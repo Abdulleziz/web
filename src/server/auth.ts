@@ -19,6 +19,7 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
+      discordId: string;
       // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
@@ -37,9 +38,14 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session({ session, user }) {
+    async session({ session, user }) {
       if (session.user) {
+        const accounts = await prisma.account.findMany({
+          where: { userId: user.id },
+        });
+
         session.user.id = user.id;
+        session.user.discordId = accounts[0]!.providerAccountId;
         // session.user.role = user.role; <-- put other properties on the session here
       }
       return session;
