@@ -8,8 +8,8 @@ import type {
 
 import { discordFetch } from ".";
 
-type Member = RESTGetAPIGuildMemberResult;
-type Roles = RESTGetAPIGuildRolesResult;
+export type Member = RESTGetAPIGuildMemberResult;
+export type Roles = RESTGetAPIGuildRolesResult;
 
 export const ABDULLEZIZ_SERVER_ID = "918833527389315092";
 

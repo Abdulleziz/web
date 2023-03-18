@@ -42,6 +42,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         const accounts = await prisma.account.findMany({
           where: { userId: user.id },
+          select: { providerAccountId: true },
         });
 
         session.user.id = user.id;

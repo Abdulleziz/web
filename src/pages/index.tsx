@@ -35,32 +35,49 @@ const Home: NextPage = () => {
 
           <div className="flex flex-col items-center gap-2">
             <div className="text-2xl text-white">
-              {!member.data ? (
+              {member.isLoading ? (
                 <p>Loading Abdulleziz Employee data...</p>
               ) : (
                 <div>
                   <div className="container flex flex-col gap-4 p-4">
                     <p>
-                      has {member.data.roles.length} roles in Abdulleziz Corp.
+                      has {member.data?.roles.length ?? 0} roles in Abdulleziz
+                      Corp.
                     </p>
                   </div>
                   <div className="flex flex-col items-start gap-2">
-                    {member.data.roles.map((role) => (
-                      <div key={role} className="flex flex-row gap-4">
-                        <p>Role ID: {role}</p>
+                    {member.data?.roles.map((role) => (
+                      <div key={role.id} className="flex flex-row gap-4">
+                        <p style={{ color: `#${role.color.toString(16)}` }}>
+                          {role.allah ? "[Allah!]" : <>[#{role.position}]</>}{" "}
+                          Role name: {role.name}
+                        </p>
+
                         <button
                           className="btn-error btn-sm btn rounded-3xl"
-                          disabled={removeRole.isLoading || removeRole.isError}
-                          onClick={() => removeRole.mutate(role)}
+                          disabled={
+                            removeRole.isLoading ||
+                            removeRole.isError ||
+                            role.allah
+                          }
+                          onClick={() => removeRole.mutate(role.id)}
                         >
                           Remove Role
                         </button>
                       </div>
                     ))}
                     {removeRole.isError && (
-                      <p className="text-red-500">
-                        Cannot remove role: {removeRole.error?.message}
-                      </p>
+                      <div>
+                        <p className="text-red-500">
+                          Cannot remove role: {removeRole.error?.message}
+                        </p>
+                        <button
+                          className="btn-error btn-sm btn rounded-3xl"
+                          onClick={() => removeRole.reset()}
+                        >
+                          Ok, I understand
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>

@@ -7,7 +7,7 @@ export const roleRouter = createTRPCRouter({
     .input(z.string())
     .mutation(async ({ ctx, input: roleId }) => {
       const discordId = ctx.session.user.discordId;
-      console.log("discordId", discordId, "roleId", roleId);
+
       await modifyGuildMemberRole(discordId, roleId, "DELETE");
     }),
 });
