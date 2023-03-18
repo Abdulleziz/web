@@ -11,4 +11,6 @@ jobs:
       - name: Push
         uses: heussd/mirror-to-bitbucket-github-action@v2
         with:
+          spacename: abdulleziz
+          repository: web
           password: ${{ secrets.BITBUCKET_PASSWORD }}
