@@ -8,9 +8,9 @@ const Home: NextPage = () => {
   const member = api.discord.getAbdullezizMember.useQuery();
 
   const removeRole = api.discord.role.removeAbdullezizRole.useMutation({
-    onSettled: () => {
+    onSettled: async () => {
       // when user removes a role, we need to refetch the roles to stay up to date
-      member.refetch();
+      await member.refetch();
     },
   });
 
@@ -21,7 +21,10 @@ const Home: NextPage = () => {
         <meta name="description" content="Abdulleziz Corp." />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-base-100" data-theme="black">
+      <main
+        className="flex min-h-screen flex-col items-center justify-center bg-base-100"
+        data-theme="black"
+      >
         <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
           <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
             Abdulleziz Corp.
@@ -38,16 +41,15 @@ const Home: NextPage = () => {
                 <div>
                   <div className="container flex flex-col gap-4 p-4">
                     <p>
-                      has {member.data.roles.length} roles in Abdulleziz
-                      Corp.
+                      has {member.data.roles.length} roles in Abdulleziz Corp.
                     </p>
                   </div>
                   <div className="flex flex-col items-start gap-2">
                     {member.data.roles.map((role) => (
-                      <div className="flex flex-row gap-4">
-                        <p key={role}>Role ID: {role}</p>
+                      <div key={role} className="flex flex-row gap-4">
+                        <p>Role ID: {role}</p>
                         <button
-                          className="btn-error btn btn-sm rounded-3xl"
+                          className="btn-error btn-sm btn rounded-3xl"
                           disabled={removeRole.isLoading || removeRole.isError}
                           onClick={() => removeRole.mutate(role)}
                         >
@@ -80,7 +82,7 @@ const SignComponent: React.FC = () => {
         <p className="text-2xl text-white">Signed in as {session.user.name}</p>
         <button
           className="rounded-md bg-gray-800 px-4 py-2 text-lg font-semibold text-white"
-          onClick={() => signOut()}
+          onClick={() => void signOut()}
         >
           Sign out
         </button>
@@ -93,7 +95,7 @@ const SignComponent: React.FC = () => {
       <p className="text-2xl text-white">Not signed in</p>
       <button
         className="rounded-md bg-gray-800 px-4 py-2 text-lg font-semibold text-white"
-        onClick={() => signIn("discord")}
+        onClick={() => void signIn("discord")}
       >
         Sign in
       </button>
