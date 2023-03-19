@@ -58,14 +58,15 @@ const Home: NextPage = () => {
                       Corp.
                     </p>
                   </div>
-                  <div className="dropdown dropdown-hover">
+                  <div className=" dropdown dropdown-left dropdown-end gap-2 ">
                     <label tabIndex={0} className={"btn m-1"}>Select a role to add</label>
                     <ul id="roles" tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
-                      {allRoles.data?.userRoles.roles.map(role => (
+                      {allRoles.data?.roles.map(role => (
                          <li key={role.id} value={role.id} ><a onClick={()=>addRole.mutate(role.id)} >{role.name}</a></li> 
                       ))}
                     </ul>
                   </div>
+                  <div className="divider"></div> 
                   <div className="flex flex-col items-start gap-2">
                     {member.data?.roles.map((role) => (
                       <div key={role.id} className="flex flex-row gap-4">

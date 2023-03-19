@@ -56,7 +56,7 @@ export const discordRouter = createTRPCRouter({
     
     // normalde member.roles -> sadece id'leri döndürüyor
     // idleri komple rol objeleriyle değiştiriyoruz (role.name, role.color)
-    return {userRoles};
+    return userRoles;
   }),
 
   
