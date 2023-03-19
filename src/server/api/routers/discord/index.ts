@@ -17,7 +17,7 @@ export const discordRouter = createTRPCRouter({
     const member = await getGuildMember(discordId);
 
     if (!member) throw new TRPCError({ code: "NOT_FOUND" });
-    console.log(roles)
+    
     // normalde member.roles -> sadece id'leri döndürüyor
     // idleri komple rol objeleriyle değiştiriyoruz (role.name, role.color)
     return {
@@ -40,17 +40,23 @@ export const discordRouter = createTRPCRouter({
     const member = await getGuildMember(discordId);
 
     if (!member) throw new TRPCError({ code: "NOT_FOUND" });
-    console.log(roles)
-    // normalde member.roles -> sadece id'leri döndürüyor
-    // idleri komple rol objeleriyle değiştiriyoruz (role.name, role.color)
-    return {
+
+    //bütün rollerden sadece kullanıcılara özel rolleri ayıkla
+    const userRoles = {
       ...member,
       roles: abdullezizRoles.filter((role) => {
         if(member.roles.includes(role.id) === false){
-          return role;
+          if(!role.tags){
+            if(role.name !== "@everyone")
+            return role
+          }
       }}),
-      // tüm rollerden sadece kullanıcının rollerini alıyoruz
-    };
+    }
+    
+    
+    // normalde member.roles -> sadece id'leri döndürüyor
+    // idleri komple rol objeleriyle değiştiriyoruz (role.name, role.color)
+    return {userRoles};
   }),
 
   

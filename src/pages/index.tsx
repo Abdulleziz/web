@@ -61,7 +61,7 @@ const Home: NextPage = () => {
                   <div className="dropdown dropdown-hover">
                     <label tabIndex={0} className={"btn m-1"}>Select a role to add</label>
                     <ul id="roles" tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
-                      {allRoles.data?.roles.map(role => (
+                      {allRoles.data?.userRoles.roles.map(role => (
                          <li key={role.id} value={role.id} ><a onClick={()=>addRole.mutate(role.id)} >{role.name}</a></li> 
                       ))}
                     </ul>
