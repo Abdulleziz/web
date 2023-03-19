@@ -27,6 +27,7 @@ export const Dashboard: React.FC = () => {
         <div className="tabs">
           {Object.keys(panels).map((panel) => (
             <a
+              key={panel}
               onClick={() => setActiveTab(panel as typeof activeTab)}
               className={classnames("tab-bordered tab", {
                 "tab-active": activeTab === panel,
