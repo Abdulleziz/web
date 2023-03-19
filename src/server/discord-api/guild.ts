@@ -17,14 +17,13 @@ export async function getGuildMember(
   userId: string,
   guildId = ABDULLEZIZ_SERVER_ID // <-- default value, not required
 ) {
-  return await discordFetch<Member>(
-    `guilds/${guildId}/members/${userId}?limit=100`,
-    { method: "GET" }
-  );
+  return await discordFetch<Member>(`guilds/${guildId}/members/${userId}`, {
+    method: "GET",
+  });
 }
 
 export async function getGuildMembers(guildId = ABDULLEZIZ_SERVER_ID) {
-  return await discordFetch<Member[]>(`guilds/${guildId}/members`, {
+  return await discordFetch<Member[]>(`guilds/${guildId}/members?limit=100`, {
     method: "GET",
   });
 }
