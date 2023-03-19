@@ -1,7 +1,9 @@
 
 import { type NextPage } from "next";
 import Head from "next/head";
+import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
+
 
 import { api } from "~/utils/api";
 
@@ -29,6 +31,7 @@ const Home: NextPage = () => {
 
   return (
     <>
+    <Navbar />
       <Head>
         <title>Abdulleziz Corp.</title>
         <meta name="description" content="Abdulleziz Corp." />
@@ -140,6 +143,46 @@ const SignComponent: React.FC = () => {
       </button>
     </div>
   );
+};
+
+const Navbar: React.FC = () => {
+  const { data: session } = useSession();
+  
+  return(
+        <>
+        <div className="navbar bg-base-100">
+  <div className="navbar-start">
+    <div className="dropdown">
+      <label tabIndex={0} className="btn btn-ghost btn-circle">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
+      </label>
+      <ul tabIndex={0} className="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52">
+        <li><a>Role Editor</a></li>
+      </ul>
+    </div>
+  </div>
+  <div className="navbar-center">
+    <Link href="/" className="capitalize btn btn-ghost text-2xl font-bold tracking-tight text-white sm:text-[5rem]l" >Abdulleziz Corp.</Link>
+  </div>
+  <div className="navbar-end">
+    <div className="dropdown dropdown-end">
+      {session ? (<><label tabIndex={0} className="btn btn-ghost btn-circle avatar">
+        <div className="w-10 rounded-full">
+          <img alt="Profile Photo" src={session?.user.image} />
+        </div>
+      </label>
+      <ul tabIndex={0} className="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52">
+        <li><a onClick={() => void signOut()} >Sign Out</a></li>
+      </ul></>) : (<button
+        className="capitalize btn rounded-md bg-gray-800 px-4 py-2 text-lg font-semibold text-white"
+        onClick={() => void signIn("discord")}
+      >
+        Sign in
+      </button>)}
+    </div>
+  </div>
+</div>
+        </>)
 };
 
 export default Home;
