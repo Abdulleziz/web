@@ -24,7 +24,7 @@ const Home: NextPage = () => {
             {!!session && (
               <div className="flex flex-col items-center justify-center">
                 <button
-                  className="btn-primary btn"
+                  className="btn-primary btn disabled:btn-error"
                   disabled={!session.user.inAbdullezizServer}
                   onClick={() => setShowDashboard(true)}
                 >
