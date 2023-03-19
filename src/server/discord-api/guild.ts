@@ -56,6 +56,7 @@ export async function getGuildRoles(guildId = ABDULLEZIZ_SERVER_ID) {
   return await discordFetch<Roles>(`guilds/${guildId}/roles`, {
     method: "GET",
   });
+  
 }
 
 export async function getGuildRole(

@@ -1,3 +1,4 @@
+
 import { type NextPage } from "next";
 import Head from "next/head";
 import { signIn, signOut, useSession } from "next-auth/react";
@@ -6,6 +7,7 @@ import { api } from "~/utils/api";
 
 const Home: NextPage = () => {
   const member = api.discord.getAbdullezizMember.useQuery();
+  const allRoles = api.discord.getAbdullezizRoles.useQuery()
 
   const removeRole = api.discord.role.removeAbdullezizRole.useMutation({
     onSettled: async () => {
@@ -13,6 +15,17 @@ const Home: NextPage = () => {
       await member.refetch();
     },
   });
+
+  const addRole = api.discord.role.addAbdullezizRole.useMutation({
+    onSettled: async () => {
+      // when user adds a role, we need to refetch the roles to stay up to date
+      await member.refetch();
+    }
+  })
+
+  
+
+  
 
   return (
     <>
@@ -44,6 +57,14 @@ const Home: NextPage = () => {
                       has {member.data?.roles.length ?? 0} roles in Abdulleziz
                       Corp.
                     </p>
+                  </div>
+                  <div className="dropdown dropdown-hover">
+                    <label tabIndex={0} className={"btn m-1"}>Select a role to add</label>
+                    <ul name="roleSelector" id="roles" tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+                      {allRoles.data?.roles.map(role => (
+                         <li key={role.id} value={role.id} ><a onClick={()=>addRole.mutate(role.id)} >{role.name}</a></li> 
+                      ))}
+                    </ul>
                   </div>
                   <div className="flex flex-col items-start gap-2">
                     {member.data?.roles.map((role) => (
