@@ -8,6 +8,7 @@ import DiscordProvider from "next-auth/providers/discord";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { env } from "~/env.mjs";
 import { prisma } from "~/server/db";
+import { getGuildMembers } from "./discord-api/guild";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -20,6 +21,7 @@ declare module "next-auth" {
     user: {
       id: string;
       discordId: string;
+      inAbdullezizServer: boolean;
       // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
@@ -45,8 +47,13 @@ export const authOptions: NextAuthOptions = {
           select: { providerAccountId: true },
         });
 
+        const abdullezizMembers = await getGuildMembers();
+
         session.user.id = user.id;
         session.user.discordId = accounts[0]!.providerAccountId;
+        session.user.inAbdullezizServer = !!abdullezizMembers?.find(
+          (member) => member.user!.id === session.user.discordId
+        );
         // session.user.role = user.role; <-- put other properties on the session here
       }
       return session;

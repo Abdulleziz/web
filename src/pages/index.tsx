@@ -21,13 +21,16 @@ const Home: NextPage = () => {
         {!showDashboard ? (
           <div>
             <WelcomeComponent />
-            {session !== null && (
+            {!!session && (
               <div className="flex flex-col items-center justify-center">
                 <button
                   className="btn-primary btn"
+                  disabled={!session.user.inAbdullezizServer}
                   onClick={() => setShowDashboard(true)}
                 >
-                  Go to Dashboard
+                  {session.user.inAbdullezizServer
+                    ? "Go to Dashboard"
+                    : "YOU ARE NOT ELIGIBLE"}
                 </button>
               </div>
             )}
