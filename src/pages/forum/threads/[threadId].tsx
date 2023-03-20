@@ -19,7 +19,7 @@ const ForumThread: NextPage = () => {
   const createPost = useCreateForumPost();
 
   return (
-    <Layout theme="dark">
+    <Layout>
       <div className="flex h-screen flex-col items-center justify-center p-4 py-2">
         <div className="alert alert-info flex flex-row shadow-lg">
           <div>

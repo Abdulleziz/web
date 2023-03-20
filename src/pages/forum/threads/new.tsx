@@ -7,7 +7,7 @@ import { useCreateForumThread } from "~/utils/useForum";
 
 const NewThread: NextPage = () => {
   return (
-    <Layout theme="dark">
+    <Layout>
       <div className="flex min-h-screen flex-col items-center justify-center pb-32">
         <div className="flex w-full flex-1 flex-col items-center justify-center text-center">
           <CreateThread />
