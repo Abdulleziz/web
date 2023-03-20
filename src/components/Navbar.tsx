@@ -5,7 +5,7 @@ export const Navbar: React.FC = () => {
   const { data: session } = useSession();
 
   return (
-    <div className="navbar bg-base-100">
+    <div className="navbar bg-base-100 bg-gray-700">
       <div className="dropdown-hover dropdown flex-1">
         <Link
           href="/"
@@ -13,7 +13,7 @@ export const Navbar: React.FC = () => {
         >
           Abdulleziz Corp.
         </Link>
-        <ul className="dropdown-content menu rounded-box w-52 bg-[#3d414d] bg-base-100 p-2 shadow">
+        <ul className="dropdown-content menu rounded-box w-52 bg-gray-700 bg-base-100 p-2">
           <li>
             <Link href="/">Home</Link>
           </li>
@@ -21,12 +21,12 @@ export const Navbar: React.FC = () => {
             <Link href="/forum">Forum</Link>
           </li>
           <li>
-            <a>CEO Panel (linki yok :()</a>
+            <a>CEO Panel (linki yok D:)</a>
           </li>
         </ul>
       </div>
       <div className="flex-none gap-2">
-        <div className="dropdown-end dropdown">
+        <div className="dropdown-end dropdown ">
           <label tabIndex={0} className="btn-ghost btn-circle avatar btn">
             <div className="w-10 rounded-full">
               {!!session?.user.image && <img src={session.user.image} />}
@@ -34,7 +34,7 @@ export const Navbar: React.FC = () => {
           </label>
           <ul
             tabIndex={0}
-            className="dropdown-content menu rounded-box menu-compact mt-3 w-52 bg-base-100 bg-[#3d414d] p-2 shadow"
+            className="dropdown-content menu rounded-box menu-compact mt-3 w-52 bg-base-100 bg-gray-700 p-2 shadow"
           >
             <li>
               <a className="justify-between">
