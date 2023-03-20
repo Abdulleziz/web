@@ -5,7 +5,7 @@ export const Navbar: React.FC = () => {
   const { data: session } = useSession();
 
   return (
-    <div className="navbar bg-base-100">
+    <div className="navbar bg-base-300">
       <div className="navbar-start">
         <div className="dropdown-hover dropdown">
           <Link
@@ -14,7 +14,7 @@ export const Navbar: React.FC = () => {
           >
             Abdulleziz Corp.
           </Link>
-          <ul className="dropdown-content menu rounded-box w-52 bg-base-100 p-2">
+          <ul className="dropdown-content menu rounded-box w-52 bg-base-300 p-2">
             <li>
               <Link href="/">Home</Link>
             </li>
@@ -29,21 +29,20 @@ export const Navbar: React.FC = () => {
       </div>
       <div className="navbar-center"></div>
       <div className="navbar-end">
-        <div className="dropdown dropdown-left">
+        <div className="dropdown-end dropdown">
           <label tabIndex={0} className="btn-ghost btn-circle avatar btn">
             <div className="w-10 rounded-full">
-              {!!session?.user.image && <img src={session.user.image} />}
+              {!!session?.user.image && (
+                <img src={session.user.image} alt="Profile photo" />
+              )}
             </div>
           </label>
           <ul
             tabIndex={0}
-            className="dropdown-content menu rounded-box menu-compact mt-3 w-52 bg-base-100 p-2 shadow"
+            className="dropdown-content menu rounded-box menu-compact mt-3 w-52 bg-base-300 p-2 shadow"
           >
             <li>
-              <a className="justify-between">
-                Profile
-                <span className="badge">New</span>
-              </a>
+              <a className="justify-between">Profile</a>
             </li>
             <li>
               <a>Settings</a>

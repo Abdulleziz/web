@@ -21,14 +21,14 @@ const ForumWelcome: React.FC = () => {
       <div className="navbar pt-8">
         <div className="navbar-start"></div>
         <div className="navbar-center">
-          <h1 className="px-16 text-3xl font-extrabold tracking-tight text-white">
+          <h1 className="px-16 text-3xl font-extrabold tracking-tight text-current">
             Welcome to Abdulleziz Forum!
           </h1>
         </div>
         <div className="navbar-end">
           <Link
             href="/forum/threads/new"
-            className="transtion-all text-1xl mr-7 rounded-full bg-lime-500 p-2 font-semibold text-white"
+            className="transtion-all text-1xl btn-success btn mr-7 rounded-full p-2 text-base font-semibold transition-all hover:scale-110"
           >
             New Thread
           </Link>
