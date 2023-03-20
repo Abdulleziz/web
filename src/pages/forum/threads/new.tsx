@@ -30,7 +30,7 @@ const CreateThread: NextPage = () => {
 
   return (
     <>
-      <h1 className="mt-10 p-4 text-xl font-bold tracking-tight text-white sm:text-[5rem]">
+      <h1 className="mt-10 p-4 text-sm font-bold tracking-tight text-white md:text-2xl ">
         New Thread
       </h1>
       <div className="title-div justify-centerp-4 mt-8 flex w-full flex-col items-center md:w-6/12">
@@ -70,9 +70,15 @@ const CreateThread: NextPage = () => {
             +
           </button>
         </div>
-        <div className="mb-3 rounded-lg bg-base-300 p-2">
+        <div className="mb-3 cursor-pointer rounded-lg bg-base-300 p-2 ">
           {[...tags].map((tag) => (
-            <div key={tag} className="badge-primary badge m-1">
+            <div
+              key={tag}
+              className=" badge-primary badge m-1 p-4 transition-all hover:scale-105 hover:bg-error"
+              onClick={() => {
+                setTags((old) => new Set([...old].filter((t) => tag !== t)));
+              }}
+            >
               {tag}
             </div>
           ))}
@@ -87,7 +93,11 @@ const CreateThread: NextPage = () => {
           Published! Click to go.
         </Link>
       ) : (
-        <button className="btn-primary btn" onClick={handlePublish}>
+        <button
+          className="btn-primary btn"
+          onClick={handlePublish}
+          disabled={createThread.isLoading}
+        >
           {createThread.isIdle && "Publish"}
           {createThread.isLoading && (
             <div className="m-[10px] flex items-center justify-center">
