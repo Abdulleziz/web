@@ -1,5 +1,6 @@
 import Head from "next/head";
 import { Navbar } from "./Navbar";
+import { useSession } from "next-auth/react";
 
 type Props = {
   children?: React.ReactNode;
@@ -9,9 +10,10 @@ type Props = {
 
 export const Layout: React.FC<Props> = ({
   children,
-  theme = "black",
+  theme = "dracula",
   title = "Abdulleziz Corp.",
 }) => {
+  const { data: session } = useSession();
   return (
     <>
       <Head>
@@ -20,7 +22,7 @@ export const Layout: React.FC<Props> = ({
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="min-h-screen bg-base-100" data-theme={theme}>
-        <Navbar />
+        {!!session ? <Navbar /> : <></>}
         {children}
       </main>
     </>
