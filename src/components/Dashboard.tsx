@@ -47,12 +47,12 @@ export const Dashboard: React.FC = () => {
     <Layout>
       <div className="flex max-w-screen-2xl items-center justify-center">
         <div className="tabs">
-          {roles.isLoading && <div className="btn loading">Loading...</div>}
+          {roles.isLoading && <div className="animate-pulse">Loading...</div>}
           {visiblePanels.map((panel) => (
             <a
               key={panel}
               onClick={() => setActiveTab(panel)}
-              className={classnames("tab-bordered tab", {
+              className={classnames("tab-bordered tab transition-all", {
                 "tab-active": activeTab === panel,
               })}
             >

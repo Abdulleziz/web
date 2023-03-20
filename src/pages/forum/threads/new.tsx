@@ -1,3 +1,4 @@
+import classNames from "classnames";
 import type { NextPage } from "next";
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -94,17 +95,13 @@ const CreateThread: NextPage = () => {
         </Link>
       ) : (
         <button
-          className="btn-primary btn"
+          className={classNames("btn-primary btn", {
+            loading: createThread.isLoading,
+          })}
           onClick={handlePublish}
           disabled={createThread.isLoading}
         >
           {createThread.isIdle && "Publish"}
-          {createThread.isLoading && (
-            <div className="m-[10px] flex items-center justify-center">
-              <div className="h-5 w-5 animate-spin rounded-full border-4 border-solid border-white border-t-transparent"></div>
-              <div className="ml-2"> Processing... </div>
-            </div>
-          )}
           {createThread.isSuccess && "finished"}
           {createThread.isError && "error try again"}
         </button>
