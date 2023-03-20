@@ -10,7 +10,7 @@ export const Navbar: React.FC = () => {
         <div className="dropdown-hover dropdown">
           <Link
             href="/"
-            className="btn-ghost btn m-1 bg-gradient-to-r from-[#95FFFF] via-[#9C99FF] to-[#FD5DAD] bg-clip-text text-2xl normal-case text-transparent hover:bg-clip-padding hover:text-black"
+            className="btn-ghost btn p-4 bg-gradient-to-r from-[#95FFFF] via-[#9C99FF] to-[#FD5DAD] bg-clip-text text-2xl normal-case text-transparent hover:bg-clip-padding hover:text-black"
           >
             Abdulleziz Corp.
           </Link>

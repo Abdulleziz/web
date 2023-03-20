@@ -18,10 +18,10 @@ const Forum: NextPage = () => {
 const ForumWelcome: React.FC = () => {
   return (
     <>
-      <div className="navbar pt-8">
+      <div className="navbar pt-8 flex sm:flex-row flex-col">
         <div className="navbar-start"></div>
         <div className="navbar-center">
-          <h1 className="px-16 text-3xl font-extrabold tracking-tight text-current">
+          <h1 className="px-16 text-xl md:text-3xl font-extrabold tracking-tight text-current">
             Welcome to Abdulleziz Forum!
           </h1>
         </div>
