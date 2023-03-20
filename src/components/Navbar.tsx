@@ -6,27 +6,30 @@ export const Navbar: React.FC = () => {
 
   return (
     <div className="navbar bg-base-100 bg-gray-700">
-      <div className="dropdown-hover dropdown flex-1">
-        <Link
-          href="/"
-          className="btn-ghost btn m-1 bg-gradient-to-r from-[#95FFFF] via-[#9C99FF] to-[#FD5DAD] bg-clip-text text-2xl normal-case text-transparent hover:bg-clip-padding hover:text-black"
-        >
-          Abdulleziz Corp.
-        </Link>
-        <ul className="dropdown-content menu rounded-box w-52 bg-gray-700 bg-base-100 p-2">
-          <li>
-            <Link href="/">Home</Link>
-          </li>
-          <li>
-            <Link href="/forum">Forum</Link>
-          </li>
-          <li>
-            <a>CEO Panel (linki yok D:)</a>
-          </li>
-        </ul>
+      <div className="navbar-start">
+        <div className="dropdown-hover dropdown">
+          <Link
+            href="/"
+            className="btn-ghost btn m-1 bg-gradient-to-r from-[#95FFFF] via-[#9C99FF] to-[#FD5DAD] bg-clip-text text-2xl normal-case text-transparent hover:bg-clip-padding hover:text-black"
+          >
+            Abdulleziz Corp.
+          </Link>
+          <ul className="dropdown-content menu rounded-box w-52 bg-gray-700 bg-base-100 p-2">
+            <li>
+              <Link href="/">Home</Link>
+            </li>
+            <li>
+              <Link href="/forum">Forum</Link>
+            </li>
+            <li>
+              <a>CEO Panel (linki yok D:)</a>
+            </li>
+          </ul>
+        </div>
       </div>
-      <div className="flex-none gap-2">
-        <div className="dropdown-end dropdown ">
+      <div className="navbar-center"></div>
+      <div className="navbar-end flex-none gap-2">
+        <div className="dropdown  ">
           <label tabIndex={0} className="btn-ghost btn-circle avatar btn">
             <div className="w-10 rounded-full">
               {!!session?.user.image && <img src={session.user.image} />}
