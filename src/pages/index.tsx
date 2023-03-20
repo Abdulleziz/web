@@ -168,7 +168,7 @@ const Navbar: React.FC = () => {
     <div className="dropdown dropdown-end">
       {session ? (<><label tabIndex={0} className="btn btn-ghost btn-circle avatar">
         <div className="w-10 rounded-full">
-          <img alt="Profile Photo" src={session?.user.image} />
+          {!!session?.user.image && <img src={session.user.image} />}
         </div>
       </label>
       <ul tabIndex={0} className="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52">
