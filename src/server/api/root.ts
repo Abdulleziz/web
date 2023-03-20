@@ -1,5 +1,5 @@
 import { createTRPCRouter } from "~/server/api/trpc";
-import { exampleRouter } from "~/server/api/routers/example";
+import { forumRouter } from "~/server/api/routers/forum";
 import { discordRouter } from "./routers/discord";
 
 /**
@@ -8,7 +8,7 @@ import { discordRouter } from "./routers/discord";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  example: exampleRouter,
+  forum: forumRouter,
   discord: discordRouter,
 });
 

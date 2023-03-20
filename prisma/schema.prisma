@@ -6,15 +6,48 @@ generator client {
 }
 
 datasource db {
-    provider = "mysql"
-    url      = env("DATABASE_URL")
+    provider     = "mysql"
+    url          = env("DATABASE_URL")
     relationMode = "prisma"
 }
 
-model Example {
+model ForumTag {
+    id        String        @id @default(cuid())
+    createdAt DateTime      @default(now())
+    updatedAt DateTime      @updatedAt
+    name      String        @unique
+    threads   ForumThread[]
+}
+
+model ForumThread {
     id        String   @id @default(cuid())
+    title     String   @db.TinyText
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+    locked    Boolean  @default(false)
+
+    posts ForumPost[]
+    tags  ForumTag[]
+
+    creator   User   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+    creatorId String
+
+    @@index([creatorId])
+}
+
+model ForumPost {
+    id        String   @id @default(cuid())
+    message   String   @db.Text
+    createdAt DateTime @default(now())
+
+    thread   ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+    threadId String
+
+    creator   User   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+    creatorId String
+
+    @@index([threadId])
+    @@index([creatorId])
 }
 
 // Necessary for Next auth
@@ -48,13 +81,15 @@ model Session {
 }
 
 model User {
-    id            String    @id @default(cuid())
+    id            String        @id @default(cuid())
     name          String?
-    email         String?   @unique
+    email         String?       @unique
     emailVerified DateTime?
     image         String?
     accounts      Account[]
     sessions      Session[]
+    forumThreads  ForumThread[]
+    ForumPost     ForumPost[]
 }
 
 model VerificationToken {

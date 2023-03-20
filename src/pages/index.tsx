@@ -1,9 +1,9 @@
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
-import Head from "next/head";
 
 import { useState } from "react";
 import { Dashboard } from "~/components/Dashboard";
+import { Layout } from "~/components/Layout";
 import { WelcomeComponent } from "~/components/WelcomeComponents";
 
 const Home: NextPage = () => {
@@ -12,33 +12,26 @@ const Home: NextPage = () => {
 
   return (
     <>
-      <Head>
-        <title>Abdulleziz Corp.</title>
-        <meta name="description" content="Abdulleziz Corp." />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <main className="min-h-screen bg-base-100" data-theme="black">
-        {!showDashboard ? (
-          <div>
-            <WelcomeComponent />
-            {!!session && (
-              <div className="flex flex-col items-center justify-center">
-                <button
-                  className="btn-primary btn disabled:btn-error"
-                  disabled={!session.user.inAbdullezizServer}
-                  onClick={() => setShowDashboard(true)}
-                >
-                  {session.user.inAbdullezizServer
-                    ? "Go to Dashboard"
-                    : "YOU ARE NOT ELIGIBLE"}
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <Dashboard />
-        )}
-      </main>
+      {!showDashboard ? (
+        <Layout>
+          <WelcomeComponent />
+          {!!session && (
+            <div className="flex flex-col items-center justify-center">
+              <button
+                className="btn-primary btn disabled:btn-error"
+                disabled={!session.user.inAbdullezizServer}
+                onClick={() => setShowDashboard(true)}
+              >
+                {session.user.inAbdullezizServer
+                  ? "Go to Dashboard"
+                  : "YOU ARE NOT ELIGIBLE"}
+              </button>
+            </div>
+          )}
+        </Layout>
+      ) : (
+        <Dashboard />
+      )}
     </>
   );
 };

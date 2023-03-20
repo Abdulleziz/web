@@ -1,6 +1,7 @@
-import { Navbar } from "./Navbar";
-import { useState } from "react";
 import classnames from "classnames";
+import Link from "next/link";
+import { useState } from "react";
+import { Layout } from "./Layout";
 
 export const Dashboard: React.FC = () => {
   // paneller nası olmalı
@@ -21,8 +22,7 @@ export const Dashboard: React.FC = () => {
   } as const;
 
   return (
-    <>
-      <Navbar />
+    <Layout>
       <div className="flex max-w-screen-2xl items-center justify-center">
         <div className="tabs">
           {Object.keys(panels).map((panel) => (
@@ -41,7 +41,7 @@ export const Dashboard: React.FC = () => {
       <div className="flex max-w-screen-2xl items-center justify-center">
         {panels[activeTab]}
       </div>
-    </>
+    </Layout>
   );
 };
 
@@ -63,7 +63,9 @@ const GlobalEmployeePanel: React.FC = () => {
     <div className="p-16">
       <div className="menu">
         <div className="menu-title">İşlemler</div>
-        <div className="menu-item">Foruma git</div>
+        <Link className="menu-item" href="/forum">
+          Foruma git
+        </Link>
         <div className="menu-item">Çay söylet</div>
       </div>
     </div>

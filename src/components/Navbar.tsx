@@ -1,11 +1,15 @@
 import { signOut, useSession } from "next-auth/react";
+import Link from "next/link";
 
 export const Navbar: React.FC = () => {
   const { data: session } = useSession();
+
   return (
     <div className="navbar bg-base-100">
       <div className="flex-1">
-        <a className="btn-ghost btn text-xl normal-case">Abdulleziz Corp.</a>
+        <Link href="/" className="btn-ghost btn text-xl normal-case">
+          Abdulleziz Corp.
+        </Link>
       </div>
       <div className="flex-none gap-2">
         {/* <div className="form-control">
