@@ -1,4 +1,6 @@
+
 import { type NextPage } from "next";
+
 import { useSession } from "next-auth/react";
 
 import { useState } from "react";
@@ -10,8 +12,21 @@ const Home: NextPage = () => {
   const { data: session } = useSession();
   const [showDashboard, setShowDashboard] = useState(false);
 
+
+  const addRole = api.discord.role.addAbdullezizRole.useMutation({
+    onSettled: async () => {
+      // when user adds a role, we need to refetch the roles to stay up to date
+      await member.refetch();
+    }
+  })
+
+  
+
+  
+
   return (
     <>
+
       {!showDashboard ? (
         <Layout>
           <WelcomeComponent />
@@ -26,6 +41,7 @@ const Home: NextPage = () => {
                   ? "Go to Dashboard"
                   : "YOU ARE NOT ELIGIBLE"}
               </button>
+
             </div>
           )}
         </Layout>
@@ -35,5 +51,6 @@ const Home: NextPage = () => {
     </>
   );
 };
+
 
 export default Home;
