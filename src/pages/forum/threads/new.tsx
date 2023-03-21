@@ -126,7 +126,7 @@ const CreateThread: NextPage = () => {
             loading: createThread.isLoading || createFirstPost.isLoading,
           })}
           onClick={() => {
-            handlePublish;
+            void handlePublish();
           }}
           disabled={createThread.isLoading || createFirstPost.isLoading}
         >
