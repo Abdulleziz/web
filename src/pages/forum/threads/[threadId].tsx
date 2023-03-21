@@ -8,6 +8,7 @@ import {
   useDeleteForumThread,
   useGetForumThread,
 } from "~/utils/useForum";
+import { set } from "zod";
 
 const ForumThread: NextPage = () => {
   const router = useRouter();
@@ -82,6 +83,7 @@ const ForumThread: NextPage = () => {
               <div className="form-control mt-3">
                 <div className="input-group flex items-center justify-center">
                   <textarea
+                    name="messageInput"
                     className="input-bordered input w-full max-w-2xl"
                     placeholder="Mesajınızı buraya yazın..."
                     defaultValue={content}
@@ -92,11 +94,13 @@ const ForumThread: NextPage = () => {
                       loading: createPost.isLoading,
                     })}
                     disabled={createPost.isLoading}
-                    onClick={() =>
+                    onClick={() => {
                       createPost.mutate({
                         threadId: threadId as string,
                         message: content,
-                      })
+                      });
+                      setContent("");
+                    }
                     }
                   >
                     Gönder
