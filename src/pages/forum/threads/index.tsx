@@ -7,13 +7,15 @@ const Threads: NextPage = () => {
 
   return (
     <div className="flex flex-col justify-center p-10">
-      <h1 className="rounded-t bg-base-300 p-2 text-2xl text-white">Threads</h1>
-      {threads.isLoading && <p>Yükleniyor...</p>}
+      <h1 className="rounded-t bg-base-100 p-2 text-2xl text-white">Threads</h1>
+      {threads.isLoading && (
+        <p className="animate-pulse p-4 text-lg">Yükleniyor...</p>
+      )}
       {threads.isError && <p className="text-error">Hata!</p>}
       {threads.data && (
         <ul>
           {threads.data.map((thread) => (
-            <>
+            <div key={thread.id}>
               <li
                 key={thread.id}
                 className="bg-base-200 transition-all hover:bg-base-300"
@@ -38,7 +40,7 @@ const Threads: NextPage = () => {
                 </Link>
               </li>
               <div className="divider m-0 bg-base-200"></div>
-            </>
+            </div>
           ))}
         </ul>
       )}

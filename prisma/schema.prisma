@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
     provider = "prisma-client-js"
 }
@@ -20,37 +17,32 @@ model ForumTag {
 }
 
 model ForumThread {
-    id        String   @id @default(cuid())
-    title     String   @db.TinyText
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    locked    Boolean  @default(false)
-
-    posts ForumPost[]
-    tags  ForumTag[]
-
-    creator   User   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+    id        String      @id @default(cuid())
+    title     String      @db.TinyText
+    createdAt DateTime    @default(now())
+    updatedAt DateTime    @updatedAt
+    locked    Boolean     @default(false)
     creatorId String
+    posts     ForumPost[]
+    tags      ForumTag[]
+    creator   User        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
     @@index([creatorId])
 }
 
 model ForumPost {
-    id        String   @id @default(cuid())
-    message   String   @db.Text
-    createdAt DateTime @default(now())
-
-    thread   ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-    threadId String
-
-    creator   User   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+    id        String      @id @default(cuid())
+    message   String      @db.Text
+    createdAt DateTime    @default(now())
+    threadId  String
     creatorId String
+    thread    ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+    creator   User        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
     @@index([threadId])
     @@index([creatorId])
 }
 
-// Necessary for Next auth
 model Account {
     id                String  @id @default(cuid())
     userId            String
@@ -98,4 +90,13 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+model ForumTagToForumThread {
+    A String
+    B String
+
+    @@unique([A, B], map: "_ForumTagToForumThread_AB_unique")
+    @@index([B], map: "_ForumTagToForumThread_B_index")
+    @@map("_ForumTagToForumThread")
 }

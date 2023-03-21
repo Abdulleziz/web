@@ -43,30 +43,43 @@ const ForumThread: NextPage = () => {
             Sil
           </button>
         </div>
-        <main className="mb-auto w-full text-center">
+        <main className="mb-auto mt-5 w-full ">
           {thread.isLoading && <p>Yükleniyor...</p>}
           {thread.isError && <p>Hata!</p>}
           {thread.data && (
             <div className="flex flex-col">
-              <h1 className="p-4 font-extrabold tracking-tight text-white sm:text-[5rem]">
-                Başlık: {thread.data.title}
-              </h1>
-
-              <div className="flex flex-1 flex-col items-center justify-center">
-                <p className="p-4 text-2xl font-extrabold text-info">
-                  Mesajlar:
+              <div className="rounded-md bg-base-100 p-5">
+                <h1 className=" text-lg font-semibold tracking-tight text-white sm:text-3xl">
+                  {thread.data.title}
+                </h1>
+                <p className="mt-1 text-sm sm:text-base">
+                  {thread.data.creator.name} •{" "}
+                  {thread.data.createdAt.toLocaleString()}
                 </p>
+              </div>
+              <div className="mt-3 flex flex-col  rounded bg-base-100 ">
                 {thread.data.posts.map((post) => (
-                  <div key={post.id} className="p-4">
-                    <p className="text-xl font-bold text-white">
-                      {post.creator.name}
-                    </p>
-                    <p className="text-lg text-white">{post.message}</p>
+                  <div key={post.id} className="m-4 ml-2 flex flex-row">
+                    <div className="mr-4 rounded bg-base-200 ">
+                      {post.creator.image && (
+                        <img
+                          className="ml-auto mr-auto w-12 rounded-full p-1 sm:w-24"
+                          src={post.creator.image}
+                          alt="Profile Image"
+                        />
+                      )}
+                      <p className="m-3 text-center text-sm font-bold text-white sm:text-xl">
+                        {post.creator.name}
+                      </p>
+                    </div>
+                    <div className="flex w-full min-w-0 flex-1 rounded bg-base-200 ">
+                      <h3 className="m-8">{post.message}</h3>
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <div className="form-control">
+              <div className="form-control mt-3">
                 <div className="input-group flex items-center justify-center">
                   <textarea
                     className="input-bordered input w-full max-w-2xl"
