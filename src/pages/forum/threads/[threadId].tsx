@@ -8,7 +8,6 @@ import {
   useDeleteForumThread,
   useGetForumThread,
 } from "~/utils/useForum";
-import { set } from "zod";
 
 const ForumThread: NextPage = () => {
   const router = useRouter();
