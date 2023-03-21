@@ -18,6 +18,9 @@ const ForumThread: NextPage = () => {
   const thread = useGetForumThread(threadId as string);
   const deleteThread = useDeleteForumThread();
   const createPost = useCreateForumPost();
+  const clearContent = () => {
+    setContent("");
+  };
 
   return (
     <Layout>
@@ -83,10 +86,10 @@ const ForumThread: NextPage = () => {
               <div className="form-control mt-3">
                 <div className="input-group flex items-center justify-center">
                   <textarea
-                    name="messageInput"
+                    id="messageInput"
                     className="input-bordered input w-full max-w-2xl"
                     placeholder="Mesajınızı buraya yazın..."
-                    defaultValue={content}
+                    value={content}
                     onChange={(e) => setContent(e.target.value)}
                   />
                   <button
@@ -99,7 +102,7 @@ const ForumThread: NextPage = () => {
                         threadId: threadId as string,
                         message: content,
                       });
-                      setContent("");
+                      clearContent();
                     }
                     }
                   >
