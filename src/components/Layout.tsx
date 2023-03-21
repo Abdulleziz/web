@@ -22,7 +22,7 @@ export const Layout: React.FC<Props> = ({
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="min-h-screen bg-base-300" data-theme={theme}>
-        {!!session ? <Navbar /> : <></>}
+        <Navbar />
         {children}
       </main>
     </>

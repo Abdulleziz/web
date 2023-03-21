@@ -1,4 +1,4 @@
-import { signOut, useSession } from "next-auth/react";
+import { signOut, signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 
 export const Navbar: React.FC = () => {
@@ -29,29 +29,38 @@ export const Navbar: React.FC = () => {
       </div>
       <div className="navbar-center"></div>
       <div className="navbar-end">
-        <div className="dropdown-end dropdown">
-          <label tabIndex={0} className="btn-ghost btn-circle avatar btn">
-            <div className="w-10 rounded-full">
-              {!!session?.user.image && (
-                <img src={session.user.image} alt="Profile photo" />
-              )}
-            </div>
-          </label>
-          <ul
-            tabIndex={0}
-            className="dropdown-content menu rounded-box menu-compact mt-3 w-52 bg-base-300 p-2 shadow"
+        {session ? (
+          <div className="dropdown dropdown-end">
+            <label tabIndex={0} className="btn-ghost btn-circle avatar btn">
+              <div className="w-10 rounded-full">
+                {!!session?.user.image && (
+                  <img src={session.user.image} alt="Profile photo" />
+                )}
+              </div>
+            </label>
+            <ul
+              tabIndex={0}
+              className="dropdown-content menu rounded-box menu-compact mt-3 w-52 bg-base-300 p-2 shadow"
+            >
+              <li>
+                <a className="justify-between">Profile</a>
+              </li>
+              <li>
+                <a>Settings</a>
+              </li>
+              <li>
+                <button onClick={() => void signOut()}>Logout</button>
+              </li>
+            </ul>
+          </div>
+        ) : (
+          <button
+            className="btn-primary btn"
+            onClick={() => void signIn("discord")}
           >
-            <li>
-              <a className="justify-between">Profile</a>
-            </li>
-            <li>
-              <a>Settings</a>
-            </li>
-            <li>
-              <button onClick={() => void signOut()}>Logout</button>
-            </li>
-          </ul>
-        </div>
+            Sign In
+          </button>
+        )}
       </div>
     </div>
   );
