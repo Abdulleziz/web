@@ -58,13 +58,15 @@ const CreateThread: NextPage = () => {
         />
         <input
           id="contentInput"
-          type="textarea"
+          type="text"
           placeholder="Content..."
-          className={
-            title
-              ? "input-success input w-full transition-all"
-              : "input-error input w-full transition-all"
-          }
+          className={`mt-4
+            ${
+              title
+                ? "input-success input w-full transition-all"
+                : "input-error input w-full transition-all"
+            }
+          `}
           defaultValue={content}
           onChange={(e) => setContent(e.target.value)}
         />
@@ -76,7 +78,7 @@ const CreateThread: NextPage = () => {
             ref={tagRef}
             type="text"
             placeholder="Tag…"
-            className="input-bordered input min-w-full"
+            className="input-bordered input min-w-full transition-all"
           />
 
           <button
@@ -92,7 +94,11 @@ const CreateThread: NextPage = () => {
             +
           </button>
         </div>
-        <div className="mb-3 cursor-pointer rounded-lg bg-base-300 p-2 ">
+        <div
+          className={`mb-3 cursor-pointer rounded-lg ${
+            tags.size ? "bg-base-100" : "bg-base-300"
+          }  p-2`}
+        >
           {[...tags].map((tag) => (
             <div
               key={tag}
