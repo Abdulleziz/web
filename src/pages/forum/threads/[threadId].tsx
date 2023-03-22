@@ -61,7 +61,7 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
                   {thread.data.createdAt.toLocaleString()}
                 </p>
               </div>
-              <Posts posts={thread.data.posts} />
+              <PostComponent posts={thread.data.posts} />
 
               <div className="form-control mt-3">
                 <div className="input-group flex items-center justify-center">
@@ -106,32 +106,6 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
 type Post = Prisma.ForumPostGetPayload<{
   include: { creator: true };
 }>;
-
-const Posts: React.FC<{ posts: Post[] }> = ({ posts }) => {
-  return (
-    <div className="mt-3 flex flex-col  rounded bg-base-100 ">
-      {posts.map((post) => (
-        <div key={post.id} className="m-4 ml-2 flex flex-row">
-          <div className="mr-4 rounded bg-base-200 ">
-            {post.creator.image && (
-              <img
-                className="ml-auto mr-auto w-12 rounded-full p-1 sm:w-24"
-                src={post.creator.image}
-                alt="Profile Image"
-              />
-            )}
-            <p className="m-3 text-center text-sm font-bold text-white sm:text-xl">
-              {post.creator.name}
-            </p>
-          </div>
-          <div className="flex w-full min-w-0 flex-1 rounded bg-base-200 ">
-            <h3 className="m-8">{post.message}</h3>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
 
 const DeleteThread: React.FC<ThreadProps> = ({ threadId }) => {
   const deleteThread = useDeleteForumThread();
@@ -180,23 +154,17 @@ const InfoSVG: React.FC = () => {
   );
 };
 
-const PostComponent: React.FC = () => {
-  const router = useRouter();
-  const { threadId } = router.query;
-  const thread = useGetForumThread(threadId as string);
+const PostComponent: React.FC<{ posts: Post[] }> = ({ posts }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  if (!thread?.data?.posts) {
+  if (posts.length === 0) {
     return (
-      <Layout>
-        <div className="alert alert-error flex flex-row shadow-lg">
-          <InfoSVG />
-          <span>No posts found!</span>
-        </div>
-      </Layout>
+      <div className="alert alert-error mt-3 flex flex-row items-center justify-start shadow-lg">
+        <InfoSVG />
+        <span>No posts found!</span>
+      </div>
     );
   } else {
-    const posts = thread.data.posts;
     const postsPerPage = 5;
     const startIndex = (currentPage - 1) * postsPerPage;
     const endIndex = startIndex + postsPerPage;
