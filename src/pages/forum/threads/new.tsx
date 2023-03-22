@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Layout } from "~/components/Layout";
-import { useCreateForumThread, useCreateForumPost } from "~/utils/useForum";
+import { useCreateForumThread } from "~/utils/useForum";
 
 const NewThread: NextPage = () => {
   return (
@@ -24,19 +24,12 @@ const CreateThread: NextPage = () => {
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
   const createThread = useCreateForumThread();
-  const createFirstPost = useCreateForumPost();
 
   const tagRef =
     useRef<HTMLInputElement>() as React.MutableRefObject<HTMLInputElement>;
 
-  const handlePublish = async () => {
-    const thread = await createThread.mutateAsync({ tags: [...tags], title });
-    const threadId = thread.id;
-    createFirstPost.mutate({
-      threadId,
-      message: content,
-    });
-  };
+  const handlePublish = () =>
+    createThread.mutate({ tags: [...tags], title, message: content });
 
   return (
     <>
@@ -60,13 +53,10 @@ const CreateThread: NextPage = () => {
           id="contentInput"
           type="text"
           placeholder="Content..."
-          className={`mt-4
-            ${
-              title
-                ? "input-success input w-full transition-all"
-                : "input-error input w-full transition-all"
-            }
-          `}
+          className={classNames(
+            "input mt-4 w-full transition-all",
+            title ? "input-success" : "input-error"
+          )}
           defaultValue={content}
           onChange={(e) => setContent(e.target.value)}
         />
@@ -123,17 +113,14 @@ const CreateThread: NextPage = () => {
       ) : (
         <button
           className={classNames("btn-primary btn", {
-            loading: createThread.isLoading || createFirstPost.isLoading,
+            loading: createThread.isLoading,
           })}
-          onClick={() => {
-            void handlePublish();
-          }}
-          disabled={createThread.isLoading || createFirstPost.isLoading}
+          onClick={handlePublish}
+          disabled={createThread.isLoading}
         >
           {createThread.isIdle && "Publish"}
           {createThread.isSuccess && "finished"}
-          {(createThread.isError || createFirstPost.isError) &&
-            "error try again"}
+          {createThread.isError && "error try again"}
         </button>
       )}
     </>

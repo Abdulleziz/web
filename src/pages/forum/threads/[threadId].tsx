@@ -3,51 +3,50 @@ import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { Layout } from "~/components/Layout";
-
+import { ThreadId } from "~/utils/zod-utils";
 import {
   useCreateForumPost,
   useDeleteForumThread,
   useGetForumThread,
 } from "~/utils/useForum";
+import { type Prisma } from "@prisma/client";
 
 const ForumThread: NextPage = () => {
-  const [content, setContent] = useState("");
   const router = useRouter();
-  const { threadId } = router.query;
-  const thread = useGetForumThread(threadId as string);
+  const parseThreadId = ThreadId.safeParse(router.query.threadId);
 
-  const deleteThread = useDeleteForumThread();
+  if (!parseThreadId.success) {
+    return (
+      <Layout>
+        <div className="flex h-screen flex-col items-center justify-center gap-4">
+          <p>Gerçek bir Thread id gibi durmuyor!</p>
+          <div
+            className="btn-primary btn"
+            onClick={() => void router.push("/forum")}
+          >
+            Geri Dön
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  return <ThreadPage threadId={parseThreadId.data} />;
+};
+
+type ThreadProps = { threadId: ThreadId };
+
+const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
+  const thread = useGetForumThread(threadId);
   const createPost = useCreateForumPost();
 
-  const clearContent = () => {
-    setContent("");
-  };
+  const [content, setContent] = useState("");
 
   return (
     <Layout>
-      <div className="flex h-max flex-col items-center justify-center p-4 py-2">
-        <div className="alert alert-info flex flex-row shadow-lg">
-          <div>
-            <InfoSVG />
-            <span>
-              Şu anda Early Alpha sürümünde olduğumuz için tüm threadler
-              silinebilir durumda!
-            </span>
-          </div>
-          <button
-            className={classNames("btn-error btn-sm btn", {
-              loading: deleteThread.isLoading,
-            })}
-            disabled={
-              deleteThread.isLoading ||
-              deleteThread.isSuccess ||
-              deleteThread.isError
-            }
-            onClick={() => deleteThread.mutate(threadId as string)}
-          >
-            Sil
-          </button>
-        </div>
+      <div className="flex h-screen flex-col items-center justify-center p-4 py-2">
+        {!!thread.data && <DeleteThread threadId={threadId} />}
+
         <main className="mb-auto mt-5 w-full ">
           {thread.isLoading && <p>Yükleniyor...</p>}
           {thread.isError && <p>Hata!</p>}
@@ -62,29 +61,29 @@ const ForumThread: NextPage = () => {
                   {thread.data.createdAt.toLocaleString()}
                 </p>
               </div>
-              <PostComponent />
+              <Posts posts={thread.data.posts} />
 
               <div className="form-control mt-3">
                 <div className="input-group flex items-center justify-center">
                   <textarea
                     name="messageInput"
                     className="input-bordered input w-full max-w-2xl"
-                    placeholder="Enter your message..."
+                    placeholder="Mesajınızı buraya yazın..."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
+                    disabled={createPost.isLoading}
                   />
                   <button
                     className={classNames("btn-primary btn", {
                       loading: createPost.isLoading,
                     })}
                     disabled={createPost.isLoading}
-                    onClick={() => {
-                      createPost.mutate({
-                        threadId: threadId as string,
-                        message: content,
-                      });
-                      clearContent();
-                    }}
+                    onClick={() =>
+                      createPost.mutate(
+                        { threadId, message: content },
+                        { onSuccess: () => setContent("") }
+                      )
+                    }
                   >
                     Send!
                   </button>
@@ -93,11 +92,73 @@ const ForumThread: NextPage = () => {
             </div>
           )}
           {thread.data === null && (
-            <p className="text-error">Thread bulunamadı veya silinmiş!</p>
+            <div className="flex items-center justify-center">
+              <p className="text-error">Thread bulunamadı veya silinmiş!</p>
+            </div>
           )}
         </main>
       </div>
     </Layout>
+  );
+};
+
+// geçici type annotation
+type Post = Prisma.ForumPostGetPayload<{
+  include: { creator: true };
+}>;
+
+const Posts: React.FC<{ posts: Post[] }> = ({ posts }) => {
+  return (
+    <div className="mt-3 flex flex-col  rounded bg-base-100 ">
+      {posts.map((post) => (
+        <div key={post.id} className="m-4 ml-2 flex flex-row">
+          <div className="mr-4 rounded bg-base-200 ">
+            {post.creator.image && (
+              <img
+                className="ml-auto mr-auto w-12 rounded-full p-1 sm:w-24"
+                src={post.creator.image}
+                alt="Profile Image"
+              />
+            )}
+            <p className="m-3 text-center text-sm font-bold text-white sm:text-xl">
+              {post.creator.name}
+            </p>
+          </div>
+          <div className="flex w-full min-w-0 flex-1 rounded bg-base-200 ">
+            <h3 className="m-8">{post.message}</h3>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const DeleteThread: React.FC<ThreadProps> = ({ threadId }) => {
+  const deleteThread = useDeleteForumThread();
+
+  return (
+    <div className="alert alert-info flex flex-row shadow-lg">
+      <div>
+        <InfoSVG />
+        <span>
+          Şu anda Early Alpha sürümünde olduğumuz için tüm threadler silinebilir
+          durumda!
+        </span>
+      </div>
+      <button
+        className={classNames("btn-error btn-sm btn", {
+          loading: deleteThread.isLoading,
+        })}
+        disabled={
+          deleteThread.isLoading ||
+          deleteThread.isSuccess ||
+          deleteThread.isError
+        }
+        onClick={() => deleteThread.mutate(threadId)}
+      >
+        Sil
+      </button>
+    </div>
   );
 };
 

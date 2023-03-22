@@ -1,4 +1,4 @@
-import { api, RouterInputs } from "./api";
+import { api, type RouterInputs } from "./api";
 
 type GetForum = RouterInputs["forum"]["getThreadById"];
 
@@ -10,7 +10,7 @@ export const useCreateForumThread = () => {
   const utils = api.useContext();
   return api.forum.createThread.useMutation({
     // invalidate the threads so it's fresh 🤣 (taze künefe)
-    onSuccess: async (data) => {
+    onSuccess: async () => {
       await utils.forum.getThreads.invalidate();
     },
   });

@@ -1,6 +1,5 @@
 import Head from "next/head";
 import { Navbar } from "./Navbar";
-import { useSession } from "next-auth/react";
 
 type Props = {
   children?: React.ReactNode;
@@ -13,7 +12,6 @@ export const Layout: React.FC<Props> = ({
   theme = "dracula",
   title = "Abdulleziz Corp.",
 }) => {
-  const { data: session } = useSession();
   return (
     <>
       <Head>

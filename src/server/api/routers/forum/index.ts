@@ -28,9 +28,10 @@ export const forumRouter = createTRPCRouter({
       z.object({
         title: nonEmptyString,
         tags: nonEmptyString.array(),
+        message: nonEmptyString,
       })
     )
-    .mutation(({ ctx, input: { title, tags } }) => {
+    .mutation(({ ctx, input: { title, tags, message } }) => {
       return ctx.prisma.forumThread.create({
         data: {
           title,
@@ -42,6 +43,12 @@ export const forumRouter = createTRPCRouter({
           },
           creator: {
             connect: { id: ctx.session.user.id },
+          },
+          posts: {
+            create: {
+              message,
+              creator: { connect: { id: ctx.session.user.id } },
+            },
           },
         },
       });
