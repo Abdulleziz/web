@@ -8,7 +8,7 @@ export const forumRouter = createTRPCRouter({
   posts: forumPostsRouter,
   getThreads: protectedProcedure.query(({ ctx }) => {
     return ctx.prisma.forumThread.findMany({
-      include: { creator: true, posts: true, tags: true },
+      include: { creator: true, tags: true },
     });
   }),
   getThreadById: protectedProcedure
@@ -16,11 +16,7 @@ export const forumRouter = createTRPCRouter({
     .query(({ ctx, input: id }) => {
       return ctx.prisma.forumThread.findUnique({
         where: { id },
-        include: {
-          creator: true,
-          posts: { include: { creator: true } },
-          tags: true,
-        },
+        include: { creator: true, tags: true },
       });
     }),
   createThread: protectedProcedure
