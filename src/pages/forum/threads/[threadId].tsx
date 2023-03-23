@@ -43,10 +43,10 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
 
   return (
     <Layout>
-      <div className="flex h-screen flex-col items-center justify-center p-4 py-2">
+      <div className="flex h-auto flex-col items-center justify-center p-4 py-2">
         {!!thread.data && <DeleteThread threadId={threadId} />}
 
-        <main className="mb-auto mt-5 w-full ">
+        <main className="pb-auto pt-5 w-full ">
           {thread.isLoading && <p>Yükleniyor...</p>}
           {thread.isError && <p>Hata!</p>}
           {thread.data && (
@@ -55,7 +55,7 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
                 <h1 className=" text-lg font-semibold tracking-tight text-white sm:text-3xl">
                   {thread.data.title}
                 </h1>
-                <p className="mt-1 text-sm sm:text-base">
+                <p className="pt-1 text-sm sm:text-base">
                   {thread.data.creator.name} •{" "}
                   {thread.data.createdAt.toLocaleString()}
                 </p>
@@ -164,7 +164,7 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
 
   if (!data?.pages.flat().length) {
     return (
-      <div className="alert alert-error mt-3 flex flex-row items-center justify-start shadow-lg">
+      <div className="alert alert-error pt-3 flex flex-row items-center justify-start shadow-lg">
         <InfoSVG />
         <span>No posts found!</span>
       </div>
@@ -172,10 +172,10 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
   }
 
   return (
-    <div className="mt-3 flex flex-col  rounded bg-base-100 ">
+    <div className="flex flex-col rounded bg-base-100 pt-3">
       {data.pages[page]?.posts.map((post) => (
-        <div key={post.id} className="m-4  flex flex-row">
-          <div className="mr-4 rounded bg-base-200 ">
+        <div key={post.id} className="p-4 flex flex-row">
+          <div className="pr-4 rounded bg-base-200 items-center justify-center flex flex-col">
             {post.creator.image && (
               <img
                 className="ml-auto mr-auto w-12 rounded-full p-1 sm:w-20"
@@ -183,16 +183,16 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
                 alt="Profile Image"
               />
             )}
-            <p className="m-3 text-center text-sm font-bold text-white sm:text-xl">
+            <p className="p-3 text-center text-sm font-bold text-white sm:text-xl">
               {post.creator.name}
             </p>
           </div>
           <div className="flex w-full min-w-0 flex-1 rounded bg-base-200 ">
-            <h3 className="m-8">{post.message}</h3>
+            <h3 className="p-8">{post.message}</h3>
           </div>
         </div>
       ))}
-      <div className="mr-4 mb-4 flex flex-wrap justify-center space-y-0 space-x-2 md:justify-end md:space-y-0 md:space-x-4">
+      <div className="pr-4 pb-4 flex flex-wrap justify-center space-y-0 space-x-2 md:justify-end md:space-y-0 md:space-x-4">
         {Array.from({ length: data.pages.length }).map((_, i) => (
           <button
             key={i}
