@@ -3,7 +3,22 @@ import { api, type RouterInputs } from "./api";
 type GetForum = RouterInputs["forum"]["getThreadById"];
 type GetPosts = RouterInputs["forum"]["posts"]["getMany"];
 
-export const useGetForumThreads = () => api.forum.getThreads.useQuery();
+export const useGetForumThreads = () => {
+  const utils = api.useContext();
+  return api.forum.getThreads.useQuery(undefined, {
+    onSuccess: (threads) => {
+      threads.forEach((thread) => {
+        // prefetch the thread, posts so it's ready when we navigate to it
+        void utils.forum.getThreadById.prefetch(thread.id, { staleTime: 1000 * 5 });
+        void utils.forum.posts.getMany.prefetchInfinite({
+          threadId: thread.id,
+          cursor: undefined,
+        });
+      });
+    },
+  });
+};
+
 export const useGetForumThread = (input: GetForum) =>
   api.forum.getThreadById.useQuery(input);
 
@@ -45,7 +60,7 @@ export const useCreateForumPost = () => {
       await utils.forum.posts.getMany.invalidate(
         { threadId, cursor },
         {
-          refetchPage: (last, index, pages) => {
+          refetchPage: (_last, index, pages) => {
             return index === pages.length - 1;
           },
         }

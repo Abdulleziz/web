@@ -10,7 +10,6 @@ import {
   useGetForumPosts,
   useGetForumThread,
 } from "~/utils/useForum";
-import { type Prisma } from "@prisma/client";
 
 const ForumThread: NextPage = () => {
   const router = useRouter();
@@ -61,14 +60,13 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
                   {thread.data.createdAt.toLocaleString()}
                 </p>
               </div>
-              <PostComponent threadId={threadId} />
+              <Posts threadId={threadId} />
 
               <div className="form-control mt-3">
                 <div className="input-group flex items-center justify-center">
                   <textarea
-                    name="messageInput"
                     className="input-bordered input w-full max-w-2xl"
-                    placeholder="Mesajınızı buraya yazın..."
+                    placeholder="Enter your message..."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     disabled={createPost.isLoading}
@@ -149,7 +147,7 @@ const InfoSVG: React.FC = () => {
   );
 };
 
-const PostComponent: React.FC<ThreadProps> = ({ threadId }) => {
+const Posts: React.FC<ThreadProps> = ({ threadId }) => {
   const {
     data,
     hasNextPage,
@@ -158,6 +156,11 @@ const PostComponent: React.FC<ThreadProps> = ({ threadId }) => {
     isLoadingError,
   } = useGetForumPosts({ threadId });
   const [page, setPage] = useState(0);
+
+  const handleNext = async () => {
+    await fetchNextPage();
+    setPage(page + 1);
+  };
 
   if (!data?.pages.flat().length) {
     return (
@@ -194,7 +197,7 @@ const PostComponent: React.FC<ThreadProps> = ({ threadId }) => {
           <button
             key={i}
             onClick={() => setPage(i)}
-            className="rounded-md bg-blue-500 px-4 py-2 text-base transition-all hover:bg-blue-600 "
+            className="btn-info btn rounded-md px-4 py-2 hover:btn-warning"
           >
             {i + 1}
           </button>
@@ -205,10 +208,7 @@ const PostComponent: React.FC<ThreadProps> = ({ threadId }) => {
             ["btn-error"]: isLoadingError,
           })}
           disabled={!hasNextPage || isFetchingNextPage}
-          onClick={async () => {
-            await fetchNextPage();
-            setPage(page + 1);
-          }}
+          onClick={() => void handleNext()}
         >
           Next
         </button>
