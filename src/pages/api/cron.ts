@@ -21,9 +21,9 @@ const CronBody = z
   })
   .optional();
 
-async function handler({ body }: NextApiRequest, res: NextApiResponse) {
+async function handler({ headers, body }: NextApiRequest, res: NextApiResponse) {
   try {
-    const jobId = CronHeader.parse(body)["upstash-message-id"];
+    const jobId = CronHeader.parse(headers)["upstash-message-id"];
     const debug = CronBody.parse(body)?.debug;
 
     const discord = new REST({ version: "10" }).setToken(env.DISCORD_TOKEN);
