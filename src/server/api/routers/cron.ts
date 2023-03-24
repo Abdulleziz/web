@@ -17,7 +17,28 @@ export const cronRouter = createTRPCRouter({
     });
     return crons;
   }),
-  create: protectedProcedure
+  leave: protectedProcedure
+    .input(z.string())
+    .mutation(async ({ ctx, input: cron }) => {
+      const dbCron = await ctx.prisma.cronJob.findUnique({
+        where: { cron },
+        select: { listeners: { select: { listenerId: true } } },
+      });
+      if (!dbCron) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!dbCron.listeners.find((l) => l.listenerId === ctx.session.user.id))
+        throw new TRPCError({ code: "FORBIDDEN" });
+      if (dbCron.listeners.length === 1)
+        return await ctx.prisma.cronJob.delete({ where: { cron } });
+      return await ctx.prisma.cronJob.update({
+        where: { cron },
+        data: {
+          listeners: {
+            disconnect: { id: ctx.session.user.id },
+          },
+        },
+      });
+    }),
+  createOrJoin: protectedProcedure
     .input(
       z.object({
         cron: z.string(),

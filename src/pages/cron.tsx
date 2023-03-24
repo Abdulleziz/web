@@ -1,11 +1,15 @@
 import type { NextPage } from "next";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Layout } from "~/components/Layout";
 import cronParser from "cron-parser";
 import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import classNames from "classnames";
-import { useCreateCron, useGetAllCrons } from "~/utils/useCron";
+import {
+  useCreateOrJoinCron,
+  useGetAllCrons,
+  useLeaveCron,
+} from "~/utils/useCron";
 
 const CronPage: NextPage = () => {
   const [cron, setCron] = useState("");
@@ -109,11 +113,16 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
     "Eğer bana özel işaretliyse, hatırlatıcıyı sadece sen görebilirsin." +
     " Şimdilik bu özellik aktif değil (sana özel mesaj nasıl iletiriz o yolları çözüyoruz)";
 
-  const create = useCreateCron();
+  const labelRef = useRef<HTMLLabelElement>(null);
+  const create = useCreateOrJoinCron();
   return (
     <>
       <input type="checkbox" id="create-cron" className="modal-toggle" />
-      <label htmlFor="create-cron" className="modal cursor-pointer">
+      <label
+        htmlFor="create-cron"
+        className="modal cursor-pointer"
+        ref={labelRef}
+      >
         <label className="modal-box relative" htmlFor="">
           <h3 className="text-lg font-bold">
             Hatırlatıcı Oluştur <span className="text-error">*</span>
@@ -138,9 +147,18 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
               Kapat
             </label>
             <button
-              className="btn-primary btn"
-              disabled={!cron || !title.trim()}
-              onClick={() => create.mutate({ title, cron, isGlobal: true })}
+              className={classNames("btn-primary btn", {
+                ["loading"]: create.isLoading,
+              })}
+              disabled={
+                !cron || !title.trim() || create.isLoading || create.isSuccess
+              }
+              onClick={() =>
+                create.mutate(
+                  { title, cron, isGlobal: true },
+                  { onSettled: () => labelRef.current?.click() }
+                )
+              }
             >
               Oluştur
             </button>
@@ -154,6 +172,8 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
 const CronTable: React.FC = () => {
   const { data: session } = useSession();
   const { data } = useGetAllCrons();
+  const join = useCreateOrJoinCron();
+  const leave = useLeaveCron();
 
   if (!session || !data || !data.length) return <></>;
   return (
@@ -205,11 +225,27 @@ const CronTable: React.FC = () => {
               </td>
               <td>{job.cron}</td>
               <th>
-                {job.listeners.filter((u) => u.id === session.user.id).length >
-                0 ? (
-                  <button className="btn-secondary btn-xs btn">Ayrıl</button>
+                {!!job.listeners.filter((u) => u.listenerId === session.user.id)
+                  .length ? (
+                  <button
+                    onClick={() => leave.mutate(job.id)}
+                    disabled={leave.isLoading || leave.isSuccess}
+                    className={classNames("btn-secondary btn-xs btn", {
+                      ["loading"]: leave.isLoading,
+                    })}
+                  >
+                    Ayrıl
+                  </button>
                 ) : (
-                  <button className="btn-primary btn-xs btn">Katıl</button>
+                  <button
+                    onClick={() => join.mutate({ title: "", cron: job.cron })}
+                    disabled={join.isLoading || join.isSuccess}
+                    className={classNames("btn-secondary btn-xs btn", {
+                      ["loading"]: join.isLoading,
+                    })}
+                  >
+                    Katıl
+                  </button>
                 )}
               </th>
             </tr>
