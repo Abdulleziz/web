@@ -7,7 +7,6 @@ import {
   type RESTPostAPIWebhookWithTokenFormDataBody,
 } from "discord-api-types/v10";
 import { env } from "~/env.mjs";
-import classNames from "classnames";
 
 const CronHeader = z.object({
   "upstash-message-id": z.string(),
@@ -32,7 +31,12 @@ async function handler(
       include: { listeners: { include: { listener: true } } },
     });
 
-    if (!job) return res.status(404);
+    console.log({ job });
+
+    if (!job) {
+      res.status(404).send("Job not found");
+      return;
+    }
 
     const users = job.listeners.map((l) => l.listener.id);
     const discordProvider = await prisma.user.findMany({
@@ -44,17 +48,22 @@ async function handler(
         },
       },
     });
+
+    console.log({ discordProvider });
+
     const discordIds = discordProvider.flatMap((u) =>
       u.accounts.map((a) => a.providerAccountId)
     );
 
-    const content = classNames(
-      { "[🧪TEST💻] ": debug },
-      "Hatırlatıcı ",
-      discordIds.map((id) => `<@${id}>`).join(", ")
-    );
+    let content = `Hatırlatıcı ${discordIds
+      .map((id) => `<@${id}>`)
+      .join(", ")}`;
+    if (debug) content = `[🧪TEST💻] ${content}`;
 
-    const url = (process.env.VERCEL ? "https://" : "") + env.NEXTAUTH_URL;
+    const url =
+      env.NODE_ENV === "production"
+        ? "https://abdulleziz.com"
+        : env.NEXTAUTH_URL;
 
     const postBody: RESTPostAPIWebhookWithTokenFormDataBody = {
       content,
@@ -89,16 +98,17 @@ async function handler(
       ],
     };
 
-    await fetch(env.DISCORD_WEBHOOK, {
+    console.log("posting to discord");
+    const r = await fetch(env.DISCORD_WEBHOOK, {
       method: "POST",
       body: JSON.stringify(postBody),
     });
+    console.log("posted to discord", r.status);
+    res.status(r.status).send(r.statusText);
   } catch (error) {
     console.error(error);
-    return res.status(500).send(error);
+    res.status(500).send(error);
   }
-
-  res.status(201);
 }
 
 export default verifySignature(handler);
