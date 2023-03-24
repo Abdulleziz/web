@@ -8,26 +8,26 @@ import {
 } from "discord-api-types/v10";
 import { env } from "~/env.mjs";
 
-const CronHeader = z.object({
-  "upstash-message-id": z.string(),
+// const CronHeader = z.object({
+//   "upstash-message-id": z.string(),
+// });
+
+const CronBody = z.object({
+  cron: z.string(),
+  debug: z.boolean().default(false),
 });
 
-const CronBody = z
-  .object({
-    debug: z.boolean().default(false),
-  })
-  .optional();
+// const messageId = CronHeader.parse(headers)["upstash-message-id"];
+// const c = new Client({ token: env.QSTASH_TOKEN });
+// const message = await c.messages.get({ id: messageId });
+// const jobId = (message as typeof message & { scheduleId?: string }).scheduleId;
 
-async function handler(
-  { headers, body }: NextApiRequest,
-  res: NextApiResponse
-) {
+async function handler({ body }: NextApiRequest, res: NextApiResponse) {
   try {
-    const jobId = CronHeader.parse(headers)["upstash-message-id"];
-    const debug = CronBody.parse(body)?.debug;
+    const { debug, cron } = CronBody.parse(body);
 
     const job = await prisma.cronJob.findUnique({
-      where: { jobId },
+      where: { cron },
       include: { listeners: { include: { listener: true } } },
     });
 
@@ -78,7 +78,7 @@ async function handler(
           fields: [
             {
               name: `Abdulleziz hatırlatıcı tarafından uyarıldınız!`,
-              value: `\`\`\`\nCron: ${job.cron}\n\`\`\``,
+              value: `\`\`\`\nCron: ${cron}\n\`\`\``,
             },
           ],
         },
@@ -91,7 +91,7 @@ async function handler(
               type: 2,
               label: "Hatırlatıcıyı göster",
               style: 1,
-              url: url + "/cron?jobId=" + jobId,
+              url: url + "/cron?exp=" + cron,
             },
           ],
         },
