@@ -69,9 +69,9 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
     if (debug) content = `[🧪TEST💻] ${content}`;
 
     const url = new URL(
-      env.NODE_ENV === "production"
+      (env.NODE_ENV === "production"
         ? "https://abdulleziz.com"
-        : env.NEXTAUTH_URL
+        : env.NEXTAUTH_URL) + "/cron"
     );
     url.searchParams.set("exp", cron);
 

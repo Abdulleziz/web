@@ -9,7 +9,7 @@ export const cronRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
     const crons = await ctx.prisma.cronJob.findMany({
       where: {
-        AND: [
+        OR: [
           { listeners: { some: { listenerId: ctx.session.user.id } } },
           { isGlobal: true },
         ],
@@ -51,12 +51,6 @@ export const cronRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input: { cron, title, isGlobal } }) => {
-      if (env.NODE_ENV !== "production")
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "Cron is disabled in development",
-        });
-
       const LIMIT = 10;
       const count = await ctx.prisma.cronListener.count({
         where: { listenerId: ctx.session.user.id },
@@ -94,22 +88,26 @@ export const cronRouter = createTRPCRouter({
             },
           },
         });
+      let jobId: string; // development reasons...
+      if (env.NODE_ENV === "production") {
+        const c = new Client({ token: env.QSTASH_TOKEN });
+        const url = (process.env.VERCEL ? "https://" : "") + env.NEXTAUTH_URL;
 
-      const c = new Client({ token: env.QSTASH_TOKEN });
-      const url = (process.env.VERCEL ? "https://" : "") + env.NEXTAUTH_URL;
-
-      const res = await c.publishJSON({
-        url: url + "/api/cron",
-        cron,
-        body: { cron },
-      });
-
+        const res = await c.publishJSON({
+          url: url + "/api/cron",
+          cron,
+          body: { cron },
+        });
+        jobId = res.scheduleId;
+      } else {
+        jobId = Math.random().toString(36).substring(2);
+      }
       await ctx.prisma.cronJob.create({
         data: {
           cron,
           title,
           isGlobal,
-          jobId: res.scheduleId,
+          jobId,
           listeners: {
             create: {
               listener: { connect: { id: ctx.session.user.id } },
