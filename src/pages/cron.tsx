@@ -228,7 +228,7 @@ const CronTable: React.FC = () => {
                 {!!job.listeners.filter((u) => u.listenerId === session.user.id)
                   .length ? (
                   <button
-                    onClick={() => leave.mutate(job.jobId)}
+                    onClick={() => leave.mutate(job.cron)}
                     disabled={leave.isLoading || leave.isSuccess}
                     className={classNames("btn-secondary btn-xs btn", {
                       ["loading"]: leave.isLoading,
