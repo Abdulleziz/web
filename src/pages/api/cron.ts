@@ -2,10 +2,12 @@ import type { NextApiRequest, NextApiResponse, NextConfig } from "next";
 import { verifySignature } from "@upstash/qstash/nextjs";
 import { z } from "zod";
 import { prisma } from "~/server/db";
-import {
-  type RESTPostAPIChannelMessageJSONBody,
-  Routes,
+import type {
+  RESTPostAPIChannelMessageJSONBody,
+  RESTPostAPICurrentUserCreateDMChannelJSONBody,
+  RESTPostAPICurrentUserCreateDMChannelResult,
 } from "discord-api-types/v10";
+import { Routes } from "discord-api-types/v10";
 import { env } from "~/env.mjs";
 import { REST } from "@discordjs/rest";
 
@@ -17,6 +19,11 @@ const CronBody = z.object({
   cron: z.string(),
   debug: z.boolean().default(false),
 });
+
+type DMBody = RESTPostAPICurrentUserCreateDMChannelJSONBody;
+type DMResult = RESTPostAPICurrentUserCreateDMChannelResult;
+
+type MessageBody = RESTPostAPIChannelMessageJSONBody;
 
 // const messageId = CronHeader.parse(headers)["upstash-message-id"];
 // const c = new Client({ token: env.QSTASH_TOKEN });
@@ -68,7 +75,7 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
     );
     url.searchParams.set("exp", cron);
 
-    const postBody: RESTPostAPIChannelMessageJSONBody = {
+    const postBody: MessageBody = {
       content,
       embeds: [
         {
@@ -98,9 +105,23 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
     };
     console.log("posting to discord");
 
-    const channelId = "1087476743142637579";
     const discord = new REST({ version: "10" }).setToken(env.DISCORD_TOKEN);
-    await discord.post(Routes.channelMessages(channelId), { body: postBody });
+    const announce = (id: string) =>
+      discord.post(Routes.channelMessages(id), { body: postBody });
+
+    if (job.isGlobal) {
+      const channelId = "1087476743142637579";
+      await announce(channelId);
+    } else {
+      for (const recipient_id of discordIds) {
+        const dmBody: DMBody = { recipient_id };
+        const channel = (await discord.post(Routes.userChannels(), {
+          body: dmBody,
+        })) as DMResult;
+
+        await announce(channel.id);
+      }
+    }
 
     console.log("posted to discord");
     res.status(200).send("OK");

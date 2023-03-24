@@ -102,16 +102,16 @@ const CronPage: NextPage = () => {
       <div className="flex flex-col gap-4 p-8">
         <CronTable />
       </div>
-      <CronCreate cron={validCron} />
+      <CronCreate key={validCron} cron={validCron} />
     </Layout>
   );
 };
 
 const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
   const [title, setTitle] = useState("");
+  const [isGlobal, setIsGlobal] = useState(true);
   const tip =
-    "Eğer bana özel işaretliyse, hatırlatıcıyı sadece sen görebilirsin." +
-    " Şimdilik bu özellik aktif değil (sana özel mesaj nasıl iletiriz o yolları çözüyoruz)";
+    "Eğer bana özel işaretliyse, hatırlatıcıyı sadece sen görebilirsin.";
 
   const labelRef = useRef<HTMLLabelElement>(null);
   const create = useCreateOrJoinCron();
@@ -139,7 +139,12 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
               <p>Bana özel </p>
               <span className="text-error">?</span>
             </div>
-            <input className="checkbox" type="checkbox" disabled={true} />
+            <input
+              className="checkbox"
+              type="checkbox"
+              checked={!isGlobal}
+              onClick={() => setIsGlobal((prev) => !prev)}
+            />
             <p>Cron: </p> <p>{cron}</p>
           </div>
           <div className="modal-action">
@@ -153,7 +158,7 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
               disabled={!cron || !title.trim() || create.isLoading}
               onClick={() =>
                 create.mutate(
-                  { title, cron, isGlobal: true },
+                  { title, cron, isGlobal },
                   { onSettled: () => labelRef.current?.click() }
                 )
               }

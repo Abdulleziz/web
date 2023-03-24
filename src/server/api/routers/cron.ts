@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { Client } from "@upstash/qstash/nodejs";
 import { z } from "zod";
 import { env } from "~/env.mjs";
+import { nonEmptyString } from "~/utils/zod-utils";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const cronRouter = createTRPCRouter({
@@ -18,7 +19,7 @@ export const cronRouter = createTRPCRouter({
     return crons;
   }),
   leave: protectedProcedure
-    .input(z.string())
+    .input(nonEmptyString)
     .mutation(async ({ ctx, input: cron }) => {
       const dbCron = await ctx.prisma.cronJob.findUnique({
         where: { cron },
@@ -44,9 +45,9 @@ export const cronRouter = createTRPCRouter({
   createOrJoin: protectedProcedure
     .input(
       z.object({
-        cron: z.string(),
-        title: z.string(),
-        isGlobal: z.literal(true).default(true),
+        cron: nonEmptyString,
+        title: nonEmptyString,
+        isGlobal: z.boolean().default(true),
       })
     )
     .mutation(async ({ ctx, input: { cron, title, isGlobal } }) => {
@@ -72,7 +73,17 @@ export const cronRouter = createTRPCRouter({
       });
 
       if (dbCron?.listeners.find((l) => l.listenerId === ctx.session.user.id))
-        throw new Error("You are already listening that cron");
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You are already listening that cron",
+        });
+
+      if (dbCron && !isGlobal)
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message:
+            "That cron is taken by someone else, please slightly change the cron",
+        });
 
       if (dbCron)
         return await ctx.prisma.cronJob.update({
