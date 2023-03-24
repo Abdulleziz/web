@@ -91,7 +91,7 @@ export const cronRouter = createTRPCRouter({
       let jobId: string; // development reasons...
       if (env.NODE_ENV === "production") {
         const c = new Client({ token: env.QSTASH_TOKEN });
-        const url = (process.env.VERCEL ? "https://" : "") + env.NEXTAUTH_URL;
+        const url = process.env.VERCEL ? "https://abdulleziz.com" : env.NEXTAUTH_URL;
 
         const res = await c.publishJSON({
           url: url + "/api/cron",
