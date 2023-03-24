@@ -2,9 +2,7 @@ import type { NextApiRequest, NextApiResponse, NextConfig } from "next";
 import { verifySignature } from "@upstash/qstash/nextjs";
 import { z } from "zod";
 import { prisma } from "~/server/db";
-import { REST } from "@discordjs/rest";
 import {
-  Routes,
   AllowedMentionsTypes,
   type RESTPostAPIWebhookWithTokenFormDataBody,
 } from "discord-api-types/v10";
@@ -21,12 +19,14 @@ const CronBody = z
   })
   .optional();
 
-async function handler({ headers, body }: NextApiRequest, res: NextApiResponse) {
+async function handler(
+  { headers, body }: NextApiRequest,
+  res: NextApiResponse
+) {
   try {
     const jobId = CronHeader.parse(headers)["upstash-message-id"];
     const debug = CronBody.parse(body)?.debug;
 
-    const discord = new REST({ version: "10" }).setToken(env.DISCORD_TOKEN);
     const job = await prisma.cronJob.findUnique({
       where: { jobId },
       include: { listeners: { include: { listener: true } } },
@@ -88,13 +88,14 @@ async function handler({ headers, body }: NextApiRequest, res: NextApiResponse) 
         },
       ],
     };
-    await discord.post(
-      Routes.webhook(env.DISCORD_WEBHOOK as `${bigint}/${string}`),
-      { body: postBody }
-    );
+
+    await fetch(env.DISCORD_WEBHOOK, {
+      method: "POST",
+      body: JSON.stringify(postBody),
+    });
   } catch (error) {
     console.error(error);
-    return res.status(500);
+    return res.status(500).send(error);
   }
 
   res.status(201);
