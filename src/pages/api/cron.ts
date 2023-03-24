@@ -54,6 +54,8 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
       discordIds.map((id) => `<@${id}>`).join(", ")
     );
 
+    const url = (process.env.VERCEL ? "https://" : "") + env.NEXTAUTH_URL;
+
     const postBody: RESTPostAPIWebhookWithTokenFormDataBody = {
       content,
       tts: false,
@@ -80,7 +82,7 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
               type: 2,
               label: "Hatırlatıcıyı göster",
               style: 1,
-              url: env.NEXTAUTH_URL + "/cron?jobId=" + jobId,
+              url: url + "/cron?jobId=" + jobId,
             },
           ],
         },

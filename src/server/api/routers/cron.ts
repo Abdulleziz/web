@@ -60,8 +60,10 @@ export const cronRouter = createTRPCRouter({
         });
 
       const c = new Client({ token: env.QSTASH_TOKEN });
+      const url = (process.env.VERCEL ? "https://" : "") + env.NEXTAUTH_URL;
+
       const res = await c.publishJSON({
-        url: env.NEXTAUTH_URL + "/api/cron",
+        url: url + "/api/cron",
         cron,
         body: { cron },
       });
