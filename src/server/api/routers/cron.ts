@@ -56,13 +56,14 @@ export const cronRouter = createTRPCRouter({
           message: "Cron is disabled in development",
         });
 
+      const LIMIT = 10;
       const count = await ctx.prisma.cronListener.count({
         where: { listenerId: ctx.session.user.id },
       });
-      if (count >= 5)
+      if (count >= LIMIT)
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
-          message: "You can only listen to 5 crons",
+          message: `You can only listen to ${LIMIT} crons`,
         });
 
       const dbCron = await ctx.prisma.cronJob.findUnique({

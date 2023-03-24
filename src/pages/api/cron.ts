@@ -103,7 +103,7 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
     await discord.post(Routes.channelMessages(channelId), { body: postBody });
 
     console.log("posted to discord");
-    res.status(200);
+    res.status(200).send("OK");
   } catch (error) {
     console.error(error);
     res.status(500).send(error);
