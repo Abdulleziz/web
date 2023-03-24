@@ -5,7 +5,6 @@ import cronParser from "cron-parser";
 import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import classNames from "classnames";
-import { api } from "~/utils/api";
 import { useCreateCron, useGetAllCrons } from "~/utils/useCron";
 
 const CronPage: NextPage = () => {
@@ -178,16 +177,15 @@ const CronTable: React.FC = () => {
                   <div className="avatar">
                     <div className="mask mask-squircle h-12 w-12">
                       <div className="avatar-group -space-x-6">
-                        {job.listeners
-                          .map((cron) => cron.listener)
-                          .filter((u) => !!u.image)
-                          .map((user) => (
-                            <div key={user.id} className="avatar">
-                              <div className="w-12">
-                                <img src={user.image!} />
-                              </div>
+                        {job.listeners.map((c) => (
+                          <div key={c.listener.id} className="avatar">
+                            <div className="w-12">
+                              {c.listener.image && (
+                                <img src={c.listener.image} alt="User avatar" />
+                              )}
                             </div>
-                          ))}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>

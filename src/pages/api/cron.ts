@@ -5,8 +5,8 @@ import { prisma } from "~/server/db";
 import { REST } from "@discordjs/rest";
 import {
   Routes,
-  RESTPostAPIWebhookWithTokenFormDataBody,
   AllowedMentionsTypes,
+  type RESTPostAPIWebhookWithTokenFormDataBody,
 } from "discord-api-types/v10";
 import { env } from "~/env.mjs";
 import classNames from "classnames";
@@ -27,12 +27,14 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
     const debug = CronBody.parse(body)?.debug;
 
     const discord = new REST({ version: "10" }).setToken(env.DISCORD_TOKEN);
-    const cron = await prisma.cronJob.findUnique({
+    const job = await prisma.cronJob.findUnique({
       where: { jobId },
       include: { listeners: { include: { listener: true } } },
     });
 
-    const users = cron?.listeners.map((l) => l.listener.id) ?? [];
+    if (!job) return res.status(404);
+
+    const users = job.listeners.map((l) => l.listener.id);
     const discordProvider = await prisma.user.findMany({
       where: { id: { in: users } },
       select: {
@@ -51,6 +53,7 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
       "Hatırlatıcı ",
       discordIds.map((id) => `<@${id}>`).join(", ")
     );
+
     const postBody: RESTPostAPIWebhookWithTokenFormDataBody = {
       content,
       tts: false,
@@ -64,7 +67,7 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
           fields: [
             {
               name: `Abdulleziz hatırlatıcı tarafından uyarıldınız!`,
-              value: `\`\`\`\nCron: ${cron}\n\`\`\``,
+              value: `\`\`\`\nCron: ${job.cron}\n\`\`\``,
             },
           ],
         },
@@ -89,6 +92,7 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
     );
   } catch (error) {
     console.error(error);
+    return res.status(500);
   }
 
   res.status(201);
