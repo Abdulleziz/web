@@ -3,10 +3,11 @@ import { verifySignature } from "@upstash/qstash/nextjs";
 import { z } from "zod";
 import { prisma } from "~/server/db";
 import {
-  AllowedMentionsTypes,
-  type RESTPostAPIWebhookWithTokenFormDataBody,
+  type RESTPostAPIChannelMessageJSONBody,
+  Routes,
 } from "discord-api-types/v10";
 import { env } from "~/env.mjs";
+import { REST } from "@discordjs/rest";
 
 // const CronHeader = z.object({
 //   "upstash-message-id": z.string(),
@@ -60,20 +61,18 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
       .join(", ")}`;
     if (debug) content = `[🧪TEST💻] ${content}`;
 
-    const url =
+    const url = new URL(
       env.NODE_ENV === "production"
         ? "https://abdulleziz.com"
-        : env.NEXTAUTH_URL;
+        : env.NEXTAUTH_URL
+    );
+    url.searchParams.set("exp", cron);
 
-    const postBody: RESTPostAPIWebhookWithTokenFormDataBody = {
+    const postBody: RESTPostAPIChannelMessageJSONBody = {
       content,
-      tts: false,
-      allowed_mentions: {
-        parse: [AllowedMentionsTypes.User],
-      },
       embeds: [
         {
-          title: `Test hatırlatıcısı!`,
+          title: `${job.title} hatırlatıcısı!`,
           color: 0x41ffff,
           fields: [
             {
@@ -91,20 +90,20 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
               type: 2,
               label: "Hatırlatıcıyı göster",
               style: 1,
-              url: url + "/cron?exp=" + cron,
+              url: url.toString(),
             },
           ],
         },
       ],
     };
-
     console.log("posting to discord");
-    const r = await fetch(env.DISCORD_WEBHOOK, {
-      method: "POST",
-      body: JSON.stringify(postBody),
-    });
-    console.log("posted to discord", r.status);
-    res.status(r.status).send(r.statusText);
+
+    const channelId = "1087476743142637579";
+    const discord = new REST({ version: "10" }).setToken(env.DISCORD_TOKEN);
+    await discord.post(Routes.channelMessages(channelId), { body: postBody });
+
+    console.log("posted to discord");
+    res.status(200);
   } catch (error) {
     console.error(error);
     res.status(500).send(error);
