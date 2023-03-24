@@ -6,6 +6,7 @@ import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import classNames from "classnames";
 import { api } from "~/utils/api";
+import { useCreateCron, useGetAllCrons } from "~/utils/useCron";
 
 const CronPage: NextPage = () => {
   const [cron, setCron] = useState("");
@@ -108,6 +109,8 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
   const tip =
     "Eğer bana özel işaretliyse, hatırlatıcıyı sadece sen görebilirsin." +
     " Şimdilik bu özellik aktif değil (sana özel mesaj nasıl iletiriz o yolları çözüyoruz)";
+
+  const create = useCreateCron();
   return (
     <>
       <input type="checkbox" id="create-cron" className="modal-toggle" />
@@ -138,6 +141,7 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
             <button
               className="btn-primary btn"
               disabled={!cron || !title.trim()}
+              onClick={() => create.mutate({ title, cron, isGlobal: true })}
             >
               Oluştur
             </button>
@@ -150,9 +154,9 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
 
 const CronTable: React.FC = () => {
   const { data: session } = useSession();
-  const { data } = api.cron.getAll.useQuery();
+  const { data } = useGetAllCrons();
 
-  if (!session || !data) return <></>;
+  if (!session || !data || !data.length) return <></>;
   return (
     <div className="w-full overflow-x-auto">
       <table className="table w-full">

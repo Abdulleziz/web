@@ -22,7 +22,7 @@ export const cronRouter = createTRPCRouter({
       z.object({
         cron: z.string(),
         title: z.string(),
-        isGlobal: z.literal(false).default(false),
+        isGlobal: z.literal(true).default(true),
       })
     )
     .mutation(async ({ ctx, input: { cron, title, isGlobal } }) => {
