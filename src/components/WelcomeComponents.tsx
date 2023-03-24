@@ -1,3 +1,4 @@
+import classNames from "classnames";
 import { signIn, useSession } from "next-auth/react";
 
 export const WelcomeComponent: React.FC = () => {
@@ -17,7 +18,7 @@ export const WelcomeComponent: React.FC = () => {
 };
 
 export const SignComponent: React.FC = () => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -28,7 +29,10 @@ export const SignComponent: React.FC = () => {
         <></>
       ) : (
         <button
-          className="btn-primary btn"
+          className={classNames("btn-primary btn", {
+            ["loading"]: status === "loading",
+          })}
+          disabled={status === "loading"}
           onClick={() => void signIn("discord")}
         >
           Sign In

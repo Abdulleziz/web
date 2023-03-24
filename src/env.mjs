@@ -22,6 +22,10 @@ const server = z.object({
   DISCORD_CLIENT_ID: z.string(),
   DISCORD_CLIENT_SECRET: z.string(),
   DISCORD_TOKEN: z.string().min(1),
+  DISCORD_WEBHOOK: z.string().min(1),
+  QSTASH_TOKEN: z.string().min(1),
+  QSTASH_CURRENT_SIGNING_KEY: z.string().min(1),
+  QSTASH_NEXT_SIGNING_KEY: z.string().min(1),
 });
 
 /**
@@ -46,6 +50,10 @@ const processEnv = {
   DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET,
   DISCORD_TOKEN: process.env.DISCORD_TOKEN,
+  DISCORD_WEBHOOK: process.env.DISCORD_WEBHOOK,
+  QSTASH_TOKEN: process.env.QSTASH_TOKEN,
+  QSTASH_CURRENT_SIGNING_KEY: process.env.QSTASH_CURRENT_SIGNING_KEY,
+  QSTASH_NEXT_SIGNING_KEY: process.env.QSTASH_NEXT_SIGNING_KEY,
   // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
 };
 

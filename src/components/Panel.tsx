@@ -26,7 +26,10 @@ export const GlobalEmployeePanel: React.FC = () => {
         <Link className="menu-item" href="/forum">
           Foruma git
         </Link>
-        <div className="menu-item">Çay söylet</div>
+        <Link className="menu-item" href="/cron">
+          Hatırlatıcıya git
+        </Link>
+        <div className="menu-item text-neutral">Çay söylet</div>
       </div>
     </Panel>
   );

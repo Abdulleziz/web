@@ -43,6 +43,35 @@ model ForumPost {
     @@index([creatorId])
 }
 
+model CronJob {
+    id       String  @id @default(cuid())
+    cron     String  @unique @db.Char(13)
+    jobId    String  @unique
+    title    String
+    isGlobal Boolean @default(false)
+
+    lastRun   DateTime?
+    listeners CronListener[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model CronListener {
+    id       String  @id @default(cuid())
+    isAuthor Boolean @default(false)
+    isActive Boolean @default(true)
+
+    listener   User   @relation(fields: [listenerId], references: [id], onDelete: Restrict) /// in order to delete a user, you must first delete all of their cron listeners (or job if no listeners)
+    listenerId String
+
+    cronJob   CronJob @relation(fields: [cronJobId], references: [id], onDelete: Cascade)
+    cronJobId String
+
+    @@index([listenerId])
+    @@index([cronJobId])
+}
+
 model Account {
     id                String  @id @default(cuid())
     userId            String
@@ -73,15 +102,16 @@ model Session {
 }
 
 model User {
-    id            String        @id @default(cuid())
+    id            String         @id @default(cuid())
     name          String?
-    email         String?       @unique
+    email         String?        @unique
     emailVerified DateTime?
     image         String?
     accounts      Account[]
     sessions      Session[]
     forumThreads  ForumThread[]
-    ForumPost     ForumPost[]
+    forumPosts    ForumPost[]
+    listenedCrons CronListener[]
 }
 
 model VerificationToken {
