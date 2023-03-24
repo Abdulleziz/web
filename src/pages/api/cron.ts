@@ -89,7 +89,7 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
             {
               type: 2,
               label: "Hatırlatıcıyı göster",
-              style: 1,
+              style: 5,
               url: url.toString(),
             },
           ],

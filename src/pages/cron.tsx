@@ -150,9 +150,7 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
               className={classNames("btn-primary btn", {
                 ["loading"]: create.isLoading,
               })}
-              disabled={
-                !cron || !title.trim() || create.isLoading || create.isSuccess
-              }
+              disabled={!cron || !title.trim() || create.isLoading}
               onClick={() =>
                 create.mutate(
                   { title, cron, isGlobal: true },
