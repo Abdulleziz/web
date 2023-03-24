@@ -22,13 +22,16 @@ export const cronRouter = createTRPCRouter({
     .mutation(async ({ ctx, input: cron }) => {
       const dbCron = await ctx.prisma.cronJob.findUnique({
         where: { cron },
-        select: { listeners: { select: { listenerId: true } } },
+        select: { jobId: true, listeners: { select: { listenerId: true } } },
       });
       if (!dbCron) throw new TRPCError({ code: "NOT_FOUND" });
       if (!dbCron.listeners.find((l) => l.listenerId === ctx.session.user.id))
         throw new TRPCError({ code: "FORBIDDEN" });
-      if (dbCron.listeners.length === 1)
+      if (dbCron.listeners.length === 1) {
+        const c = new Client({ token: env.QSTASH_TOKEN });
+        await c.schedules.delete({ id: dbCron.jobId });
         return await ctx.prisma.cronJob.delete({ where: { cron } });
+      }
       return await ctx.prisma.cronJob.update({
         where: { cron },
         data: {
