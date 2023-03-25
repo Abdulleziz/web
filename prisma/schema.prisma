@@ -59,7 +59,7 @@ model CronJob {
 
 model CronListener {
     id       String  @id @default(cuid())
-    isAuthor Boolean @default(false)
+    isAuthor Boolean @default(true)
     isActive Boolean @default(true)
 
     listener   User   @relation(fields: [listenerId], references: [id], onDelete: Restrict) /// in order to delete a user, you must first delete all of their cron listeners (or job if no listeners)

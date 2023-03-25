@@ -80,18 +80,19 @@ export const cronRouter = createTRPCRouter({
         });
 
       if (dbCron)
-        return await ctx.prisma.cronJob.update({
-          where: { cron },
+        return await ctx.prisma.cronListener.create({
           data: {
-            listeners: {
-              connect: { id: ctx.session.user.id },
-            },
+            isAuthor: false,
+            listener: { connect: { id: ctx.session.user.id } },
+            cronJob: { connect: { cron } },
           },
         });
       let jobId: string; // development reasons...
       if (env.NODE_ENV === "production") {
         const c = new Client({ token: env.QSTASH_TOKEN });
-        const url = process.env.VERCEL ? "https://abdulleziz.com" : env.NEXTAUTH_URL;
+        const url = process.env.VERCEL
+          ? "https://abdulleziz.com"
+          : env.NEXTAUTH_URL;
 
         const res = await c.publishJSON({
           url: url + "/api/cron",
@@ -110,6 +111,7 @@ export const cronRouter = createTRPCRouter({
           jobId,
           listeners: {
             create: {
+              isAuthor: true,
               listener: { connect: { id: ctx.session.user.id } },
             },
           },
