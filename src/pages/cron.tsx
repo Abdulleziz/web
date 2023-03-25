@@ -241,7 +241,7 @@ const CronTable: React.FC = () => {
                   </button>
                 ) : (
                   <button
-                    onClick={() => join.mutate({ title: "", cron: job.cron })}
+                    onClick={() => join.mutate({ title: "31", cron: job.cron })}
                     disabled={join.isLoading}
                     className={classNames("btn-secondary btn-xs btn", {
                       ["loading"]: join.isLoading,
