@@ -68,6 +68,7 @@ model CronListener {
     cronJob   CronJob @relation(fields: [cronJobId], references: [id], onDelete: Cascade)
     cronJobId String
 
+    @@unique([listenerId, cronJobId]) /// a user can only listen to a job once
     @@index([listenerId])
     @@index([cronJobId])
 }
