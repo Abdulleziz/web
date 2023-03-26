@@ -246,13 +246,17 @@ const CronTable: React.FC = () => {
                               .join(", ")}
                           </div>
                           <label className="visible sm:btn-disabled sm:invisible">
-                            {job.listeners[0]?.listener.name} and{" "}
-                            <label
-                              htmlFor={job.jobId}
-                              className="btn-xs btn visible sm:btn-disabled sm:invisible"
-                            >
-                              {job.listeners.length - 1} more Users
-                            </label>
+                            {job.listeners[0]?.listener.name}{" "}
+                            {job.listeners.length - 1 !== 0 ? (
+                              <label
+                                htmlFor={job.jobId}
+                                className="btn-xs btn visible sm:btn-disabled sm:invisible"
+                              >
+                                and {job.listeners.length - 1} more Users
+                              </label>
+                            ) : (
+                              <></>
+                            )}
                           </label>
                         </div>
                       ) : (
