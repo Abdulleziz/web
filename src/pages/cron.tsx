@@ -213,8 +213,56 @@ const CronTable: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <div className="font-bold">
-                      {job.listeners.map((c) => c.listener.name).join(", ")}
+                    <div className=" font-normal sm:visible sm:text-base">
+                      <div>
+                        <input
+                          type="checkbox"
+                          id={job.jobId}
+                          className="modal-toggle"
+                        />
+                        <div className="modal">
+                          <div className="modal-box">
+                            <h3 className="font-bold">Subscribed Users</h3>
+                            <ul className="ml-4">
+                              {job.listeners.map((c) => (
+                                <li className="list-disc" key={c.id}>
+                                  {c.listener.name}
+                                </li>
+                              ))}
+                            </ul>
+                            <div className="modal-action">
+                              <label htmlFor={job.jobId} className="btn">
+                                Close
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {job.listeners.length < 4 ? (
+                        <div>
+                          <div className=" invisible relative top-4 text-[1px] font-normal sm:visible sm:text-base">
+                            {job.listeners
+                              .map((c) => c.listener.name)
+                              .join(", ")}
+                          </div>
+                          <label className="visible sm:btn-disabled sm:invisible">
+                            {job.listeners[0]?.listener.name} and{" "}
+                            <label
+                              htmlFor={job.jobId}
+                              className="btn-xs btn visible sm:btn-disabled sm:invisible"
+                            >
+                              {job.listeners.length - 1} more Users
+                            </label>
+                          </label>
+                        </div>
+                      ) : (
+                        <label>
+                          {job.listeners[0]?.listener.name} and{" "}
+                          <label htmlFor={job.jobId} className=" btn-xs btn">
+                            {job.listeners.length - 1} more Users
+                          </label>
+                        </label>
+                      )}
                     </div>
                   </div>
                 </div>
