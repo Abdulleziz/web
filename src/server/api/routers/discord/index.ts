@@ -1,11 +1,21 @@
 import { TRPCError } from "@trpc/server";
 import { getGuildMember, getGuildRoles } from "~/server/discord-api/guild";
-import { sortRoles } from "~/server/discord-api/utils";
-import { createTRPCRouter, protectedProcedure } from "../../trpc";
+import { getAbdullezizRoles, sortRoles } from "~/server/discord-api/utils";
+import { appRouter } from "../../root";
 import { roleRouter } from "./role";
+import { createTRPCRouter, protectedProcedure } from "../../trpc";
+import { permissionDecider } from "~/utils/abdulleziz";
 
 export const discordRouter = createTRPCRouter({
-  getAbdullezizMember: protectedProcedure.query(async ({ ctx }) => {
+  getAbdullezizUser: protectedProcedure.query(async ({ ctx }) => {
+    const internalCaller = appRouter.createCaller(ctx);
+    const member = await internalCaller.discord.getDiscordMember();
+    const verifiedRoles = getAbdullezizRoles(member.roles);
+    const verifiedPerms = permissionDecider(verifiedRoles.map((r) => r.name));
+
+    return { roles: verifiedRoles, perms: verifiedPerms };
+  }),
+  getDiscordMember: protectedProcedure.query(async ({ ctx }) => {
     const discordId = ctx.session.user.discordId;
 
     const roles = sortRoles(await getGuildRoles());
@@ -26,6 +36,5 @@ export const discordRouter = createTRPCRouter({
       // tüm rollerden sadece kullanıcının rollerini alıyoruz
     };
   }),
-
   role: roleRouter,
 });

@@ -143,7 +143,7 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
               className="checkbox"
               type="checkbox"
               checked={!isGlobal}
-              onClick={() => setIsGlobal((prev) => !prev)}
+              onChange={() => setIsGlobal((prev) => !prev)}
             />
             <p>Cron: </p> <p>{cron}</p>
           </div>

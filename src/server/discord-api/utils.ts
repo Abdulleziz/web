@@ -7,7 +7,7 @@ export const sortRoles = (roles: Roles | undefined) => {
 
 // discord permlerinden abdülleziz-verified rolleri alıyoz
 // CEO, CTO... gibi
-export const getVerifiedAbdullezizRoles = (roles: Roles) => {
+export const getAbdullezizRoles = (roles: Roles) => {
   const r = abdullezizRoles;
   return roles
     .filter((role) => r[role.name as AbdullezizRole] === role.id)

@@ -3,15 +3,17 @@ import classnames from "classnames";
 import { useState } from "react";
 import { Layout } from "./Layout";
 import { Panel, CEOPanel, GlobalEmployeePanel, ServantPanel } from "./Panel";
-import { useGetVerifiedAbdullezizRoles } from "~/utils/useDiscord";
+import { useGetAbdullezizUser } from "~/utils/useDiscord";
 import { useSession } from "next-auth/react";
 
-type AbdullezizRecord<T> = Record<AbdullezizRole, T>;
+type AbdullezizRecord<T> = Record<AbdullezizRole | "@everyone", T>;
 
 export const Dashboard: React.FC = () => {
+  const user = useGetAbdullezizUser();
   const { data: session } = useSession();
-  const roles = useGetVerifiedAbdullezizRoles();
-  const [activeTab, setActiveTab] = useState<AbdullezizRole>("@everyone");
+  const [activeTab, setActiveTab] = useState<AbdullezizRole | "@everyone">(
+    "@everyone"
+  );
 
   const panels: AbdullezizRecord<JSX.Element> = {
     CEO: <CEOPanel />,
@@ -41,14 +43,16 @@ export const Dashboard: React.FC = () => {
     "@everyone": "Abdulleziz Employee Paneli",
   } as const;
 
-  const visiblePanels = roles.data?.map((role) => role.name) ?? [];
+  const visiblePanels =
+    user.data?.roles.map((role) => role.name) ??
+    ([] as (AbdullezizRole | "@everyone")[]);
   if (session?.user?.inAbdullezizServer) visiblePanels.push("@everyone");
 
   return (
     <Layout>
       <div className="flex max-w-screen-2xl items-center justify-center">
         <div className="tabs">
-          {roles.isLoading && <div className="animate-pulse">Loading...</div>}
+          {user.isLoading && <div className="animate-pulse">Loading...</div>}
           {visiblePanels.map((panel) => (
             <a
               key={panel}

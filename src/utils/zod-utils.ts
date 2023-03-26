@@ -22,11 +22,12 @@ export const abdullezizRoles = {
   Driver: "1089315109085659176",
   Intern: "1045657984149245972",
   Servant: "918836973253316610",
-  "@everyone": "918833527389315092",
+  // "@everyone": "918833527389315092",
 } as const satisfies Record<string, `${number}`>;
 
 export type AbdullezizRole = keyof typeof abdullezizRoles;
-export type Severity = IntRange<1, 101>;
+export type Severity = IntRange<2, 101>;
+// export type Severity = IntRange<1, 101>;
 
 export const abdullezizRoleSeverities = {
   CEO: 100,
@@ -39,7 +40,7 @@ export const abdullezizRoleSeverities = {
   Driver: 31,
   Intern: 25,
   Servant: 20,
-  "@everyone": 1,
+  // "@everyone": 1,
 } as const satisfies Record<AbdullezizRole, Severity>;
 
 //..

@@ -5,16 +5,6 @@ import {
   AbdullezizRole,
 } from "./zod-utils";
 
-// burada kan ter çabalama görüyoruz
-// fakat her şey typesafe yapmak için...
-// idede ctrl boşluk ile tık tık kod yazmak için
-// veya üzerine gelince ne olduğunu görmek için
-// veya bugu, productiona göndermeden öğrenmek için
-// burada savaş çıkardım!
-
-// bakılması gereken tek yerler permlerin neye göre verildiği
-// yani requiredSeverity
-
 type Range = Exclude<Severity, 1>; // Exclude everyone
 type Role = Exclude<AbdullezizRole, "@everyone">; // Exclude everyone
 type Roles = ReadOnlyAtLeastOne<Role>;
@@ -64,11 +54,13 @@ export const requiredSeverity = [
 ] as const satisfies readonly RequiredSeverity[];
 
 export type AbdullezizPerm = (typeof requiredSeverity)[number]["perm"];
-// mouse'u üstüne getirince gelen satisfaction
+export type RequiredSeverities = readonly (RequiredSeverity & {
+  perm: AbdullezizPerm;
+})[];
 
 export function permissionDecider(roles: Role[]) {
-  const perms = [];
-  for (const p of requiredSeverity as readonly RequiredSeverity[]) {
+  const perms: AbdullezizPerm[] = [];
+  for (const p of requiredSeverity as RequiredSeverities) {
     if ("roles" in p) {
       if (p.roles.some((r) => roles.includes(r))) perms.push(p.perm);
       continue;
