@@ -22,9 +22,15 @@ export const SignComponent: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <p className="text-2xl text-white">
-        {!!session ? <>Welcome {session.user.name}</> : <>Please Sign In</>}
-      </p>
+      {status !== "loading" && (
+        <p className="text-2xl text-white">
+          {!!session ? (
+            <>Hoş Geldin {session.user.name}</>
+          ) : (
+            <>Lütfen giriş yap</>
+          )}
+        </p>
+      )}
       {session ? (
         <></>
       ) : (
@@ -35,7 +41,7 @@ export const SignComponent: React.FC = () => {
           disabled={status === "loading"}
           onClick={() => void signIn("discord")}
         >
-          Sign In
+          Giriş Yap
         </button>
       )}
     </div>

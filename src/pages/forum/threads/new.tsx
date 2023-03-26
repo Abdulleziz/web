@@ -34,7 +34,7 @@ const CreateThread: NextPage = () => {
   return (
     <>
       <h1 className="mt-10 p-4 text-sm font-bold tracking-tight text-white md:text-2xl ">
-        New Thread
+        Yeni Thread
       </h1>
       <div className="title-div justify-centerp-4 mt-8 flex w-full flex-col items-center md:w-6/12">
         <input
@@ -108,7 +108,7 @@ const CreateThread: NextPage = () => {
           className="btn-success btn"
           href={`/forum/threads/${createThread.data.id}`}
         >
-          Published! Click to go.
+          Paylaşıldı! Gitmek için tıkla.
         </Link>
       ) : (
         <button

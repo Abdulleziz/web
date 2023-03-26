@@ -23,8 +23,8 @@ const Home: NextPage = () => {
                 onClick={() => setShowDashboard(true)}
               >
                 {session.user.inAbdullezizServer
-                  ? "Go to Dashboard"
-                  : "YOU ARE NOT ELIGIBLE"}
+                  ? "Kontrol Paneline Git"
+                  : "Önce Abdulleziz Sunucusuna Katıl!"}
               </button>
             </div>
           )}

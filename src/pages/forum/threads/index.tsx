@@ -7,7 +7,7 @@ const Threads: NextPage = () => {
 
   return (
     <div className="flex flex-col justify-center p-10">
-      <h1 className="rounded-t bg-base-100 p-2 text-2xl text-white">Threads</h1>
+      <h1 className="rounded-t bg-base-100 p-2 text-2xl text-white">Threadler</h1>
       {threads.isLoading && (
         <p className="animate-pulse p-4 text-lg">Yükleniyor...</p>
       )}
@@ -33,7 +33,7 @@ const Threads: NextPage = () => {
                       )}
                       <p className="px-2">{thread.creator.name}</p>
                       <div className="ml-auto text-sm ">
-                        <p>Created at: {thread.createdAt.toLocaleString()}</p>
+                        <p>Oluşturulma: {thread.createdAt.toLocaleString()}</p>
                       </div>
                     </div>
                   </div>

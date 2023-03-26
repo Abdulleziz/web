@@ -44,6 +44,7 @@ export const requiredSeverity = [
   { perm: "zam iste", min: 31, max: 100, exclude: ["CEO"] }, // CEO ZAM olmalı mı?
   { perm: "araba sür", roles: ["Driver"] }, // minigame?
   { perm: "stajları yönet", min: 80, include: ["HR"] },
+  { perm: "forum thread pinle", min: 80, include: ["Advertisement Lead"] },
   { perm: "arabaları yönet", min: 80 }, // MEGAN EKLE
   { perm: "çalışanları yönet", min: 80 }, // kovmak veya işe almak için 2 (kurul veya üstteki çalışan) oyu lazım olsun
   // örneğin CEO, CTO'yu kovması için CIO'dan izin almalı

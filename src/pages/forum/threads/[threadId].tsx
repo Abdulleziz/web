@@ -66,7 +66,7 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
                 <div className="input-group flex items-center justify-center">
                   <textarea
                     className="input-bordered input w-full max-w-2xl"
-                    placeholder="Enter your message..."
+                    placeholder="Mesajınızı giriniz..."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     disabled={createPost.isLoading}
@@ -83,7 +83,7 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
                       )
                     }
                   >
-                    Send!
+                    Gönder!
                   </button>
                 </div>
               </div>
@@ -166,7 +166,7 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
     return (
       <div className="alert alert-error pt-3 flex flex-row items-center justify-start shadow-lg">
         <InfoSVG />
-        <span>No posts found!</span>
+        <span>Hiç post bulunamadı!</span>
       </div>
     );
   }
@@ -210,7 +210,7 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
           disabled={!hasNextPage || isFetchingNextPage}
           onClick={() => void handleNext()}
         >
-          Next
+          Sonraki
         </button>
       </div>
     </div>

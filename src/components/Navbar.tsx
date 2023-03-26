@@ -5,7 +5,7 @@ export const Navbar: React.FC = () => {
   const { data: session } = useSession();
 
   return (
-    <div className="navbar sticky top-0 bg-base-300">
+    <div className="navbar bg-base-300">
       <div className="navbar-start">
         <div className="dropdown-hover dropdown">
           <Link
@@ -16,7 +16,7 @@ export const Navbar: React.FC = () => {
           </Link>
           <ul className="dropdown-content menu rounded-box w-52 bg-base-300 p-2">
             <li>
-              <Link href="/">Home</Link>
+              <Link href="/">Anasayfa</Link>
             </li>
             <li>
               <Link href="/forum">Forum</Link>
