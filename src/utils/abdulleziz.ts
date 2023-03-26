@@ -1,8 +1,8 @@
 import {
   abdullezizRoleSeverities,
-  ReadOnlyAtLeastOne,
-  Severity,
-  AbdullezizRole,
+  type ReadOnlyAtLeastOne,
+  type Severity,
+  type AbdullezizRole,
 } from "./zod-utils";
 
 type Range = Exclude<Severity, 1>; // Exclude everyone

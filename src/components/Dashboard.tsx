@@ -21,8 +21,8 @@ export const Dashboard: React.FC = () => {
         {isLoading && <button className="loading btn">Yükleniyor</button>}
         {!isLoading && !data && <button className="btn">Error</button>}
         {panels.map((Panel, i) => (
-          <div className="max-w-sm">
-            <Panel key={i} />
+          <div key={i} className="max-w-sm">
+            <Panel />
           </div>
         ))}
       </div>

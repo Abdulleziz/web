@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import type { AbdullezizPerm } from "~/utils/abdulleziz";
 import { useGetAbdullezizUser } from "~/utils/useDiscord";
 
@@ -146,7 +147,7 @@ export const ServantPanel: React.FC = () => {
           <div
             className="radial-progress m-1 text-xs text-primary"
             style={
-              { "--value": 70, "--size": "2rem", "--thickness": "2px" } as any
+              { "--value": 70, "--size": "2rem", "--thickness": "2px" } as CSSProperties
             }
           >
             70
@@ -185,19 +186,19 @@ const DemoCounter: React.FC = () => {
     <div className="grid auto-cols-max grid-flow-col gap-5 text-center">
       <div className="flex flex-col">
         <span className="countdown font-mono text-2xl">
-          <span style={{ "--value": 10 } as any}></span>
+          <span style={{ "--value": 10 } as CSSProperties}></span>
         </span>
         saat
       </div>
       <div className="flex flex-col">
         <span className="countdown font-mono text-2xl">
-          <span style={{ "--value": 24 } as any}></span>
+          <span style={{ "--value": 24 } as CSSProperties}></span>
         </span>
         dakika
       </div>
       <div className="flex flex-col">
         <span className="countdown font-mono text-2xl">
-          <span style={{ "--value": 47 } as any}></span>
+          <span style={{ "--value": 47 } as CSSProperties}></span>
         </span>
         saniye
       </div>
