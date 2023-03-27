@@ -9,7 +9,9 @@ export const useGetForumThreads = () => {
     onSuccess: (threads) => {
       threads.forEach((thread) => {
         // prefetch the thread, posts so it's ready when we navigate to it
-        void utils.forum.getThreadById.prefetch(thread.id, { staleTime: 1000 * 5 });
+        void utils.forum.getThreadById.prefetch(thread.id, {
+          staleTime: 1000 * 5,
+        });
         void utils.forum.posts.getMany.prefetchInfinite({
           threadId: thread.id,
           cursor: undefined,
@@ -26,6 +28,24 @@ export const useGetForumPosts = (input: GetPosts) =>
   api.forum.posts.getMany.useInfiniteQuery(input, {
     getNextPageParam: (lastPage) => lastPage.next,
   });
+
+export const useCreateForumPin = () => {
+  const utils = api.useContext();
+  return api.forum.createPin.useMutation({
+    onSuccess: async () => {
+      await utils.forum.getThreads.invalidate();
+    },
+  });
+};
+
+export const useDeleteForumPin = () => {
+  const utils = api.useContext();
+  return api.forum.deletePin.useMutation({
+    onSuccess: async () => {
+      await utils.forum.getThreads.invalidate();
+    },
+  });
+};
 
 export const useCreateForumThread = () => {
   const utils = api.useContext();

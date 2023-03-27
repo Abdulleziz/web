@@ -1,5 +1,5 @@
 import { type AbdullezizRole, abdullezizRoles } from "~/utils/zod-utils";
-import type { Roles } from "./guild";
+import { getGuildRoles, Member, Roles } from "./guild";
 
 export const sortRoles = (roles: Roles | undefined) => {
   return (roles ?? [])
@@ -17,4 +17,13 @@ export const getAbdullezizRoles = (roles: Roles) => {
   return roles
     .filter((role) => r[role.name as AbdullezizRole] === role.id)
     .map((role) => ({ ...role, name: role.name as AbdullezizRole }));
+};
+
+export const fetchMembersWithRoles = async (members: Member[]) => {
+  const roles = sortRoles(await getGuildRoles());
+
+  return members.map((member) => ({
+    ...member,
+    roles: roles.filter((role) => member.roles.includes(role.id)),
+  }));
 };
