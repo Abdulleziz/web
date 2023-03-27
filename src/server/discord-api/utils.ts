@@ -2,7 +2,12 @@ import { type AbdullezizRole, abdullezizRoles } from "~/utils/zod-utils";
 import type { Roles } from "./guild";
 
 export const sortRoles = (roles: Roles | undefined) => {
-  return (roles ?? []).sort((a, b) => a.position - b.position);
+  return (roles ?? [])
+    .sort((a, b) => a.position - b.position)
+    .map((role) => ({
+      ...role,
+      allah: (roles ?? []).length === role.position + 1,
+    }));
 };
 
 // discord permlerinden abdülleziz-verified rolleri alıyoz
