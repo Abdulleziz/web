@@ -16,6 +16,19 @@ model ForumTag {
     threads   ForumThread[]
 }
 
+model ForumPin {
+    id        String   @id
+    createdAt DateTime @default(now())
+
+    pinnedBy   User   @relation(fields: [pinnedById], references: [id], onDelete: Cascade)
+    pinnedById String
+
+    thread ForumThread @relation(fields: [id], references: [id], onDelete: Cascade)
+
+    @@index([id])
+    @@index([pinnedById])
+}
+
 model ForumThread {
     id        String      @id @default(cuid())
     title     String      @db.TinyText
@@ -26,6 +39,7 @@ model ForumThread {
     posts     ForumPost[]
     tags      ForumTag[]
     creator   User        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+    pin       ForumPin?
 
     @@index([creatorId])
 }
@@ -113,6 +127,7 @@ model User {
     forumThreads  ForumThread[]
     forumPosts    ForumPost[]
     listenedCrons CronListener[]
+    ForumPin      ForumPin[]
 }
 
 model VerificationToken {

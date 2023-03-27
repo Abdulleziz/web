@@ -1,14 +1,24 @@
 import { z } from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import {
+  createPermissionProcedure,
+  createTRPCRouter,
+  protectedProcedure,
+} from "~/server/api/trpc";
 import { nonEmptyString, ThreadId } from "~/utils/zod-utils";
 import { forumPostsRouter } from "./posts";
+
+const managePinsProcedure = createPermissionProcedure(["forum thread pinle"]);
 
 export const forumRouter = createTRPCRouter({
   posts: forumPostsRouter,
   getThreads: protectedProcedure.query(({ ctx }) => {
     return ctx.prisma.forumThread.findMany({
-      include: { creator: true, tags: true },
+      include: {
+        creator: true,
+        tags: true,
+        pin: { include: { pinnedBy: true } },
+      },
     });
   }),
   getThreadById: protectedProcedure
@@ -18,6 +28,21 @@ export const forumRouter = createTRPCRouter({
         where: { id },
         include: { creator: true, tags: true },
       });
+    }),
+  createPin: managePinsProcedure
+    .input(ThreadId)
+    .mutation(({ ctx, input: id }) => {
+      return ctx.prisma.forumPin.create({
+        data: {
+          thread: { connect: { id } },
+          pinnedBy: { connect: { id: ctx.session.user.id } },
+        },
+      });
+    }),
+  deletePin: managePinsProcedure
+    .input(ThreadId)
+    .mutation(({ ctx, input: id }) => {
+      return ctx.prisma.forumPin.delete({ where: { id } });
     }),
   createThread: protectedProcedure
     .input(
