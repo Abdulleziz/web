@@ -5,7 +5,7 @@ import { useGetAbdullezizUser } from "~/utils/useDiscord";
 
 type PanelProps = { children?: React.ReactNode };
 export const Panel: React.FC<PanelProps> = ({ children }) => {
-  return <div className="card bg-base-100 p-8">{children}</div>;
+  return <div className="">{children}</div>;
 };
 
 export const GlobalPanel: React.FC = () => {
@@ -147,7 +147,11 @@ export const ServantPanel: React.FC = () => {
           <div
             className="radial-progress m-1 text-xs text-primary"
             style={
-              { "--value": 70, "--size": "2rem", "--thickness": "2px" } as CSSProperties
+              {
+                "--value": 70,
+                "--size": "2rem",
+                "--thickness": "2px",
+              } as CSSProperties
             }
           >
             70
@@ -180,7 +184,7 @@ export const ServantPanel: React.FC = () => {
   );
 };
 
-const DemoCounter: React.FC = () => {
+export const DemoCounter: React.FC = () => {
   const nextDay = new Date();
   return (
     <div className="grid auto-cols-max grid-flow-col gap-5 text-center">

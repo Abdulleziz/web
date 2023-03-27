@@ -31,13 +31,16 @@ export const Navbar: React.FC = () => {
       <div className="navbar-end">
         {session ? (
           <div className="dropdown dropdown-end">
-            <label tabIndex={0} className="btn-ghost btn-circle avatar btn">
-              <div className="w-10 rounded-full">
-                {!!session?.user.image && (
-                  <img src={session.user.image} alt="Profile photo" />
-                )}
-              </div>
-            </label>
+            <div className="flex flex-row items-center gap-2">
+              <span>{session.user.name}</span>
+              <label tabIndex={0} className="btn-ghost btn-circle avatar btn">
+                <div className="w-10 rounded-full">
+                  {!!session?.user.image && (
+                    <img src={session.user.image} alt="Profile photo" />
+                  )}
+                </div>
+              </label>
+            </div>
             <ul
               tabIndex={0}
               className="dropdown-content menu rounded-box menu-compact mt-3 w-52 bg-base-300 p-2 shadow"
