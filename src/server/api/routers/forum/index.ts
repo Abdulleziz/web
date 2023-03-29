@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import {
@@ -31,8 +32,16 @@ export const forumRouter = createTRPCRouter({
     }),
   createPin: managePinsProcedure
     .input(ThreadId)
-    .mutation(({ ctx, input: id }) => {
-      return ctx.prisma.forumPin.create({
+    .mutation(async ({ ctx, input: id }) => {
+      const MAX_PIN = 3;
+      const pins = await ctx.prisma.forumPin.count();
+      if (pins >= MAX_PIN)
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: `You can only pin ${MAX_PIN} threads at a time.`,
+        });
+
+      await ctx.prisma.forumPin.create({
         data: {
           thread: { connect: { id } },
           pinnedBy: { connect: { id: ctx.session.user.id } },
