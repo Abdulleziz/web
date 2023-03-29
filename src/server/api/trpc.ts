@@ -133,7 +133,7 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
  */
 export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
 
-import { AbdullezizPerm, permissionDecider } from "~/utils/abdulleziz";
+import { type AbdullezizPerm, permissionDecider } from "~/utils/abdulleziz";
 import { getGuildMember } from "../discord-api/guild";
 import {
   fetchMembersWithRoles,

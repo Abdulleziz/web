@@ -21,8 +21,21 @@ export const Dashboard: React.FC = () => {
 
   const panels =
     !isLoading && !!data
-      ? [AdminPanel, ServantPanel, DriveablePabel, MemberPanel, GlobalPanel]
+      ? [
+          AdminPanel,
+          ServantPanel,
+          DriveablePabel,
+          MemberPanel,
+          GlobalPanel,
+        ].filter(
+          // if any of the visibleBy permissions are not in the user's perms,
+          // don't show the panel
+          (p) =>
+            p.visibleBy?.some((perm) => data.perms.includes(perm)) ||
+            p.visibleBy === undefined
+        )
       : [GlobalPanel];
+
   return (
     <>
       <Layout>
@@ -60,16 +73,14 @@ export const Dashboard: React.FC = () => {
                   <span className="block text-gray-500">Workers</span>
                 </div>
               </div>
-              {panels
-                .filter((p) => !!p)
-                .map((Panel, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-center rounded-lg bg-base-100 p-4"
-                  >
-                    <Panel />
-                  </div>
-                ))}
+              {panels.map((Panel, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-center rounded-lg bg-base-100 p-4"
+                >
+                  <Panel />
+                </div>
+              ))}
             </section>
             <section className="grid gap-6 md:grid-cols-2 xl:grid-flow-col xl:grid-cols-4 xl:grid-rows-3">
               <div className="row-span-3 rounded-lg bg-base-100 shadow">
