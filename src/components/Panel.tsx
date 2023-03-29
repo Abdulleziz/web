@@ -148,7 +148,7 @@ export const ServantPanel = createPanel(undefined, () => {
   const canShout = data.perms.includes("çaycıya kız");
   const ummmmm = data.perms.includes("*i*n-t*i.h?a_r ½e(t=");
 
-  const remainingTea = descendingNumberTest(70);
+  const remainingTea = useDescendingNumberTest(70);
 
   return (
     <Panel>
@@ -244,7 +244,7 @@ export const DemoCounter = () => {
   );
 };
 
-export const descendingNumberTest = (valueStart: number) => {
+export const useDescendingNumberTest = (valueStart: number) => {
   const [value, setValue] = useState(valueStart);
   useEffect(() => {
     const interval = setInterval(() => {
