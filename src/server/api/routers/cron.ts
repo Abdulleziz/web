@@ -36,8 +36,10 @@ export const cronRouter = createTRPCRouter({
         throw new TRPCError({ code: "FORBIDDEN" });
 
       if (dbCron.listeners.length === 1) {
-        const c = new Client({ token: env.QSTASH_TOKEN });
-        await c.schedules.delete({ id: dbCron.jobId });
+        if (env.NODE_ENV === "production") {
+          const c = new Client({ token: env.QSTASH_TOKEN });
+          await c.schedules.delete({ id: dbCron.jobId });
+        }
         return await ctx.prisma.cronJob.delete({ where: { cron } });
       }
 
