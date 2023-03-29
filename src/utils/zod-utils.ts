@@ -9,7 +9,7 @@ export type PostId = z.infer<typeof PostId>;
 export const nonEmptyString = z
   .string()
   .transform((t) => t?.trim())
-  .pipe(z.string().min(1));
+  .pipe(z.string().min(1, "Bu alan boş bırakılamaz."));
 
 export const abdullezizRoles = {
   CEO: "937780766446858273",

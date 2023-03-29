@@ -1,3 +1,4 @@
+import { toast } from "react-hot-toast";
 import { api, type RouterInputs } from "./api";
 
 type GetForum = RouterInputs["forum"]["getThreadById"];
@@ -33,7 +34,16 @@ export const useCreateForumPin = () => {
   const utils = api.useContext();
   return api.forum.createPin.useMutation({
     onSuccess: async () => {
+      toast.success("Thread pinlendi!", { id: "forum.createPin" });
       await utils.forum.getThreads.invalidate();
+    },
+    onMutate: () => {
+      toast.loading("Thread pinleniyor...", { id: "forum.createPin" });
+    },
+    onError(error) {
+      toast.error(error.data?.zodError || error.message, {
+        id: "forum.createPin",
+      });
     },
   });
 };
@@ -42,7 +52,16 @@ export const useDeleteForumPin = () => {
   const utils = api.useContext();
   return api.forum.deletePin.useMutation({
     onSuccess: async () => {
+      toast.success("Thread pin kaldırıldı!", { id: "forum.deletePin" });
       await utils.forum.getThreads.invalidate();
+    },
+    onMutate: () => {
+      toast.loading("Thread pin kaldırılıyor...", { id: "forum.deletePin" });
+    },
+    onError(error) {
+      toast.error(error.data?.zodError || error.message, {
+        id: "forum.deletePin",
+      });
     },
   });
 };
@@ -52,7 +71,16 @@ export const useCreateForumThread = () => {
   return api.forum.createThread.useMutation({
     // invalidate the threads so it's fresh 🤣 (taze künefe)
     onSuccess: async () => {
+      toast.success("Thread oluşturuldu!", { id: "forum.createThread" });
       await utils.forum.getThreads.invalidate();
+    },
+    onMutate: () => {
+      toast.loading("Thread oluşturuluyor...", { id: "forum.createThread" });
+    },
+    onError(error) {
+      toast.error(error.data?.zodError || error.message, {
+        id: "forum.createThread",
+      });
     },
   });
 };
@@ -61,10 +89,19 @@ export const useDeleteForumThread = () => {
   const utils = api.useContext();
   return api.forum.deleteThreadById.useMutation({
     onSuccess: async (data) => {
+      toast.success("Thread silindi!", { id: "forum.deleteThread" });
       // invalidate the thread so it's not listed anymore
       await utils.forum.getThreadById.invalidate(data.id);
       await utils.forum.getThreads.invalidate();
       await utils.forum.posts.getMany.invalidate({ threadId: data.id });
+    },
+    onMutate: () => {
+      toast.loading("Thread siliniyor...", { id: "forum.deleteThread" });
+    },
+    onError(error) {
+      toast.error(error.data?.zodError || error.message, {
+        id: "forum.deleteThread",
+      });
     },
   });
 };
@@ -73,6 +110,7 @@ export const useCreateForumPost = () => {
   const utils = api.useContext();
   return api.forum.posts.create.useMutation({
     onSuccess: async ({ threadId }) => {
+      toast.success("Post oluşturuldu!", { id: "forum.createPost" });
       const cursor = utils.forum.posts.getMany
         .getInfiniteData()
         ?.pages.at(-1)?.next;
@@ -85,6 +123,14 @@ export const useCreateForumPost = () => {
           },
         }
       );
+    },
+    onMutate: () => {
+      toast.loading("Post oluşturuluyor...", { id: "forum.createPost" });
+    },
+    onError(error) {
+      toast.error(error.data?.zodError || error.message, {
+        id: "forum.createPost",
+      });
     },
   });
 };

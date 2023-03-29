@@ -18,7 +18,7 @@ export const discordRouter = createTRPCRouter({
 
     return { roles: verifiedRoles, perms: verifiedPerms };
   }),
-  getAbdullezizUsers: protectedProcedure.query(async ({ ctx }) => {
+  getAbdullezizUsers: protectedProcedure.query(async () => {
     const m = await getGuildMembers();
     if (!m) throw new TRPCError({ code: "NOT_FOUND" });
 

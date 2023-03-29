@@ -11,7 +11,7 @@ import type { ChartData, ChartOptions } from "chart.js";
 import { Radar } from "react-chartjs-2";
 
 import Link from "next/link";
-import { CSSProperties, useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import {
   useGetAbdullezizUser,
   useGetAbdullezizUsers,
@@ -231,7 +231,7 @@ export const DemoCounter = () => {
       setRemains(nextDay - new Date().getTime());
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [nextDay]);
 
   const days = Math.floor(remains / (1000 * 60 * 60 * 24));
   const hours = Math.floor(
