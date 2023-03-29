@@ -5,62 +5,18 @@ import {
   AdminPanel,
   DriveablePabel,
   MemberPanel,
+  VoteChart,
+  MembersPanel,
 } from "./Panel";
 import { useGetAbdullezizUser, useGetDiscordMembers } from "~/utils/useDiscord";
 import { useSession } from "next-auth/react";
-import { getAvatarUrl } from "~/server/discord-api/utils";
-
-import {
-  Chart as ChartJS,
-  RadialLinearScale,
-  PointElement,
-  LineElement,
-  Filler,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import type { ChartData, ChartOptions } from "chart.js";
-import { Radar } from "react-chartjs-2";
-
-ChartJS.register(
-  RadialLinearScale,
-  PointElement,
-  LineElement,
-  Filler,
-  Tooltip,
-  Legend
-);
 
 export const Dashboard: React.FC = () => {
   const { data: session } = useSession();
   const { isLoading, data } = useGetAbdullezizUser();
   const getDcMembers = useGetDiscordMembers();
 
-  const members = (getDcMembers.data ?? [])
-    .map((m) => ({ ...m, user: m.user! })) // assert user is defined
-    .filter((m) => !m.user.bot); // filter out bots
-
-  const ChartOptions: ChartOptions<"radar"> = {
-    scales: {
-      r: {
-        ticks: {
-          display: false,
-        },
-      },
-    },
-  };
-  const chartData: ChartData<"radar"> = {
-    labels: members.map((m) => m.nick || m.user.username),
-    datasets: [
-      {
-        label: "Oy sayısı",
-        data: members.map((m) => m.roles.length),
-        backgroundColor: "rgba(255, 99, 132, 0.2)",
-        borderColor: "rgba(255, 99, 132, 1)",
-        borderWidth: 2,
-      },
-    ],
-  };
+  const members = getDcMembers.data ?? [];
 
   const panels =
     !isLoading && !!data
@@ -86,8 +42,8 @@ export const Dashboard: React.FC = () => {
           <main className="space-y-6 p-6 sm:p-10">
             <div className="flex flex-col justify-between space-y-6 md:flex-row md:space-y-0">
               <div className="mr-6">
-                <h1 className="mb-2 text-4xl font-semibold text-white">
-                  Welcome {session?.user.name}
+                <h1 className="overflow-hidden pb-2 text-4xl font-semibold text-white">
+                  Hoş geldin {session?.user.name}!
                 </h1>
               </div>
             </div>
@@ -113,7 +69,9 @@ export const Dashboard: React.FC = () => {
                   <span className="block text-2xl font-bold">
                     {members.length}
                   </span>
-                  <span className="block text-gray-500">Workers</span>
+                  <span className="block text-gray-500">
+                    Abdülleziz Çalışanı
+                  </span>
                 </div>
               </div>
               {panels.map((Panel, i) => (
@@ -126,34 +84,13 @@ export const Dashboard: React.FC = () => {
               ))}
             </section>
             <section className="grid gap-6 md:grid-cols-2 xl:grid-flow-col xl:grid-cols-4 xl:grid-rows-3">
-              <div className="row-span-3 rounded-lg bg-base-100 shadow">
-                <div className="flex items-center justify-between border-b border-base-200 px-6 py-5 font-semibold">
-                  <span>Abdulleziz Members</span>
-                </div>
-                <div className="overflow-y-auto">
-                  <ul className="space-y-6 p-6">
-                    {members.map((member) => {
-                      const avatar = getAvatarUrl(member.user, member.avatar);
-                      return (
-                        <li key={member.user.id} className="flex items-center">
-                          <div className="mr-3 h-10 w-10 overflow-hidden rounded-full">
-                            {avatar && <img src={avatar} alt="Profile photo" />}
-                          </div>
-                          <span className="text-white">{member.nick}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              </div>
+              <MembersPanel />
               <div className="flex flex-col rounded-lg bg-base-100 shadow md:col-span-2 md:row-span-2">
                 <div className="border-b border-gray-100 px-6 py-5 font-semibold">
                   Oylar!
                 </div>
                 <div className="flex-grow p-4">
-                  <div className="flex h-full items-center justify-center rounded-md border-2 border-dashed border-gray-200 bg-base-300 px-4 py-16 text-3xl font-semibold text-gray-400">
-                    <Radar data={chartData} options={ChartOptions} />
-                  </div>
+                  <VoteChart />
                 </div>
               </div>
             </section>

@@ -1,7 +1,33 @@
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import type { ChartData, ChartOptions } from "chart.js";
+import { Radar } from "react-chartjs-2";
+
 import Link from "next/link";
 import { CSSProperties, useEffect, useState } from "react";
+import {
+  useGetAbdullezizUser,
+  useGetAbdullezizUsers,
+  useGetDiscordMembers,
+} from "~/utils/useDiscord";
+import { getAvatarUrl } from "~/server/discord-api/utils";
 import type { AbdullezizPerm } from "~/utils/abdulleziz";
-import { useGetAbdullezizUser } from "~/utils/useDiscord";
+
+ChartJS.register(
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend
+);
 
 const createPanel = <T, V extends AbdullezizPerm[] | undefined>(
   visibleBy: V,
@@ -243,6 +269,106 @@ export const DemoCounter = () => {
     </div>
   );
 };
+
+export const VoteChart = createPanel(undefined, () => {
+  const getDcMembers = useGetDiscordMembers();
+
+  const members = (getDcMembers.data ?? [])
+    .map((m) => ({ ...m, user: m.user! })) // assert user is defined
+    .filter((m) => !m.user.bot); // filter out bots
+
+  const ChartOptions: ChartOptions<"radar"> = {
+    scales: {
+      r: {
+        ticks: {
+          display: false,
+        },
+      },
+    },
+  };
+  const chartData: ChartData<"radar"> = {
+    labels: members.map((m) => m.nick || m.user.username),
+    datasets: [
+      {
+        label: "Oy sayısı",
+        data: members.map((m) => m.roles.length),
+        backgroundColor: "rgba(255, 99, 132, 0.2)",
+        borderColor: "rgba(255, 99, 132, 1)",
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  return (
+    <div className="flex items-center justify-center rounded-md border-2 border-dashed border-gray-200 bg-base-300 px-4 py-16 text-3xl font-semibold text-gray-400">
+      <Radar data={chartData} options={ChartOptions} />
+    </div>
+  );
+});
+
+export const MembersPanel = createPanel(undefined, () => {
+  const getDcMembers = useGetAbdullezizUsers();
+
+  const members = (getDcMembers.data ?? [])
+    .map((m) => ({
+      ...m,
+      roles: m.roles.sort((r1, r2) => r2.position - r1.position), // sort roles
+    }))
+    .filter((m) => !m.user.bot) // filter out bots
+    .sort((m1, m2) => {
+      // sort members by highest role
+      const s1 = m1.roles[0];
+      const s2 = m2.roles[0];
+      return (s2?.position ?? 0) - (s1?.position ?? 0);
+    });
+
+  return (
+    <div className="row-span-3 rounded-lg bg-base-100 shadow">
+      <div className="flex items-center justify-between border-b border-base-200 px-6 py-5 font-semibold">
+        <span>Abdulleziz Çalışanları</span>
+      </div>
+      <div className="overflow-y-auto">
+        <ul className="space-y-6 p-6">
+          {members.map((member) => {
+            const avatar = getAvatarUrl(member.user, member.avatar);
+            return (
+              <li
+                key={member.user.id}
+                className="flex flex-col items-center justify-center text-center"
+              >
+                <div className="avatar-group">
+                  {avatar && (
+                    <img
+                      className="avatar w-12"
+                      src={avatar}
+                      alt="Profile photo"
+                    />
+                  )}
+                </div>
+                {
+                  <p
+                    style={
+                      member.roles.length > 0
+                        ? {
+                            color: `#${member.roles[0]!.color.toString(16)}`,
+                          }
+                        : { color: "white" }
+                    }
+                  >
+                    {member.nick}
+                  </p>
+                }
+                <p className="text-gray-400">
+                  {member.user.username}#{member.user.discriminator}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
+});
 
 export const useDescendingNumberTest = (valueStart: number) => {
   const [value, setValue] = useState(valueStart);

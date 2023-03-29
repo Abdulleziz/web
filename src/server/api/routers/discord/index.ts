@@ -18,6 +18,23 @@ export const discordRouter = createTRPCRouter({
 
     return { roles: verifiedRoles, perms: verifiedPerms };
   }),
+  getAbdullezizUsers: protectedProcedure.query(async ({ ctx }) => {
+    const m = await getGuildMembers();
+    if (!m) throw new TRPCError({ code: "NOT_FOUND" });
+
+    const members = await fetchMembersWithRoles(m);
+    const verifiedRoles = members.map((m) => getAbdullezizRoles(m.roles));
+    const verifiedPerms = verifiedRoles.map((r) =>
+      permissionDecider(r.map((r) => r.name))
+    );
+    const verifiedMembers = members.map((m, i) => ({
+      ...m,
+      user: m.user!,
+      roles: verifiedRoles[i]!,
+      perms: verifiedPerms[i]!,
+    }));
+    return verifiedMembers;
+  }),
   getDiscordMembers: protectedProcedure.query(async () => {
     const members = await getGuildMembers();
     if (!members) throw new TRPCError({ code: "NOT_FOUND" });
