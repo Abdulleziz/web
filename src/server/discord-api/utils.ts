@@ -1,5 +1,10 @@
 import { type AbdullezizRole, abdullezizRoles } from "~/utils/zod-utils";
-import { getGuildRoles, Member, Roles } from "./guild";
+import {
+  ABDULLEZIZ_SERVER_ID,
+  getGuildRoles,
+  type Member,
+  type Roles,
+} from "./guild";
 
 export const sortRoles = (roles: Roles | undefined) => {
   return (roles ?? [])
@@ -26,4 +31,21 @@ export const fetchMembersWithRoles = async (members: Member[]) => {
     ...member,
     roles: roles.filter((role) => member.roles.includes(role.id)),
   }));
+};
+
+export const getAvatarUrl = (
+  member: Member,
+  guildId = ABDULLEZIZ_SERVER_ID
+) => {
+  const CDN = "https://cdn.discordapp.com";
+  const { avatar: guildAvatar } = member;
+  const { avatar, id } = member.user!;
+
+  if (guildAvatar) {
+    return `${CDN}/guilds/${guildId}/users/${id}/avatars/${guildAvatar}`;
+  }
+
+  if (avatar) {
+    return `${CDN}/avatars/${id}/${avatar}`;
+  }
 };

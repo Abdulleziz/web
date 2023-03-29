@@ -5,27 +5,20 @@ import {
   AdminPanel,
   DriveablePabel,
   MemberPanel,
-  DemoCounter,
 } from "./Panel";
 import { useGetAbdullezizUser, useGetDiscordMembers } from "~/utils/useDiscord";
 import { useSession } from "next-auth/react";
-import { getAbdullezizRoles } from "~/server/discord-api/utils";
-import { getGuildMembers } from "~/server/discord-api/guild";
-import { useState } from "react";
+import { getAvatarUrl } from "~/server/discord-api/utils";
 
 export const Dashboard: React.FC = () => {
   const { data: session } = useSession();
-
   const { isLoading, data } = useGetAbdullezizUser();
+  const getDcMembers = useGetDiscordMembers();
 
-  const everything = useGetDiscordMembers();
-  const allMembers = everything.data?.map((user) => user.user);
-  let abdullezizCount = 0;
-  const abdullezizMember = allMembers?.map((staff) => {
-    if (!staff?.bot) {
-      abdullezizCount++;
-    }
-  });
+  const members = (getDcMembers.data ?? [])
+    .map((m) => ({ ...m, user: m.user! })) // assert user is defined
+    .filter((m) => !m.user!.bot); // filter out bots
+
   const panels =
     !isLoading && !!data
       ? [AdminPanel, ServantPanel, DriveablePabel, MemberPanel, GlobalPanel]
@@ -62,7 +55,7 @@ export const Dashboard: React.FC = () => {
                 </div>
                 <div>
                   <span className="block text-2xl font-bold">
-                    {abdullezizCount}
+                    {members.length}
                   </span>
                   <span className="block text-gray-500">Workers</span>
                 </div>
@@ -85,23 +78,16 @@ export const Dashboard: React.FC = () => {
                 </div>
                 <div className="overflow-y-auto">
                   <ul className="space-y-6 p-6">
-                    {allMembers?.map((member) => {
-                      if (!member?.bot)
-                        return (
-                          <li key={member?.id} className="flex items-center">
-                            <div className="mr-3 h-10 w-10 overflow-hidden rounded-full">
-                              {!!member?.avatar && (
-                                <img
-                                  src={`https://cdn.discordapp.com/avatars/${member.id}/${member.avatar}`}
-                                  alt="Profile photo"
-                                />
-                              )}
-                            </div>
-                            <span className="text-white">
-                              {member?.username}
-                            </span>
-                          </li>
-                        );
+                    {members.map((member) => {
+                      const avatar = getAvatarUrl(member as any);
+                      return (
+                        <li key={member.user.id} className="flex items-center">
+                          <div className="mr-3 h-10 w-10 overflow-hidden rounded-full">
+                            {avatar && <img src={avatar} alt="Profile photo" />}
+                          </div>
+                          <span className="text-white">{member.nick}</span>
+                        </li>
+                      );
                     })}
                   </ul>
                 </div>
