@@ -35,7 +35,7 @@ export const fetchMembersWithRoles = async (members: Member[]) => {
 
 export const getAvatarUrl = (
   user: Exclude<Member["user"], undefined>,
-  guildAvatar?: string,
+  guildAvatar?: Member["avatar"],
   guildId = ABDULLEZIZ_SERVER_ID
 ) => {
   const CDN = "https://cdn.discordapp.com";
