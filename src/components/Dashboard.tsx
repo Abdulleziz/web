@@ -17,7 +17,7 @@ export const Dashboard: React.FC = () => {
 
   const members = (getDcMembers.data ?? [])
     .map((m) => ({ ...m, user: m.user! })) // assert user is defined
-    .filter((m) => !m.user!.bot); // filter out bots
+    .filter((m) => !m.user.bot); // filter out bots
 
   const panels =
     !isLoading && !!data
@@ -79,7 +79,7 @@ export const Dashboard: React.FC = () => {
                 <div className="overflow-y-auto">
                   <ul className="space-y-6 p-6">
                     {members.map((member) => {
-                      const avatar = getAvatarUrl(member as any);
+                      const avatar = getAvatarUrl(member.user, member.avatar);
                       return (
                         <li key={member.user.id} className="flex items-center">
                           <div className="mr-3 h-10 w-10 overflow-hidden rounded-full">
