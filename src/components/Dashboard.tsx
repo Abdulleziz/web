@@ -7,6 +7,7 @@ import {
   MemberPanel,
   VoteChart,
   MembersPanel,
+  HistoryPanel,
 } from "./Panel";
 import { useGetAbdullezizUser, useGetDiscordMembers } from "~/utils/useDiscord";
 import { useSession } from "next-auth/react";
@@ -85,6 +86,7 @@ export const Dashboard: React.FC = () => {
             </section>
             <section className="grid gap-6 md:grid-cols-2 xl:grid-flow-col xl:grid-cols-4 xl:grid-rows-3">
               <MembersPanel />
+              <HistoryPanel />
               <div className="flex flex-col rounded-lg bg-base-100 shadow md:col-span-2 md:row-span-2">
                 <div className="border-b border-gray-100 px-6 py-5 font-semibold">
                   Oylar!

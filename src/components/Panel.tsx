@@ -19,6 +19,7 @@ import {
 } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import type { AbdullezizPerm } from "~/utils/abdulleziz";
+import classNames from "classnames";
 
 ChartJS.register(
   RadialLinearScale,
@@ -196,18 +197,26 @@ export const ServantPanel = createPanel(undefined, () => {
           </div>
         </div>
         <div className="menu-item">
-          <button className="btn-sm btn">
+          <button className="btn-sm btn" disabled={!remainingTea}>
             {canServe ? "Çay koy" : "Çay söylet"}
           </button>
         </div>
         <div className="menu-item">
-          <button className="btn-sm btn gap-2" disabled={!canBuy}>
+          <button
+            className={classNames("btn-sm btn gap-2", {
+              ["btn-warning"]: !remainingTea,
+            })}
+            disabled={!canBuy}
+          >
             Çay satın al
           </button>
         </div>
         {!canServe && (
           <div className="menu-item">
-            <button className="btn-warning btn-sm btn" disabled={!canShout}>
+            <button
+              className="btn-warning btn-sm btn"
+              disabled={!canShout || !remainingTea}
+            >
               Çaycıya kız
             </button>
           </div>
@@ -304,6 +313,60 @@ export const VoteChart = createPanel(undefined, () => {
   return (
     <div className="flex items-center justify-center rounded-md border-2 border-dashed border-gray-200 bg-base-300 px-4 py-16 text-3xl font-semibold text-gray-400">
       <Radar data={chartData} options={ChartOptions} />
+    </div>
+  );
+});
+
+export const HistoryPanel = createPanel([], () => {
+  const users = useGetAbdullezizUsers().data ?? [];
+  if (!users.length) return null;
+
+  // DEMO, TEST DATA
+  const barkin = users.find((u) => u.user.id === "288397394465521664")!;
+  const bora = users.find((u) => u.user.id === "222663527784120320")!;
+  const bugra = users.find((u) => u.user.id === "282535915203723265")!;
+  const kerem = users.find((u) => u.user.id === "852595277037568031")!;
+
+  const historyTESTDATA = [
+    ["step-warning", `${barkin.nick} Çaycıya kızdı`, barkin],
+    [`step-success`, `${bora.nick} Şirkete Megan Hediye etti!`, bora],
+    [`step-primary`, `${bora.nick} Forum'da bir şeyler yazdı`, bora],
+    [`step-primary`, `${bora.nick} Forum'da Thread Pinledi`, bora],
+    [`step-success`, `${bugra.nick} CEO'luktan Driver'a atandı`, bugra],
+    [`step-warning`, `${bora.nick} Çaycıya kızdı`, bora],
+    [`step-secondary`, "Kerem oylamaya katıldı", kerem],
+    [`step-error`, `${barkin.nick} CEO'yu kovdu`, barkin],
+    [`step-error`, `${barkin.nick} CTO'yu kovdu`, barkin],
+    [`step-error`, `${barkin.nick} CSO'yu kovdu`, barkin],
+    [`step-error`, `${barkin.nick} CMO'yu kovdu`, barkin],
+  ] as const;
+
+  return (
+    <div className="row-span-3 rounded-lg bg-base-100 shadow">
+      <div className="flex items-center justify-between border-b border-base-200 px-6 py-5 font-semibold">
+        <span>Geçmiş Paneli</span>
+      </div>
+      <div className="overflow-y-auto">
+        <ul className="steps steps-vertical p-6">
+          {historyTESTDATA.map((h) => {
+            const url = getAvatarUrl(h[2].user, h[2].avatar);
+            return (
+              <li
+                key={h[1]}
+                data-content="★"
+                className={classNames("step flex items-center space-x-4", h[0])}
+              >
+                <div className="flex items-center justify-center gap-4">
+                  {!!url && (
+                    <img className="avatar w-12 rounded-full" src={url} />
+                  )}
+                  {h[1]}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 });
