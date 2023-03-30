@@ -63,7 +63,7 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
       u.accounts.map((a) => a.providerAccountId)
     );
 
-    let content = `Hatırlatıcı ${discordIds
+    let content = `${job.title} hatırlatıcısı! ${discordIds
       .map((id) => `<@${id}>`)
       .join(", ")}`;
     if (debug) content = `[🧪TEST💻] ${content}`;
@@ -79,7 +79,7 @@ async function handler({ body }: NextApiRequest, res: NextApiResponse) {
       content,
       embeds: [
         {
-          title: `${job.title} hatırlatıcısı!`,
+          title: `Hatırlatıcı!`,
           color: 0x41ffff,
           fields: [
             {
