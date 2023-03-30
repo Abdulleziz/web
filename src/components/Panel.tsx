@@ -328,17 +328,17 @@ export const HistoryPanel = createPanel([], () => {
   const kerem = users.find((u) => u.user.id === "852595277037568031")!;
 
   const historyTESTDATA = [
-    ["step-warning", `${barkin.nick} Çaycıya kızdı`, barkin],
-    [`step-success`, `${bora.nick} Şirkete Megan Hediye etti!`, bora],
-    [`step-primary`, `${bora.nick} Forum'da bir şeyler yazdı`, bora],
-    [`step-primary`, `${bora.nick} Forum'da Thread Pinledi`, bora],
-    [`step-success`, `${bugra.nick} CEO'luktan Driver'a atandı`, bugra],
-    [`step-warning`, `${bora.nick} Çaycıya kızdı`, bora],
+    ["step-warning", `${barkin.nick!} Çaycıya kızdı`, barkin],
+    [`step-success`, `${bora.nick!} Şirkete Megan Hediye etti!`, bora],
+    [`step-primary`, `${bora.nick!} Forum'da bir şeyler yazdı`, bora],
+    [`step-primary`, `${bora.nick!} Forum'da Thread Pinledi`, bora],
+    [`step-success`, `${bugra.nick!} CEO'luktan Driver'a atandı`, bugra],
+    [`step-warning`, `${bora.nick!} Çaycıya kızdı`, bora],
     [`step-secondary`, "Kerem oylamaya katıldı", kerem],
-    [`step-error`, `${barkin.nick} CEO'yu kovdu`, barkin],
-    [`step-error`, `${barkin.nick} CTO'yu kovdu`, barkin],
-    [`step-error`, `${barkin.nick} CSO'yu kovdu`, barkin],
-    [`step-error`, `${barkin.nick} CMO'yu kovdu`, barkin],
+    [`step-error`, `${barkin.nick!} CEO'yu kovdu`, barkin],
+    [`step-error`, `${barkin.nick!} CTO'yu kovdu`, barkin],
+    [`step-error`, `${barkin.nick!} CSO'yu kovdu`, barkin],
+    [`step-error`, `${barkin.nick!} CMO'yu kovdu`, barkin],
   ] as const;
 
   return (
