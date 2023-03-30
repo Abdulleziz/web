@@ -11,7 +11,7 @@ import type { ChartData, ChartOptions } from "chart.js";
 import { Radar } from "react-chartjs-2";
 
 import Link from "next/link";
-import { type CSSProperties, useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState, useRef } from "react";
 import {
   useGetAbdullezizUser,
   useGetAbdullezizUsers,
@@ -223,15 +223,17 @@ export const ServantPanel = createPanel(undefined, () => {
 });
 
 export const DemoCounter = () => {
-  const nextDay = new Date(Date.now() + 1000 * 60 * 60 * 24).getTime();
-  const [remains, setRemains] = useState(() => nextDay - new Date().getTime());
+  const nextDay = useRef(new Date(Date.now() + 1000 * 60 * 60 * 24).getTime());
+  const [remains, setRemains] = useState(
+    () => nextDay.current - new Date().getTime()
+  );
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setRemains(nextDay - new Date().getTime());
+      setRemains(nextDay.current - new Date().getTime());
     }, 1000);
     return () => clearInterval(interval);
-  }, [nextDay]);
+  }, []);
 
   const days = Math.floor(remains / (1000 * 60 * 60 * 24));
   const hours = Math.floor(
@@ -291,7 +293,7 @@ export const VoteChart = createPanel(undefined, () => {
     datasets: [
       {
         label: "Oy sayısı",
-        data: members.map((m) => m.roles.length),
+        data: members.map((m) => Math.floor(Math.random() * 10)),
         backgroundColor: "rgba(255, 99, 132, 0.2)",
         borderColor: "rgba(255, 99, 132, 1)",
         borderWidth: 2,
