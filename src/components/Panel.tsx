@@ -20,6 +20,8 @@ import {
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import type { AbdullezizPerm } from "~/utils/abdulleziz";
 import classNames from "classnames";
+import { toast } from "react-hot-toast";
+import { useWalletStore } from "./Dashboard";
 
 ChartJS.register(
   RadialLinearScale,
@@ -175,7 +177,8 @@ export const ServantPanel = createPanel(undefined, () => {
   const canShout = data.perms.includes("çaycıya kız");
   const ummmmm = data.perms.includes("*i*n-t*i.h?a_r ½e(t=");
 
-  const remainingTea = useDescendingNumberTest(70);
+  const [remainingTea, setRemainingTea] = useDescendingNumberTest(70);
+  const { balance, setBalance } = useWalletStore();
 
   return (
     <Panel>
@@ -197,7 +200,14 @@ export const ServantPanel = createPanel(undefined, () => {
           </div>
         </div>
         <div className="menu-item">
-          <button className="btn-sm btn" disabled={!remainingTea}>
+          <button
+            className="btn-sm btn"
+            disabled={!remainingTea}
+            onClick={() => {
+              setRemainingTea(remainingTea >= 10 ? remainingTea - 10 : 0);
+              toast.success("Çay koyuldu");
+            }}
+          >
             {canServe ? "Çay koy" : "Çay söylet"}
           </button>
         </div>
@@ -207,6 +217,11 @@ export const ServantPanel = createPanel(undefined, () => {
               ["btn-warning"]: !remainingTea,
             })}
             disabled={!canBuy}
+            onClick={() => {
+              setBalance(balance >= 100 ? balance - 100 : 0);
+              setRemainingTea(remainingTea <= 90 ? remainingTea + 10 : 100);
+              toast.success("Çay satın alındı");
+            }}
           >
             Çay satın al
           </button>
@@ -302,7 +317,7 @@ export const VoteChart = createPanel(undefined, () => {
     datasets: [
       {
         label: "Oy sayısı",
-        data: members.map((m) => Math.floor(Math.random() * 10)),
+        data: members.map(() => Math.floor(Math.random() * 10)),
         backgroundColor: "rgba(255, 99, 132, 0.2)",
         borderColor: "rgba(255, 99, 132, 1)",
         borderWidth: 2,
@@ -443,5 +458,5 @@ export const useDescendingNumberTest = (valueStart: number) => {
     }, 1000);
     return () => clearInterval(interval);
   });
-  return value;
+  return [value, setValue] as const;
 };

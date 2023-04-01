@@ -11,11 +11,25 @@ import {
 } from "./Panel";
 import { useGetAbdullezizUser, useGetDiscordMembers } from "~/utils/useDiscord";
 import { useSession } from "next-auth/react";
+import { create } from "zustand";
+
+type WalletStore = {
+  balance: number;
+  setBalance: (s: number) => void;
+};
+
+// GEÇİCİ... havalı bir şeyler
+export const useWalletStore = create<WalletStore>((set) => ({
+  balance: 0,
+  setBalance: (balance) => set({ balance }),
+}));
 
 export const Dashboard: React.FC = () => {
   const { data: session } = useSession();
   const { isLoading, data } = useGetAbdullezizUser();
   const getDcMembers = useGetDiscordMembers();
+
+  if (data) useWalletStore.setState({ balance: data.perms.length * 1000 });
 
   const members = getDcMembers.data ?? [];
 
