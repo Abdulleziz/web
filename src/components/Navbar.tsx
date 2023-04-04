@@ -7,7 +7,7 @@ export const Navbar: React.FC = () => {
   const { balance } = useWalletStore();
 
   return (
-    <div className="navbar bg-base-300">
+    <div className="navbar sticky top-0 z-50 bg-base-300">
       <div className="navbar-start">
         <div className="dropdown-hover dropdown">
           <Link
