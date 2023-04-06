@@ -4,6 +4,7 @@ import { z } from "zod";
 import { env } from "~/env.mjs";
 import { nonEmptyString } from "~/utils/zod-utils";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import type { CronBody } from "~/pages/api/cron";
 
 export const cronRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
@@ -107,7 +108,7 @@ export const cronRouter = createTRPCRouter({
         const res = await c.publishJSON({
           url: url + "/api/cron",
           cron,
-          body: { cron },
+          body: { cron } as z.input<typeof CronBody>,
         });
         jobId = res.scheduleId;
       } else {

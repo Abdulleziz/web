@@ -1,28 +1,29 @@
-import { TRPCError } from "@trpc/server";
-import { getGuildMember, getGuildMembers } from "~/server/discord-api/guild";
-import {
-  fetchMembersWithRoles,
-  getAbdullezizRoles,
-} from "~/server/discord-api/utils";
-import { appRouter } from "../../root";
-import { roleRouter } from "./role";
+import { getAbdullezizRoles } from "~/server/discord-api/utils";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
+import { roleRouter } from "./role";
 import { permissionDecider } from "~/utils/abdulleziz";
+import {
+  getGuildMemberWithRoles,
+  getGuildMembersWithRoles,
+} from "~/server/discord-api/trpc";
 
+// api router
 export const discordRouter = createTRPCRouter({
+  getDiscordMembers: protectedProcedure.query(async () => {
+    return await getGuildMembersWithRoles();
+  }),
+  getDiscordMember: protectedProcedure.query(async ({ ctx }) => {
+    return await getGuildMemberWithRoles(ctx.session.user.discordId);
+  }),
   getAbdullezizUser: protectedProcedure.query(async ({ ctx }) => {
-    const internalCaller = appRouter.createCaller(ctx);
-    const member = await internalCaller.discord.getDiscordMember();
+    const member = await getGuildMemberWithRoles(ctx.session.user.discordId);
     const verifiedRoles = getAbdullezizRoles(member.roles);
     const verifiedPerms = permissionDecider(verifiedRoles.map((r) => r.name));
 
     return { roles: verifiedRoles, perms: verifiedPerms };
   }),
   getAbdullezizUsers: protectedProcedure.query(async () => {
-    const m = await getGuildMembers();
-    if (!m) throw new TRPCError({ code: "NOT_FOUND" });
-
-    const members = await fetchMembersWithRoles(m);
+    const members = await getGuildMembersWithRoles();
     const verifiedRoles = members.map((m) => getAbdullezizRoles(m.roles));
     const verifiedPerms = verifiedRoles.map((r) =>
       permissionDecider(r.map((r) => r.name))
@@ -34,20 +35,6 @@ export const discordRouter = createTRPCRouter({
       perms: verifiedPerms[i]!,
     }));
     return verifiedMembers;
-  }),
-  getDiscordMembers: protectedProcedure.query(async () => {
-    const members = await getGuildMembers();
-    if (!members) throw new TRPCError({ code: "NOT_FOUND" });
-
-    return await fetchMembersWithRoles(members);
-  }),
-  getDiscordMember: protectedProcedure.query(async ({ ctx }) => {
-    const discordId = ctx.session.user.discordId;
-
-    const member = await getGuildMember(discordId);
-    if (!member) throw new TRPCError({ code: "NOT_FOUND" });
-
-    return (await fetchMembersWithRoles([member])).at(0)!;
   }),
   role: roleRouter,
 });

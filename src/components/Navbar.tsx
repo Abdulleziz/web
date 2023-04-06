@@ -1,10 +1,11 @@
 import { signOut, signIn, useSession } from "next-auth/react";
 import Link from "next/link";
-import { useWalletStore } from "./Dashboard";
+import { useGetWallet } from "~/utils/usePayments";
 
 export const Navbar: React.FC = () => {
   const { data: session } = useSession();
-  const { balance } = useWalletStore();
+  const wallet = useGetWallet();
+  const balance = wallet.data?.balance ?? 0;
 
   return (
     <div className="navbar sticky top-0 z-50 bg-base-300">
@@ -35,7 +36,9 @@ export const Navbar: React.FC = () => {
           <div className="dropdown dropdown-end">
             <div className="flex flex-row items-center gap-2">
               <span>{session.user.name}</span>
-              <span className="text-success">${balance}</span>
+              <span className="text-success">
+                ${wallet.isLoading ? "..." : balance}
+              </span>
               <label tabIndex={0} className="btn-ghost btn-circle avatar btn">
                 <div className="w-10 rounded-full">
                   {!!session.user.image && (

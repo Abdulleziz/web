@@ -87,6 +87,32 @@ model CronListener {
     @@index([cronJobId])
 }
 
+enum PaymentType {
+    salary
+    transfer
+    invoice
+}
+
+model Payment {
+    id        String      @id @default(cuid())
+    type      PaymentType
+    amount    Int
+    createdAt DateTime    @default(now())
+
+    to   User   @relation("paymentReciever", fields: [toId], references: [id], onDelete: Cascade)
+    toId String
+
+    from   User?   @relation("paymentSender", fields: [fromId], references: [id], onDelete: SetNull)
+    fromId String?
+
+    entityId Int?
+
+    @@index([fromId])
+    @@index([toId])
+    @@index([fromId, toId])
+    @@index([entityId])
+}
+
 model Account {
     id                String  @id @default(cuid())
     userId            String
@@ -128,6 +154,9 @@ model User {
     forumPosts    ForumPost[]
     listenedCrons CronListener[]
     ForumPin      ForumPin[]
+
+    paymentsSent     Payment[] @relation("paymentSender")
+    paymentsRecieved Payment[] @relation("paymentReciever")
 }
 
 model VerificationToken {

@@ -1,12 +1,13 @@
 import { toast } from "react-hot-toast";
 import { api, type RouterInputs } from "./api";
 
+type GetThreads = RouterInputs["forum"]["getThreads"];
 type GetForum = RouterInputs["forum"]["getThreadById"];
 type GetPosts = RouterInputs["forum"]["posts"]["getMany"];
 
-export const useGetForumThreads = () => {
+export const useGetForumThreads = (input: GetThreads) => {
   const utils = api.useContext();
-  return api.forum.getThreads.useQuery(undefined, {
+  return api.forum.getThreads.useQuery(input, {
     onSuccess: (threads) => {
       threads.forEach((thread) => {
         // prefetch the thread, posts so it's ready when we navigate to it

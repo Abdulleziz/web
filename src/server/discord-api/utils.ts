@@ -1,3 +1,4 @@
+import type { PrismaClient } from "@prisma/client";
 import { type AbdullezizRole, abdullezizRoles } from "~/utils/zod-utils";
 import {
   ABDULLEZIZ_SERVER_ID,
@@ -6,14 +7,15 @@ import {
   type Roles,
 } from "./guild";
 
-export const sortRoles = (roles: Roles | undefined) => {
-  return (roles ?? [])
-    .sort((a, b) => a.position - b.position)
+export const sortRoles = <Role extends Roles[number]>(
+  roles: Role[] | undefined
+) =>
+  (roles ?? [])
+    .sort((a, b) => b.position - a.position)
     .map((role) => ({
       ...role,
       allah: (roles ?? []).length === role.position + 1,
     }));
-};
 
 // discord permlerinden abdülleziz-verified rolleri alıyoz
 // CEO, CTO... gibi
@@ -48,4 +50,33 @@ export const getAvatarUrl = (
   if (avatar) {
     return `${CDN}/avatars/${id}/${avatar}`;
   }
+};
+
+export const connectMembersWithIds = async <
+  Member extends { user: { id: string } }
+>(
+  prisma: PrismaClient,
+  members: Member[]
+) => {
+  const dbUsers = await prisma.user.findMany({
+    where: {
+      accounts: {
+        some: { providerAccountId: { in: members.map((u) => u.user.id) } },
+      },
+    },
+    select: { id: true, accounts: { select: { providerAccountId: true } } },
+  });
+  return members
+    .filter((member) =>
+      // kayıtlı olmayan dc kullanıcıları filtrele
+      dbUsers.some((u) =>
+        u.accounts.some((a) => a.providerAccountId === member.user.id)
+      )
+    )
+    .map((member) => ({
+      id: dbUsers.find((u) =>
+        u.accounts.some((a) => a.providerAccountId === member.user.id)
+      )!.id,
+      ...member,
+    }));
 };

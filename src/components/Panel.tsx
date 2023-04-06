@@ -21,7 +21,7 @@ import { getAvatarUrl } from "~/server/discord-api/utils";
 import type { AbdullezizPerm } from "~/utils/abdulleziz";
 import classNames from "classnames";
 import { toast } from "react-hot-toast";
-import { useWalletStore } from "./Dashboard";
+import { useBuyEntities, useCreateSalary } from "~/utils/usePayments";
 
 ChartJS.register(
   RadialLinearScale,
@@ -73,6 +73,8 @@ export const MemberPanel = createPanel(undefined, () => {
   const canRequestRaise = data.perms.includes("zam iste");
   const canTakeSalary = data.perms.includes("maaş al");
 
+  const t = useCreateSalary();
+
   return (
     <Panel>
       <div className="menu flex items-center gap-4">
@@ -83,7 +85,13 @@ export const MemberPanel = createPanel(undefined, () => {
           </button>
         </div>
         <div className="menu-item">
-          <button className="btn-sm btn" disabled={!canRequestRaise}>
+          <button
+            className="btn-sm btn"
+            disabled={!canRequestRaise}
+            onClick={() => {
+              t.mutate({});
+            }}
+          >
             Zam iste
           </button>
         </div>
@@ -178,7 +186,8 @@ export const ServantPanel = createPanel(undefined, () => {
   const ummmmm = data.perms.includes("*i*n-t*i.h?a_r ½e(t=");
 
   const [remainingTea, setRemainingTea] = useDescendingNumberTest(70);
-  const { balance, setBalance } = useWalletStore();
+
+  const buyEntities = useBuyEntities();
 
   return (
     <Panel>
@@ -215,12 +224,27 @@ export const ServantPanel = createPanel(undefined, () => {
           <button
             className={classNames("btn-sm btn gap-2", {
               ["btn-warning"]: !remainingTea,
+              ["loading"]: buyEntities.isLoading,
             })}
             disabled={!canBuy}
             onClick={() => {
-              setBalance(balance >= 100 ? balance - 100 : 0);
-              setRemainingTea(remainingTea <= 90 ? remainingTea + 10 : 100);
-              toast.success("Çay satın alındı");
+              // ilerde bu button direkt mağazaya götürsün...
+              toast.loading("Çay satın alınıyor", { id: "buyTea" });
+              buyEntities.mutate(
+                [
+                  { entityId: 1, amount: 1 }, // 1kg
+                  { entityId: 2, amount: 5 }, // 200gr * 5 = 1kg
+                  // toplam 2kg çay 🤣🍔😭😎
+                ],
+                {
+                  onSuccess: () => {
+                    setRemainingTea(
+                      remainingTea <= 90 ? remainingTea + 10 : 100
+                    );
+                    toast.success("Çay satın alındı", { id: "buyTea" });
+                  },
+                }
+              );
             }}
           >
             Çay satın al

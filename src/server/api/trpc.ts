@@ -136,24 +136,20 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
 export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
 
 import { type AbdullezizPerm, permissionDecider } from "~/utils/abdulleziz";
-import { getGuildMember } from "../discord-api/guild";
-import {
-  fetchMembersWithRoles,
-  getAbdullezizRoles,
-} from "../discord-api/utils";
+import { getAbdullezizRoles } from "../discord-api/utils";
+import { getGuildMemberWithRoles } from "../discord-api/trpc";
 
 export const createPermissionProcedure = (requiredPerms: AbdullezizPerm[]) =>
   t.procedure.use(
     enforceUserIsAuthed.unstable_pipe(async ({ ctx, next }) => {
-      const discordId = ctx.session.user.discordId;
-
-      const partialMember = await getGuildMember(discordId);
-      if (!partialMember) throw new TRPCError({ code: "NOT_FOUND" });
-      const member = (await fetchMembersWithRoles([partialMember])).at(0)!;
+      const member = await getGuildMemberWithRoles(ctx.session.user.discordId);
       const verifiedRoles = getAbdullezizRoles(member.roles);
       const verifiedPerms = permissionDecider(verifiedRoles.map((r) => r.name));
 
-      if (!verifiedPerms.some((perm) => requiredPerms.includes(perm))) {
+      if (
+        requiredPerms.length &&
+        !verifiedPerms.some((perm) => requiredPerms.includes(perm))
+      ) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Perms not met" });
       }
       return next({

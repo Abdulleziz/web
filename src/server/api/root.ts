@@ -2,6 +2,7 @@ import { createTRPCRouter } from "~/server/api/trpc";
 import { forumRouter } from "~/server/api/routers/forum";
 import { discordRouter } from "./routers/discord";
 import { cronRouter } from "./routers/cron";
+import { paymentsRouter } from "./routers/payments";
 
 /**
  * This is the primary router for your server.
@@ -12,6 +13,7 @@ export const appRouter = createTRPCRouter({
   forum: forumRouter,
   discord: discordRouter,
   cron: cronRouter,
+  payments: paymentsRouter,
 });
 
 // export type definition of API
