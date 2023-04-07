@@ -36,7 +36,7 @@ const CronPage: NextPage = () => {
       const i = cronParser.parseExpression(cron, { utc: true });
       setParser(i);
 
-      if (calculateDiff(i) < 12) setError(null);
+      if (calculateDiff(i) >= 12) setError(null);
       else
         setError(
           "Hatırlatıcı en az 12 saat aralıklarla olmalı! (api ödiyecek paramız yok :D)"
@@ -87,7 +87,7 @@ const CronPage: NextPage = () => {
             <label
               htmlFor="create-cron"
               className={classNames("btn", {
-                ["btn-disabled"]: !input || (diff ?? 0) <= 12,
+                ["btn-disabled"]: !input || (diff ?? 0) < 12,
               })}
             >
               Oluştur
