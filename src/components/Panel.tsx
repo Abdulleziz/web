@@ -21,7 +21,7 @@ import { getAvatarUrl } from "~/server/discord-api/utils";
 import type { AbdullezizPerm } from "~/utils/abdulleziz";
 import classNames from "classnames";
 import { toast } from "react-hot-toast";
-import { useBuyEntities, useCreateSalary } from "~/utils/usePayments";
+import { useBuyEntities } from "~/utils/usePayments";
 
 ChartJS.register(
   RadialLinearScale,
@@ -73,8 +73,6 @@ export const MemberPanel = createPanel(undefined, () => {
   const canRequestRaise = data.perms.includes("zam iste");
   const canTakeSalary = data.perms.includes("maaş al");
 
-  const t = useCreateSalary();
-
   return (
     <Panel>
       <div className="menu flex items-center gap-4">
@@ -85,13 +83,7 @@ export const MemberPanel = createPanel(undefined, () => {
           </button>
         </div>
         <div className="menu-item">
-          <button
-            className="btn-sm btn"
-            disabled={!canRequestRaise}
-            onClick={() => {
-              t.mutate({});
-            }}
-          >
+          <button className="btn-sm btn" disabled={!canRequestRaise}>
             Zam iste
           </button>
         </div>
@@ -243,6 +235,8 @@ export const ServantPanel = createPanel(undefined, () => {
                     );
                     toast.success("Çay satın alındı", { id: "buyTea" });
                   },
+                  onError: () =>
+                    toast.error("Çay satın alınamadı", { id: "buyTea" }),
                 }
               );
             }}
