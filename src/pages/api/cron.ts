@@ -61,6 +61,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         data: salaryTakers.map((u) => ({
           type: "salary",
           toId: u.id,
+          fromId: parsed.fromId,
           amount:
             // highest_role.severity x multiplier (90 * 10 = 900)
             abdullezizRoleSeverities[sortRoles(u.roles).at(0)!.name] *
