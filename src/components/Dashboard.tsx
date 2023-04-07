@@ -14,7 +14,7 @@ import { useSession } from "next-auth/react";
 
 export const Dashboard: React.FC = () => {
   const { data: session } = useSession();
-  const { isLoading, data, isSuccess } = useGetAbdullezizUser();
+  const { isLoading, data } = useGetAbdullezizUser();
   const getDcMembers = useGetDiscordMembers();
 
   const members = getDcMembers.data ?? [];

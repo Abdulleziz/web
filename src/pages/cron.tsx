@@ -37,8 +37,12 @@ const CronPage: NextPage = () => {
   const parseCron = (cron: string) => {
     try {
       if (!cron.trim()) throw new Error("Cron boş olamaz!");
+      // UTC -> TR
       const i = cronParser.parseExpression(cron, { utc: true });
-      setParser(i);
+      // 3 saat geri al
+      const fields = UTCtoTR(i);
+      const iAsTR = cronParser.fieldsToExpression(fields);
+      setParser(iAsTR);
 
       if (calculateDiff(i) >= 12) setError(null);
       else
@@ -46,25 +50,15 @@ const CronPage: NextPage = () => {
           "Hatırlatıcı en az 12 saat aralıklarla olmalı! (api ödiyecek paramız yok :D)"
         );
     } catch (error) {
-      const err = error as { message: string };
-      setError(err.message);
-      setParser(null);
+      if (error instanceof Error) {
+        setError(error.message);
+        setParser(null);
+      }
     }
   };
 
   return (
     <Layout>
-      <div className="p-4">
-        <div className="alert alert-warning shadow-lg">
-          <div>
-            <WarningSVG />
-            <span>
-              Not: Cronları UTC formatında hazırlamayı unutmayın! (Türkiye 3
-              saat ilerde)
-            </span>
-          </div>
-        </div>
-      </div>
       <div>
         <div className="flex flex-col items-center justify-center gap-4 p-4">
           <div className="flex gap-4">
@@ -122,11 +116,11 @@ const CronPage: NextPage = () => {
           <div className="modal">
             <div className="modal-box">
               <h3 className="font-bold">Sonraki Hatırlatıcılar</h3>
-              <ul className="ml-4">
+              <ul className="p-4 gap-2">
                 {nextDates
                   .map((date) => date.toDate().toLocaleString("tr-TR"))
                   .map((date) => (
-                    <li className="list-disc" key={date}>
+                    <li className="list-disc text-xl text-accent" key={date}>
                       {date}
                     </li>
                   ))}
@@ -183,7 +177,7 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
               checked={!isGlobal}
               onChange={() => setIsGlobal((prev) => !prev)}
             />
-            <p>Cron: </p> <p>{cron}</p>
+            <p>Cron: </p> <p>{cron} (UTC)</p>
           </div>
           <div className="modal-action">
             <label className={"btn-warning btn"} htmlFor="create-cron">
@@ -225,8 +219,8 @@ const CronTable: React.FC = () => {
           <tr>
             <th>Katılımcılar</th>
             <th>Başlık</th>
-            <th>Cron</th>
-            <th></th>
+            <th>Cron (UTC)</th>
+            <th>Hepsi: {data.length}</th>
           </tr>
         </thead>
         <tbody>
@@ -350,14 +344,54 @@ const CronTable: React.FC = () => {
           <tr>
             <th>Katılımcılar</th>
             <th>Başlık</th>
-            <th>Cron</th>
-            <th></th>
+            <th>Cron (UTC)</th>
+            <th>Hepsi: {data.length}</th>
           </tr>
         </tfoot>
       </table>
     </div>
   );
 };
+
+
+function noDuplicate<T>(params: T[]) {
+  return params.filter((v, i) => i === params.indexOf(v));
+}
+
+function UTCtoTR(i: cronParser.CronExpression) {
+  // hiç kullanışlı olmayan, crondan 3 saat çıkaran bir fonksiyon
+  // eminim ki buglu, but who cares 😎😁🤣
+  // CONFIRMED BUG: cron: ayın ilk gününde ilk 3 saat içinde ise, ay değişmiyor.
+  const dayDiff = i.fields.hour.some((h) => h <= 3);
+  // 22 23 0 1 2 3 4 // eğer 3 saat çıkarırsak
+  // UTC...|........ // gün değişir, ve hafta
+  // TR..........|.. // ve aylar...
+  const dayOfWeek = i.fields.dayOfWeek.map((d) =>
+    // S M T W T F S
+    // 0 1 2 3 4 5 6
+    // 7
+    dayDiff ? (d === 0 || d === 7 ? 6 : d - 1) : d
+  );
+  const dayOfMonth =
+    i.fields.dayOfMonth.length !== 31
+      ? i.fields.dayOfMonth.map((d) =>
+          // if last day -> remain same
+          // if not last day and dayDiff -> -1
+          // if first day and dayDiff -> (L)ast day
+          dayDiff && d !== "L" ? (d === 1 ? "L" : d - 1) : d
+        )
+      : [...i.fields.dayOfMonth];
+  const fields: typeof i.fields = {
+    ...i.fields,
+    hour: i.fields.hour.map((h) =>
+      h < 3 ? h + 21 : h - 3
+    ) as typeof i.fields.hour,
+    dayOfWeek: noDuplicate(dayOfWeek) as typeof i.fields.dayOfWeek,
+    dayOfMonth: noDuplicate(dayOfMonth) as typeof i.fields.dayOfMonth,
+    // TODO: month handling...
+  };
+  return fields;
+}
 
 const WarningSVG: React.FC = () => {
   return (
