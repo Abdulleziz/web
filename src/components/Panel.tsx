@@ -235,6 +235,8 @@ export const ServantPanel = createPanel(undefined, () => {
                     );
                     toast.success("Çay satın alındı", { id: "buyTea" });
                   },
+                  onError: () =>
+                    toast.error("Çay satın alınamadı", { id: "buyTea" }),
                 }
               );
             }}
