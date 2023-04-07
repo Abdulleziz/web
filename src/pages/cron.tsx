@@ -28,7 +28,11 @@ const CronPage: NextPage = () => {
 
   const diff = parser ? calculateDiff(parser) : null;
   const validCron = parser ? parser.stringify() : "";
-  const nextDateString = parser ? parser.next().toString() : null;
+  const clone = () => cronParser.parseExpression(validCron, { utc: true });
+  const nextDates = parser ? clone().iterate(5) : null;
+  const nextDateString = parser
+    ? clone().next().toDate().toLocaleString("tr-TR")
+    : null;
 
   const parseCron = (cron: string) => {
     try {
@@ -94,11 +98,16 @@ const CronPage: NextPage = () => {
             </label>
           </div>
           <div className="flex flex-row items-center justify-center gap-4">
-            {nextDateString && (
-              <div>
-                <span className="text-info">Sonraki hatırlatıcı: </span>
-                <p>{nextDateString}</p>
-              </div>
+            {!!nextDateString && (
+              <>
+                <div>
+                  <span className="text-info">Sonraki hatırlatıcı: </span>
+                  <p>{nextDateString}</p>
+                </div>
+                <label htmlFor="test-modal" className="btn-xs btn">
+                  Hepsini göster
+                </label>
+              </>
             )}
             <p className="text-error">{error}</p>
           </div>
@@ -107,6 +116,30 @@ const CronPage: NextPage = () => {
       <div className="flex flex-col gap-4 p-8">
         <CronTable />
       </div>
+      {!!nextDates && (
+        <div>
+          <input type="checkbox" className="modal-toggle" id="test-modal" />
+          <div className="modal">
+            <div className="modal-box">
+              <h3 className="font-bold">Sonraki Hatırlatıcılar</h3>
+              <ul className="ml-4">
+                {nextDates
+                  .map((date) => date.toDate().toLocaleString("tr-TR"))
+                  .map((date) => (
+                    <li className="list-disc" key={date}>
+                      {date}
+                    </li>
+                  ))}
+              </ul>
+              <div className="modal-action">
+                <label htmlFor="test-modal" className="btn">
+                  Kapat
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <CronCreate key={validCron} cron={validCron} />
     </Layout>
   );
