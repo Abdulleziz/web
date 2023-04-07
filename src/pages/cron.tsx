@@ -11,35 +11,40 @@ import {
   useLeaveCron,
 } from "~/utils/useCron";
 
-const CronPage: NextPage = () => {
-  const [cron, setCron] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [parsed, setParsed] = useState<string | null>(null);
-  const [diff, setDiff] = useState<number | null>(null);
-  const [validCron, setValidCron] = useState("");
+const maker = "https://crontab.guru/";
 
-  const maker = "https://crontab.guru/";
+const calculateDiff = (cron: cronParser.CronExpression) => {
+  const next = cron.next().getTime();
+  const prev = cron.prev().getTime();
+  const diff = (next - prev) / (1000 * 60 * 24);
+  return diff;
+};
+
+const CronPage: NextPage = () => {
+  const [input, setInput] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const [parser, setParser] = useState<cronParser.CronExpression | null>(null);
+
+  const diff = parser ? calculateDiff(parser) : null;
+  const validCron = parser ? parser.stringify() : "";
+  const nextDateString = parser ? parser.next().toString() : null;
+
   const parseCron = (cron: string) => {
     try {
-      if (!cron.trim()) throw new Error();
-      const interval = cronParser.parseExpression(cron, { utc: true });
-      const diffHours =
-        (interval.next().getTime() - interval.prev().getTime()) /
-        (1000 * 60 * 24);
-      setDiff(diffHours);
-      setParsed(interval.next().toString());
-      setValidCron(interval.stringify());
-      if (diffHours <= 12)
+      if (!cron.trim()) throw new Error("Cron boş olamaz!");
+      const i = cronParser.parseExpression(cron, { utc: true });
+      setParser(i);
+
+      if (calculateDiff(i) < 12) setError(null);
+      else
         setError(
           "Hatırlatıcı en az 12 saat aralıklarla olmalı! (api ödiyecek paramız yok :D)"
         );
-      else setError(null);
     } catch (error) {
       const err = error as { message: string };
-      setDiff(null);
-      setParsed(null);
-      setValidCron("");
       setError(err.message);
+      setParser(null);
     }
   };
 
@@ -73,26 +78,26 @@ const CronPage: NextPage = () => {
               type="text"
               className="input"
               placeholder="Cron... (0 8 * * 5)"
-              value={cron}
+              value={input}
               onChange={(e) => {
-                flushSync(() => setCron(e.target.value));
+                flushSync(() => setInput(e.target.value));
                 parseCron(e.target.value);
               }}
             />
             <label
               htmlFor="create-cron"
               className={classNames("btn", {
-                ["btn-disabled"]: !cron || (diff ?? 0) <= 12,
+                ["btn-disabled"]: !input || (diff ?? 0) <= 12,
               })}
             >
               Oluştur
             </label>
           </div>
           <div className="flex flex-row items-center justify-center gap-4">
-            {parsed && (
+            {nextDateString && (
               <div>
                 <span className="text-info">Sonraki hatırlatıcı: </span>
-                <p>{parsed}</p>
+                <p>{nextDateString}</p>
               </div>
             )}
             <p className="text-error">{error}</p>
