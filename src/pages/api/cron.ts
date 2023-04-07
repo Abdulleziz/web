@@ -22,7 +22,7 @@ import { CreateSalary } from "~/server/api/routers/payments";
 
 export const CronBody = z.discriminatedUnion("type", [
   z.object({
-    type: z.undefined().optional(),
+    type: z.undefined(),
     cron: z.string(),
     debug: z.boolean().default(false),
   }),
