@@ -5,20 +5,21 @@ type GetThreads = RouterInputs["forum"]["getThreads"];
 type GetForum = RouterInputs["forum"]["getThreadById"];
 type GetPosts = RouterInputs["forum"]["posts"]["getMany"];
 
-export const useGetForumThreads = (input: GetThreads) => {
+export const useGetForumThreads = (input: GetThreads, prefetch = true) => {
   const utils = api.useContext();
   return api.forum.getThreads.useQuery(input, {
     onSuccess: (threads) => {
-      threads.forEach((thread) => {
-        // prefetch the thread, posts so it's ready when we navigate to it
-        void utils.forum.getThreadById.prefetch(thread.id, {
-          staleTime: 1000 * 5,
+      if (prefetch)
+        threads.forEach((thread) => {
+          // prefetch the thread, posts so it's ready when we navigate to it
+          void utils.forum.getThreadById.prefetch(thread.id, {
+            staleTime: 1000 * 5,
+          });
+          void utils.forum.posts.getMany.prefetchInfinite({
+            threadId: thread.id,
+            cursor: undefined,
+          });
         });
-        void utils.forum.posts.getMany.prefetchInfinite({
-          threadId: thread.id,
-          cursor: undefined,
-        });
-      });
     },
   });
 };

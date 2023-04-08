@@ -44,8 +44,8 @@ const ensurePayment = <
 ) => {
   if (p.type === "invoice") {
     const entityId = p.entityId!;
-    const entity = getSystemEntityById(entityId);
-    return { ...p, type: "invoice" as const, entityId, entity };
+    // const entity = getSystemEntityById(entityId);
+    return { ...p, type: "invoice" as const, entityId };
   } else if (p.type === "transfer") {
     const fromId = p.fromId!;
     const from = p.from!;

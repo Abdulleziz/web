@@ -1,55 +1,111 @@
 import { createPanel } from "./utils";
 import { usePaymentsHistory } from "~/utils/usePayments";
 import type { RouterOutputs } from "~/utils/api";
+import { useGetAllCrons } from "~/utils/useCron";
+import { useGetForumThreads } from "~/utils/useForum";
+import { getSystemEntityById } from "~/utils/entities";
 
 type PaymentData = RouterOutputs["payments"]["getAll"][number];
+type CronData = RouterOutputs["cron"]["getAll"][number];
+type ThreadData = RouterOutputs["forum"]["getThreads"][number];
 
-type HistoryStep = {
-  // only one history step for now
-  type: "payment";
-  data: PaymentData;
-};
+type HistoryStep =
+  | {
+      type: "payment";
+      data: PaymentData;
+    }
+  | {
+      type: "cron";
+      data: CronData;
+    }
+  | {
+      type: "thread";
+      data: ThreadData;
+    };
+
 const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
   switch (step.type) {
+    case "thread": {
+      const { creator, title, createdAt, pin } = step.data;
+      return (
+        <li className="step-warning step flex items-center space-x-4">
+          <div className="text-sm">
+            Thread: {title} by: {creator.name} pin: {pin ? "✅" : "🟥"} date:{" "}
+            <span className="text-accent">
+              {createdAt.toLocaleString("tr-TR")}
+            </span>
+            {!!pin && <> pin date: {pin.createdAt.toLocaleString("tr-TR")}</>}
+          </div>
+        </li>
+      );
+    }
+    case "cron": {
+      const { cron, isGlobal, listeners, title, createdAt } = step.data;
+      return (
+        <li className="step-warning step flex items-center space-x-4">
+          <div className="text-sm">
+            Cron: {title} cron: {cron} Herkese Açık: {isGlobal ? "✅" : "🟥"}{" "}
+            {isGlobal && (
+              <>
+                dinleyiciler:{" "}
+                <span className="text-xs">
+                  {listeners.map((l) => l.listener.name).join(", ")}
+                </span>
+              </>
+            )}
+            <span className="text-accent">
+              {" "}
+              {createdAt.toLocaleString("tr-TR")}
+            </span>
+          </div>
+        </li>
+      );
+    }
     case "payment":
-      const { id, type, to, toId, amount, createdAt } = step.data;
-      if (type === "salary") {
-        return (
-          <li className="step-warning step flex items-center space-x-4">
-            <div>
-              Salary: <span className="text-success">${amount}</span> to:{" "}
-              {to.name} date:{" "}
-              <span className="text-accent">
-                {createdAt.toLocaleString("tr-TR")}
-              </span>
-            </div>
-          </li>
-        );
-      }
-      if (type === "transfer") {
-        const { from, fromId } = step.data;
-        return (
-          <li className="step-warning step flex items-center space-x-4">
-            payment id: {id} from: {from.name} to: {to.name} amount: ${amount}
-          </li>
-        );
-      }
-      if (type === "invoice") {
-        const { entityId, entity } = step.data;
-        return (
-          <li className="step-warning step flex items-center space-x-4">
-            <div>
-              Invoice: entity:{entityId} type:{entity.type} date:{" "}
-              <span className="text-accent">
-                {createdAt.toLocaleString("tr-TR")}
-              </span>
-            </div>
-          </li>
-        );
+      {
+        const { id, type, to, toId, amount, createdAt } = step.data;
+        if (type === "salary") {
+          return (
+            <li className="step-warning step flex items-center space-x-4">
+              <div className="text-sm">
+                Salary: <span className="text-success">${amount}</span> to:{" "}
+                {to.name} date:{" "}
+                <span className="text-accent">
+                  {createdAt.toLocaleString("tr-TR")}
+                </span>
+              </div>
+            </li>
+          );
+        }
+        if (type === "transfer") {
+          const { from, fromId } = step.data;
+          return (
+            <li className="step-warning step flex items-center space-x-4">
+              payment id: {id} from: {from.name} to: {to.name} amount: ${amount}
+            </li>
+          );
+        }
+        if (type === "invoice") {
+          const { entityId } = step.data;
+          const entity = getSystemEntityById(entityId);
+          return (
+            <li className="step-warning step flex items-center space-x-4">
+              <div>
+                Invoice: {entity.type.toUpperCase()} {amount}x
+                <span className="text-primary">${entity.price}</span>=
+                <span className="text-success">${amount * entity.price}</span>{" "}
+                to: {to.name} date:{" "}
+                <span className="text-accent">
+                  {createdAt.toLocaleString("tr-TR")}
+                </span>
+              </div>
+            </li>
+          );
+        }
       }
       break;
     default:
-      const _exhaustiveCheck: never = step.type;
+      const _exhaustiveCheck: never = step;
       throw new Error(`Unhandled step type`);
   }
   return null;
@@ -57,6 +113,8 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
 
 export const HistoryPanel = createPanel([], () => {
   const buyHistory = usePaymentsHistory().data ?? [];
+  const cronHistory = useGetAllCrons().data ?? [];
+  const threadHistory = useGetForumThreads(undefined, false).data ?? [];
 
   //   // DEMO, TEST DATA
   //   const barkin = users.find((u) => u.user.id === "288397394465521664")!;
@@ -80,12 +138,13 @@ export const HistoryPanel = createPanel([], () => {
 
   const history: HistoryStep[] = [
     // tüm historyleri birleştiriyoruz
-    // şimdilik sadece payment var
+    ...threadHistory.map((t) => ({ type: "thread" as const, data: t })),
+    ...cronHistory.map((c) => ({ type: "cron" as const, data: c })),
     ...buyHistory.map((b) => ({ type: "payment" as const, data: b })),
     // TODO: aynı anda dağıtılan payment'ler için pool oluştur ve
     // tek bir step olarak göster
     // NOTE: pool oluşturmak için step.createAt.getTime() identifier olarak kullanılabilir! 😎
-  ];
+  ].sort((a, b) => b.data.createdAt.getTime() - a.data.createdAt.getTime());
 
   return (
     <div className="row-span-3 rounded-lg bg-base-100 shadow">
