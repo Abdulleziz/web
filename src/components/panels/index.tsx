@@ -21,7 +21,7 @@ import { getAvatarUrl } from "~/server/discord-api/utils";
 import classNames from "classnames";
 import { toast } from "react-hot-toast";
 import { useBuyEntities, useNextSalaryDate } from "~/utils/usePayments";
-import { createPanel } from "./utils";
+import { createModal, createPanel } from "./utils";
 
 ChartJS.register(
   RadialLinearScale,
@@ -103,14 +103,73 @@ export const AdminPanel = createPanel(
     const manageForum = data.perms.includes("forumu yönet");
     const manageForumPins = data.perms.includes("forum thread pinle");
 
+    const { Modal, ModalTrigger } = createModal(
+      "manage-members",
+      "Çalışanları yönet"
+    );
+
+    const o7 =
+      "https://github.com/Abdulleziz/web/tree/main/src/components/panels/index.tsx#119";
+
     return (
       <Panel>
+        <Modal>
+          <h3 className="text-lg font-bold">
+            Çalışanları Yönet{" "}
+            <span className="badge-secondary badge badge-lg">Beta</span>{" "}
+            <span className="badge badge-lg">Work In Progress</span>
+          </h3>
+          <p className="py-4">
+            <div className="font-bold text-primary">
+              Bu paneli tamamlamak için yardım lazım. <br />
+              Fikirleriniz çok önemli. <br />
+              <a href={o7} className="link text-secondary">
+                Github: src/components/panels/index.tsx
+              </a>
+            </div>
+            <ul className="gap-2 p-4">
+              <p className="p-2 text-xl font-bold">Yapılacaklar...</p>
+              <li className="list-disc">
+                Kullanıcıları yönet (Rolleri vb...) <br />
+                <span className={manageUsers ? "text-success" : "text-error"}>
+                  (you are {!manageUsers && "not "}
+                  eligible)
+                </span>
+                <br />
+                #1: Kovmak için birden fazla kurul üyesi oy vermeli <br />
+                #2: Intern{"'"}lere Pozisyon vermek <br />
+                #3: Rol düşürmek/yükseltmek <br />
+                #4: Hayko Cepkin{"'"}e laf etmek ban sebebi <br />
+              </li>
+              <li className="list-disc">
+                Manuel/Ekstra Maaş dağıt (kullanım alanları: özel günlerde){" "}
+                <br />
+                <span className={manageUsers ? "text-success" : "text-error"}>
+                  (you are {!manageUsers && "not "}
+                  eligible)
+                </span>
+              </li>
+              <li className="list-disc">
+                Daha aklıma gelmedi, fikirleriniz varsa{" "}
+                <a href={o7} className="link-primary link">
+                  buraya
+                </a>{" "}
+                ekleyin <br />
+                <span className="text-success">(you are eligible 🤣)</span>
+              </li>
+            </ul>
+          </p>
+        </Modal>
         <div className="menu flex items-center gap-4">
           <div className="menu-title">Yönetici İşlemleri</div>
           <div className="menu-item">
-            <button className="btn-sm btn" disabled={!manageUsers}>
-              Çalışanları yönet
-            </button>
+            <ModalTrigger
+              className={classNames("btn-sm btn", {
+                // ["disabled"]: !manageUsers,
+                // şimdilik herkes görebilsin
+                // yardım lazım UI için 🤣
+              })}
+            />
           </div>
           <div className="menu-item">
             <Link href="/forum">
