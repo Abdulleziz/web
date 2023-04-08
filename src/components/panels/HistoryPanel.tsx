@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createPanel } from "./utils";
 import { usePaymentsHistory } from "~/utils/usePayments";
 import type { RouterOutputs } from "~/utils/api";
@@ -26,11 +27,15 @@ type HistoryStep =
 const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
   switch (step.type) {
     case "thread": {
-      const { creator, title, createdAt, pin } = step.data;
+      const { id, creator, title, createdAt, pin } = step.data;
       return (
         <li className="step-warning step flex items-center space-x-4">
           <div className="text-sm">
-            Thread: {title} by: {creator.name} pin: {pin ? "✅" : "🟥"} date:{" "}
+            Thread:{" "}
+            <Link className="link-secondary link" href={`/forum/threads/${id}`}>
+              {title}
+            </Link>{" "}
+            by: {creator.name} pin: {pin ? "✅" : "🟥"} date:{" "}
             <span className="text-accent">
               {createdAt.toLocaleString("tr-TR")}
             </span>
@@ -40,11 +45,18 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
       );
     }
     case "cron": {
-      const { cron, isGlobal, listeners, title, createdAt } = step.data;
+      const { cron, isGlobal, listeners, title, createdAt, lastRun } =
+        step.data;
+      const url = new URL("/cron", window.location.href);
+      url.searchParams.set("exp", cron);
       return (
         <li className="step-warning step flex items-center space-x-4">
           <div className="text-sm">
-            Cron: {title} cron: {cron} Herkese Açık: {isGlobal ? "✅" : "🟥"}{" "}
+            Cron:{" "}
+            <Link className="link-secondary link" href={url}>
+              {title}
+            </Link>{" "}
+            exp: {cron} Herkese Açık: {isGlobal ? "✅" : "🟥"}{" "}
             {isGlobal && (
               <>
                 dinleyiciler:{" "}
