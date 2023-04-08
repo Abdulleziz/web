@@ -80,3 +80,15 @@ export const connectMembersWithIds = async <
       ...member,
     }));
 };
+
+export const timedCache = <T>(fn: () => Promise<T>, ms: number) => {
+  let cache: T | undefined;
+  let lastFetched = 0;
+  return async () => {
+    if (Date.now() - lastFetched > ms) {
+      cache = await fn();
+      lastFetched = Date.now();
+    }
+    return cache;
+  };
+};

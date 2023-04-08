@@ -15,6 +15,14 @@ export async function discordFetch<T>(path: string, options: RequestInit) {
         throw new TRPCError({ code: "UNAUTHORIZED", cause: res.statusText });
       case 403:
         throw new TRPCError({ code: "FORBIDDEN", cause: res.statusText });
+      case 429:
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: `Rate limited: ${
+            res.headers.get("X-RateLimit-Reset-After") || "unknown"
+          }`,
+          cause: res.statusText,
+        });
 
       default:
         throw new TRPCError({

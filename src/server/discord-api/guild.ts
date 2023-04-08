@@ -7,6 +7,7 @@ import type {
 } from "discord-api-types/v10";
 
 import { discordFetch } from ".";
+import { timedCache } from "./utils";
 
 export type Member = RESTGetAPIGuildMemberResult;
 export type Roles = RESTGetAPIGuildRolesResult;
@@ -22,10 +23,27 @@ export async function getGuildMember(
   });
 }
 
+const createGetGuildMembers = (guildId: string) => {
+  // çok fazla discord api request atmasın diye 1 dakika cacheleyelim
+  return timedCache(
+    () =>
+      discordFetch<Member[]>(`guilds/${guildId}/members?limit=100`, {
+        method: "GET",
+      }),
+    1000 * 60
+  );
+};
+
+const getGuildMembersIdCache = new Map<
+  string,
+  ReturnType<typeof createGetGuildMembers>
+>();
+
 export async function getGuildMembers(guildId = ABDULLEZIZ_SERVER_ID) {
-  return await discordFetch<Member[]>(`guilds/${guildId}/members?limit=100`, {
-    method: "GET",
-  });
+  if (!getGuildMembersIdCache.has(guildId)) {
+    getGuildMembersIdCache.set(guildId, createGetGuildMembers(guildId));
+  }
+  return await getGuildMembersIdCache.get(guildId)!();
 }
 
 export async function modifyGuildMember(
