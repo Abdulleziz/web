@@ -358,7 +358,7 @@ function noDuplicate<T>(params: T[]) {
   return params.filter((v, i) => i === params.indexOf(v));
 }
 
-function UTCtoTR(i: cronParser.CronExpression) {
+export function UTCtoTR(i: cronParser.CronExpression) {
   // hiç kullanışlı olmayan, crondan 3 saat çıkaran bir fonksiyon
   // eminim ki buglu, but who cares 😎😁🤣
   // CONFIRMED BUG: cron: ayın ilk gününde ilk 3 saat içinde ise, ay değişmiyor.

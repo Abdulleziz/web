@@ -11,7 +11,7 @@ import type { ChartData, ChartOptions } from "chart.js";
 import { Radar } from "react-chartjs-2";
 
 import Link from "next/link";
-import { type CSSProperties, useEffect, useState, useRef } from "react";
+import { type CSSProperties, useEffect, useState, useCallback } from "react";
 import {
   useGetAbdullezizUser,
   useGetAbdullezizUsers,
@@ -20,7 +20,7 @@ import {
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import classNames from "classnames";
 import { toast } from "react-hot-toast";
-import { useBuyEntities } from "~/utils/usePayments";
+import { useBuyEntities, useNextSalaryDate } from "~/utils/usePayments";
 import { createPanel } from "./utils";
 
 ChartJS.register(
@@ -81,7 +81,7 @@ export const MemberPanel = createPanel(undefined, () => {
         {canTakeSalary && (
           <div className="menu-item">
             Sonraki Maaş
-            <DemoCounter />
+            <SalaryCounter />
           </div>
         )}
       </div>
@@ -255,18 +255,23 @@ export const ServantPanel = createPanel(undefined, () => {
   );
 });
 
-export const DemoCounter = () => {
-  const nextDay = useRef(new Date(Date.now() + 1000 * 60 * 60 * 24).getTime());
-  const [remains, setRemains] = useState(
-    () => nextDay.current - new Date().getTime()
-  );
+export const SalaryCounter = () => {
+  const nextSalaryDate = useNextSalaryDate();
+  const nextDay = nextSalaryDate.data ?? new Date().getTime();
+  const [remains, setRemains] = useState(() => nextDay - new Date().getTime());
+
+  const refreshRemains = useCallback(() => {
+    setRemains(nextDay - new Date().getTime());
+    if (remains <= 0 && !nextSalaryDate.isLoading)
+      void nextSalaryDate.refetch();
+  }, [nextDay, remains, nextSalaryDate]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setRemains(nextDay.current - new Date().getTime());
+      refreshRemains();
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [nextDay, refreshRemains]);
 
   const days = Math.floor(remains / (1000 * 60 * 60 * 24));
   const hours = Math.floor(

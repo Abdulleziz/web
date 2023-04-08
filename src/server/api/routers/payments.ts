@@ -10,6 +10,7 @@ import { z } from "zod";
 import { env } from "~/env.mjs";
 import { prisma } from "~/server/db";
 import { Client } from "@upstash/qstash/nodejs";
+import { parseExpression } from "cron-parser";
 import type { CronBody } from "~/pages/api/cron";
 import { appRouter } from "../root";
 import { connectMembersWithIds, sortRoles } from "~/server/discord-api/utils";
@@ -124,8 +125,14 @@ const manageEmployeesProcedure = createPermissionProcedure([
   "çalışanları yönet",
 ]);
 
+const takeSalaryProcedure = createPermissionProcedure(["maaş al"]);
+
 // api router
 export const paymentsRouter = createTRPCRouter({
+  nextSalaryDate: takeSalaryProcedure.query(() => {
+    const i = parseExpression("0 9,21 * * *", { utc: true });
+    return i.next().getTime();
+  }),
   getWallet: protectedProcedure.query(async ({ ctx }) => {
     return await calculateWallet(ctx.session.user.id);
   }),

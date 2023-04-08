@@ -30,3 +30,8 @@ export const useCreateSalary = () => api.payments.createSalary.useMutation();
 // delay -> yarın, 2 saat sonra, 1 hafta sonra
 // multiplier -> abdulleziz role severity * multiplier
 // örn: CTO=90 multiplier=20 = 1800
+
+export const useNextSalaryDate = () =>
+  api.payments.nextSalaryDate.useQuery(undefined, {
+    staleTime: Infinity,
+  });
