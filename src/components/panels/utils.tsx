@@ -15,14 +15,11 @@ type Props = {
 };
 
 export const createModal = (id: string, openText: string) => {
-  const [DEBUG, setDEBUG] = useState(true);
-
   const Modal = ({ children }: Props) => {
     return (
       <>
         <input
-          checked={DEBUG}
-          onChange={() => setDEBUG(!DEBUG)}
+          defaultChecked={true}
           type="checkbox"
           id={id}
           className="modal-toggle"
