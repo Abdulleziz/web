@@ -1,4 +1,4 @@
-import type { Payment, PrismaClient } from "@prisma/client";
+import type { Payment, Prisma, PrismaClient } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { getSystemEntityById } from "~/utils/entities";
 import {
@@ -37,6 +37,28 @@ type CreateEntities = z.infer<typeof CreateEntities>;
 type CreateSalary = z.infer<typeof CreateSalary>;
 
 // utils
+const ensurePayment = <
+  P extends Prisma.PaymentGetPayload<{ include: { from: true } }>
+>(
+  p: P
+) => {
+  if (p.type === "invoice") {
+    const entityId = p.entityId!;
+    const entity = getSystemEntityById(entityId);
+    return { ...p, type: "invoice" as const, entityId, entity };
+  } else if (p.type === "transfer") {
+    const fromId = p.fromId!;
+    const from = p.from!;
+    return { ...p, type: p.type, fromId, from };
+  } else if (p.type === "salary") {
+    return { ...p, type: p.type };
+  }
+  throw new TRPCError({
+    code: "INTERNAL_SERVER_ERROR",
+    message: "Unknown payment type",
+  });
+};
+
 export const calculateInvoice = (payment: Payment) => {
   if (payment.type !== "invoice" || !payment.entityId)
     throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -108,7 +130,11 @@ export const paymentsRouter = createTRPCRouter({
     return await calculateWallet(ctx.session.user.id);
   }),
   getAll: protectedProcedure.query(async ({ ctx }) => {
-    return await ctx.prisma.payment.findMany();
+    return (
+      await ctx.prisma.payment.findMany({
+        include: { from: true, to: true },
+      })
+    ).map(ensurePayment);
   }),
   buyEntities: protectedProcedure
     .input(CreateEntities)

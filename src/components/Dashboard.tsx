@@ -8,7 +8,7 @@ import {
   VoteChart,
   MembersPanel,
   HistoryPanel,
-} from "./Panel";
+} from "./panels";
 import { useGetAbdullezizUser, useGetDiscordMembers } from "~/utils/useDiscord";
 import { useSession } from "next-auth/react";
 
