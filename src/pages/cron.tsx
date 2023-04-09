@@ -1,5 +1,5 @@
 import type { NextPage } from "next";
-import { useRef, useState } from "react";
+import { type ChangeEvent, useRef, useState } from "react";
 import { Layout } from "~/components/Layout";
 import cronParser from "cron-parser";
 import { flushSync } from "react-dom";
@@ -20,6 +20,17 @@ const calculateDiff = (cron: cronParser.CronExpression) => {
   return diff;
 };
 
+// not implemented yet...
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// cron input hem custom hem alttaki seçeneklerden biri olacak
+const predefinedCrons = {
+  "Her x dakikada bir": (min = 1) => `*/${min} * * * *`,
+  "Her x saatte bir": (hour = 1) => `0 */${hour} * * *`,
+  "Her Gün": (hour = 0, min = 0) => `${min} ${hour} * * *`,
+  "Her Haftasonu": (hour = 0, min = 0) => `${min} ${hour} * * 0,6`, // cumartesi-pazar
+  "Her Haftaiçi": (hour = 0, min = 0) => `${min} ${hour} * * 1-5`, // pazartesi-cuma
+} as const;
+
 const CronPage: NextPage = () => {
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +44,12 @@ const CronPage: NextPage = () => {
   const nextDateString = parser
     ? clone().next().toDate().toLocaleString("tr-TR")
     : null;
+
+  const handleSubmit = (cron: string) => {
+    // manuel or predefined cron submit handler
+    flushSync(() => setInput(cron));
+    parseCron(cron);
+  };
 
   const parseCron = (cron: string) => {
     try {
@@ -77,10 +94,7 @@ const CronPage: NextPage = () => {
               className="input"
               placeholder="Cron... (0 8 * * 5)"
               value={input}
-              onChange={(e) => {
-                flushSync(() => setInput(e.target.value));
-                parseCron(e.target.value);
-              }}
+              onChange={(e) => handleSubmit(e.target.value)}
             />
             <label
               htmlFor="create-cron"
@@ -116,7 +130,7 @@ const CronPage: NextPage = () => {
           <div className="modal">
             <div className="modal-box">
               <h3 className="font-bold">Sonraki Hatırlatıcılar</h3>
-              <ul className="p-4 gap-2">
+              <ul className="gap-2 p-4">
                 {nextDates
                   .map((date) => date.toDate().toLocaleString("tr-TR"))
                   .map((date) => (
@@ -352,7 +366,6 @@ const CronTable: React.FC = () => {
     </div>
   );
 };
-
 
 function noDuplicate<T>(params: T[]) {
   return params.filter((v, i) => i === params.indexOf(v));
