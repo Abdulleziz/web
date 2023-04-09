@@ -12,9 +12,7 @@ import { prisma } from "~/server/db";
 import { Client } from "@upstash/qstash/nodejs";
 import { parseExpression } from "cron-parser";
 import type { CronBody } from "~/pages/api/cron";
-import { appRouter } from "../root";
-import { connectMembersWithIds, sortRoles } from "~/server/discord-api/utils";
-import { abdullezizRoleSeverities } from "~/utils/zod-utils";
+import { getSalaryTakers } from "~/server/discord-api/trpc";
 
 // validators
 export const CreateEntities = z
@@ -44,13 +42,14 @@ const ensurePayment = <
   p: P
 ) => {
   if (p.type === "invoice") {
-    const entityId = p.entityId!;
-    // const entity = getSystemEntityById(entityId);
-    return { ...p, type: "invoice" as const, entityId };
+    if (!p.entityId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    // const entity = getSystemEntityById(p.entityId);
+    return { ...p, type: "invoice" as const, entityId: p.entityId };
   } else if (p.type === "transfer") {
-    const fromId = p.fromId!;
-    const from = p.from!;
-    return { ...p, type: p.type, fromId, from };
+    if (!p.fromId || !p.from)
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    return { ...p, type: p.type, fromId: p.fromId, from: p.from };
   } else if (p.type === "salary") {
     return { ...p, type: p.type };
   }
@@ -194,22 +193,18 @@ export const paymentsRouter = createTRPCRouter({
         });
       } else {
         // currently in dev, we don't have a cron job
-        const internalCaller = appRouter.createCaller(ctx);
-        const users = await internalCaller.discord.getAbdullezizUsers();
-
-        const salaryTakers = (
-          await connectMembersWithIds(ctx.prisma, users)
-        ).filter((u) => u.perms.includes("maaş al"));
+        const salaryTakers = await getSalaryTakers();
 
         await prisma.payment.createMany({
-          data: salaryTakers.map((u) => ({
-            type: "salary",
-            toId: u.id,
-            amount:
-              // highest_role.severity x multiplier (90 * 10 = 900)
-              abdullezizRoleSeverities[sortRoles(u.roles).at(0)!.name] *
-              multiplier,
-          })),
+          data: salaryTakers.map((u) => {
+            return {
+              type: "salary",
+              toId: u.id,
+              amount:
+                // highest_role.severity x multiplier (90 * 10 = 900)
+                u.severity * multiplier,
+            };
+          }),
         });
       }
     }),

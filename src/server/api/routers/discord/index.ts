@@ -3,6 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { roleRouter } from "./role";
 import { permissionDecider } from "~/utils/abdulleziz";
 import {
+  getAbdullezizUsers,
   getGuildMemberWithRoles,
   getGuildMembersWithRoles,
 } from "~/server/discord-api/trpc";
@@ -23,18 +24,7 @@ export const discordRouter = createTRPCRouter({
     return { roles: verifiedRoles, perms: verifiedPerms };
   }),
   getAbdullezizUsers: protectedProcedure.query(async () => {
-    const members = await getGuildMembersWithRoles();
-    const verifiedRoles = members.map((m) => getAbdullezizRoles(m.roles));
-    const verifiedPerms = verifiedRoles.map((r) =>
-      permissionDecider(r.map((r) => r.name))
-    );
-    const verifiedMembers = members.map((m, i) => ({
-      ...m,
-      user: m.user!,
-      roles: verifiedRoles[i]!,
-      perms: verifiedPerms[i]!,
-    }));
-    return verifiedMembers;
+    return await getAbdullezizUsers();
   }),
   role: roleRouter,
 });

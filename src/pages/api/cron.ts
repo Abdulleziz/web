@@ -10,11 +10,8 @@ import type {
 import { Routes } from "discord-api-types/v10";
 import { env } from "~/env.mjs";
 import { REST } from "@discordjs/rest";
-import { getServerAuthSession } from "~/server/auth";
-import { appRouter } from "~/server/api/root";
-import { connectMembersWithIds, sortRoles } from "~/server/discord-api/utils";
-import { abdullezizRoleSeverities } from "~/utils/zod-utils";
 import { CreateSalary } from "~/server/api/routers/payments";
+import { getSalaryTakers } from "~/server/discord-api/trpc";
 
 // const CronHeader = z.object({
 //   "upstash-message-id": z.string(),
@@ -48,14 +45,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     if (parsed.type === "salary") {
       // connect to trpc
-      const session = await getServerAuthSession({ req, res });
-      const internalCaller = appRouter.createCaller({ prisma, session });
-
-      const users = await internalCaller.discord.getAbdullezizUsers();
-
-      const salaryTakers = (await connectMembersWithIds(prisma, users)).filter(
-        (u) => u.perms.includes("maaş al")
-      );
+      const salaryTakers = await getSalaryTakers();
 
       const result = await prisma.payment.createMany({
         data: salaryTakers.map((u) => ({
@@ -64,8 +54,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           fromId: parsed.fromId,
           amount:
             // highest_role.severity x multiplier (90 * 10 = 900)
-            abdullezizRoleSeverities[sortRoles(u.roles).at(0)!.name] *
-            parsed.multiplier,
+            u.severity * parsed.multiplier,
         })),
       });
       console.log({ result });

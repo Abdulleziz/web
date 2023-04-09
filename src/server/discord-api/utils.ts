@@ -1,5 +1,9 @@
 import type { PrismaClient } from "@prisma/client";
-import { type AbdullezizRole, abdullezizRoles } from "~/utils/zod-utils";
+import {
+  abdullezizRoles,
+  type AbdullezizRole,
+  type AtLeastOne,
+} from "~/utils/zod-utils";
 import {
   ABDULLEZIZ_SERVER_ID,
   getGuildRoles,
@@ -26,13 +30,16 @@ export const getAbdullezizRoles = (roles: Roles) => {
     .map((role) => ({ ...role, name: role.name as AbdullezizRole }));
 };
 
-export const fetchMembersWithRoles = async (members: Member[]) => {
+export const fetchMembersWithRoles = async <M extends Member>(
+  members: AtLeastOne<M>
+) => {
   const roles = sortRoles(await getGuildRoles());
 
-  return members.map((member) => ({
+  const r = members.map((member) => ({
     ...member,
     roles: roles.filter((role) => member.roles.includes(role.id)),
   }));
+  return r as AtLeastOne<(typeof r)[number]>;
 };
 
 export const getAvatarUrl = (
@@ -73,12 +80,17 @@ export const connectMembersWithIds = async <
         u.accounts.some((a) => a.providerAccountId === member.user.id)
       )
     )
-    .map((member) => ({
-      id: dbUsers.find((u) =>
+    .map((member) => {
+      const u = dbUsers.find((u) =>
         u.accounts.some((a) => a.providerAccountId === member.user.id)
-      )!.id,
-      ...member,
-    }));
+      );
+      if (!u) throw new Error("unreachable, connectMembersWithIds");
+
+      return {
+        id: u.id,
+        ...member,
+      };
+    });
 };
 
 export const timedCache = <T>(fn: () => Promise<T>, ms: number) => {

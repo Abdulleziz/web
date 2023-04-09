@@ -42,7 +42,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, user }) {
       if (session.user) {
-        const accounts = await prisma.account.findMany({
+        const account = await prisma.account.findFirstOrThrow({
           where: { userId: user.id },
           select: { providerAccountId: true },
         });
@@ -50,9 +50,9 @@ export const authOptions: NextAuthOptions = {
         const abdullezizMembers = await getGuildMembers();
 
         session.user.id = user.id;
-        session.user.discordId = accounts[0]!.providerAccountId;
+        session.user.discordId = account.providerAccountId;
         session.user.inAbdullezizServer = !!abdullezizMembers?.find(
-          (member) => member.user!.id === session.user.discordId
+          (member) => member.user.id === session.user.discordId
         );
         // session.user.role = user.role; <-- put other properties on the session here
       }

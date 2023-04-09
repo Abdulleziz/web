@@ -372,9 +372,7 @@ export const SalaryCounter = () => {
 export const VoteChart = createPanel(undefined, () => {
   const getDcMembers = useGetDiscordMembers();
 
-  const members = (getDcMembers.data ?? [])
-    .map((m) => ({ ...m, user: m.user! })) // assert user is defined
-    .filter((m) => !m.user.bot); // filter out bots
+  const members = (getDcMembers.data ?? []).filter((m) => !m.user.bot); // filter out bots
 
   const ChartOptions: ChartOptions<"radar"> = {
     scales: {
