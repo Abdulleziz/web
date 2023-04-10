@@ -158,6 +158,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         await announce(channel.id);
       }
     }
+    await prisma.cronJob.update({
+      where: { id: job.id },
+      data: { lastRun: new Date() },
+    });
 
     console.log("posted to discord");
     res.status(200).send("OK - cron");
