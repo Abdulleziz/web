@@ -18,12 +18,7 @@ export const createModal = (id: string, openText: string) => {
   const Modal = ({ children }: Props) => {
     return (
       <>
-        <input
-          defaultChecked={true}
-          type="checkbox"
-          id={id}
-          className="modal-toggle"
-        />
+        <input type="checkbox" id={id} className="modal-toggle" />
         <label htmlFor={id} className="modal cursor-pointer">
           <label className="modal-box relative" htmlFor="">
             {children}

@@ -5,10 +5,12 @@ import type { RouterOutputs } from "~/utils/api";
 import { useGetAllCrons } from "~/utils/useCron";
 import { useGetForumThreads } from "~/utils/useForum";
 import { getSystemEntityById } from "~/utils/entities";
+import { useConsumeTeaHistory } from "~/utils/useConsumable";
 
 type PaymentData = RouterOutputs["payments"]["getAll"][number];
 type CronData = RouterOutputs["cron"]["getAll"][number];
 type ThreadData = RouterOutputs["forum"]["getThreads"][number];
+type ConsumeTeaData = RouterOutputs["consumable"]["tea"]["history"][number];
 
 type HistoryStep =
   | {
@@ -22,10 +24,29 @@ type HistoryStep =
   | {
       type: "thread";
       data: ThreadData;
+    }
+  | {
+      type: "consumeTea";
+      data: ConsumeTeaData;
     };
 
 const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
   switch (step.type) {
+    case "consumeTea": {
+      const { createdAt, amountGram, consumer } = step.data;
+      return (
+        <li className="step-warning step flex items-center space-x-4">
+          <div className="text-sm">
+            {consumer.name} kardeşimiz güzelinden{" "}
+            <span className="text-success">{(amountGram / 5).toFixed()} </span>
+            çay içti. tarih:{" "}
+            <span className="text-accent">
+              {createdAt.toLocaleString("tr-TR")}
+            </span>
+          </div>
+        </li>
+      );
+    }
     case "thread": {
       const { id, creator, title, createdAt, pin } = step.data;
       return (
@@ -45,8 +66,7 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
       );
     }
     case "cron": {
-      const { cron, isGlobal, listeners, title, createdAt } =
-        step.data;
+      const { cron, isGlobal, listeners, title, createdAt } = step.data;
       const url = new URL("/cron", window.location.href);
       url.searchParams.set("exp", cron);
       return (
@@ -127,6 +147,7 @@ export const HistoryPanel = createPanel([], () => {
   const buyHistory = usePaymentsHistory().data ?? [];
   const cronHistory = useGetAllCrons().data ?? [];
   const threadHistory = useGetForumThreads(undefined, false).data ?? [];
+  const consumeTeaHistory = useConsumeTeaHistory().data ?? [];
 
   //   // DEMO, TEST DATA
   //   const barkin = users.find((u) => u.user.id === "288397394465521664")!;
@@ -150,6 +171,7 @@ export const HistoryPanel = createPanel([], () => {
 
   const history: HistoryStep[] = [
     // tüm historyleri birleştiriyoruz
+    ...consumeTeaHistory.map((c) => ({ type: "consumeTea" as const, data: c })),
     ...threadHistory.map((t) => ({ type: "thread" as const, data: t })),
     ...cronHistory.map((c) => ({ type: "cron" as const, data: c })),
     ...buyHistory.map((b) => ({ type: "payment" as const, data: b })),

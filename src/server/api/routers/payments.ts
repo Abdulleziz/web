@@ -1,6 +1,6 @@
-import type { Payment, Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
-import { getSystemEntityById } from "~/utils/entities";
+import { type SystemEntity, getSystemEntityById } from "~/utils/entities";
 import {
   createPermissionProcedure,
   createTRPCRouter,
@@ -8,7 +8,7 @@ import {
 } from "../trpc";
 import { z } from "zod";
 import { env } from "~/env.mjs";
-import { prisma } from "~/server/db";
+import { type Transaction, prisma } from "~/server/db";
 import { Client } from "@upstash/qstash/nodejs";
 import { parseExpression } from "cron-parser";
 import type { CronBody } from "~/pages/api/cron";
@@ -59,12 +59,29 @@ const ensurePayment = <
   });
 };
 
-export const calculateInvoice = (payment: Payment) => {
+export const calculateInvoice = (
+  payment: Prisma.PaymentGetPayload<{
+    select: { type: true; entityId: true; amount: true };
+  }>
+) => {
   if (payment.type !== "invoice" || !payment.entityId)
     throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
   const entity = getSystemEntityById(payment.entityId);
   return payment.amount * entity.price;
+};
+
+export const calculateInvoices = (
+  payments: Parameters<typeof calculateInvoice>[number][],
+  entityFilter?: SystemEntity["type"][]
+) => {
+  const p = payments.filter((p) => {
+    if (!p.entityId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    if (!entityFilter) return true;
+    const entity = getSystemEntityById(p.entityId);
+    return entityFilter.includes(entity.type);
+  });
+  return p.reduce((acc, p) => acc + calculateInvoice(p), 0);
 };
 
 export const calculateEntitiesPrice = (entities: CreateEntities) => {
@@ -82,16 +99,13 @@ export const calculateEntitiesPrice = (entities: CreateEntities) => {
 
 export const calculateWallet = async (
   userId: string,
-  transaction?: Omit<
-    PrismaClient,
-    "$connect" | "$disconnect" | "$on" | "$transaction" | "$use"
-  > // transactions support
+  db: Transaction = prisma
 ) => {
   const wallet = { balance: 0 };
   // kickstart the wallet in dev
   if (env.NODE_ENV !== "production") wallet.balance += 1000000;
 
-  const payments = await (transaction || prisma).payment.findMany({
+  const payments = await db.payment.findMany({
     where: { OR: [{ toId: userId }, { fromId: userId }] },
   });
 
@@ -152,7 +166,7 @@ export const paymentsRouter = createTRPCRouter({
         if (balance < totalPrice)
           throw new TRPCError({
             code: "PRECONDITION_FAILED",
-            message: "Not enough money",
+            message: "Yetersiz bakiye",
           });
 
         return await ctx.prisma.payment.createMany({
