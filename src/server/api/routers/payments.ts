@@ -102,8 +102,6 @@ export const calculateWallet = async (
   db: Transaction = prisma
 ) => {
   const wallet = { balance: 0 };
-  // kickstart the wallet in dev
-  if (env.NODE_ENV !== "production") wallet.balance += 1000000;
 
   const payments = await db.payment.findMany({
     where: { OR: [{ toId: userId }, { fromId: userId }] },

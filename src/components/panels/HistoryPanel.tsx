@@ -35,7 +35,10 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
     case "consumeTea": {
       const { createdAt, amountGram, consumer } = step.data;
       return (
-        <li className="step-warning step flex items-center space-x-4">
+        <li
+          className="step-primary step flex items-center space-x-4"
+          data-content="★"
+        >
           <div className="text-sm">
             {consumer.name} kardeşimiz güzelinden{" "}
             <span className="text-success">{(amountGram / 5).toFixed()} </span>
@@ -50,7 +53,10 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
     case "thread": {
       const { id, creator, title, createdAt, pin } = step.data;
       return (
-        <li className="step-warning step flex items-center space-x-4">
+        <li
+          className="step-accent step flex items-center space-x-4"
+          data-content="★"
+        >
           <div className="text-sm">
             Thread:{" "}
             <Link className="link-secondary link" href={`/forum/threads/${id}`}>
@@ -70,7 +76,10 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
       const url = new URL("/cron", window.location.href);
       url.searchParams.set("exp", cron);
       return (
-        <li className="step-warning step flex items-center space-x-4">
+        <li
+          className="step-secondary step flex items-center space-x-4"
+          data-content="★"
+        >
           <div className="text-sm">
             Cron:{" "}
             <Link className="link-secondary link" href={url}>
@@ -98,7 +107,10 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
         const { id, type, to, amount, createdAt } = step.data;
         if (type === "salary") {
           return (
-            <li className="step-warning step flex items-center space-x-4">
+            <li
+              className="step-success step flex items-center space-x-4"
+              data-content="$"
+            >
               <div className="text-sm">
                 Salary: <span className="text-success">${amount}</span> to:{" "}
                 {to.name} date:{" "}
@@ -112,7 +124,10 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
         if (type === "transfer") {
           const { from } = step.data;
           return (
-            <li className="step-warning step flex items-center space-x-4">
+            <li
+              className="step-info step flex items-center space-x-4"
+              data-content="$"
+            >
               payment id: {id} from: {from.name} to: {to.name} amount: ${amount}
             </li>
           );
@@ -121,7 +136,10 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
           const { entityId } = step.data;
           const entity = getSystemEntityById(entityId);
           return (
-            <li className="step-warning step flex items-center space-x-4">
+            <li
+              className="step-primary step flex items-center space-x-4"
+              data-content="$"
+            >
               <div>
                 Invoice: {entity.type.toUpperCase()} {amount}x
                 <span className="text-primary">${entity.price}</span>=
