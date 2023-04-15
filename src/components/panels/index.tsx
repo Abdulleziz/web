@@ -11,7 +11,9 @@ import type { ChartData, ChartOptions } from "chart.js";
 import { Radar } from "react-chartjs-2";
 
 import Link from "next/link";
+import Image from "next/image";
 import { type CSSProperties, useEffect, useState, useCallback } from "react";
+
 import {
   useGetAbdullezizUser,
   useGetAbdullezizUsers,
@@ -429,7 +431,7 @@ export const MembersPanel = createPanel(undefined, () => {
               >
                 <div className="avatar-group">
                   {avatar && (
-                    <img
+                    <Image
                       className="avatar w-12"
                       src={avatar}
                       alt="Profile photo"
@@ -439,9 +441,9 @@ export const MembersPanel = createPanel(undefined, () => {
                 {
                   <p
                     style={
-                      member.roles.length > 0
+                      member.roles[0]
                         ? {
-                            color: `#${member.roles[0]!.color.toString(16)}`,
+                            color: `#${member.roles[0].color.toString(16)}`,
                           }
                         : { color: "white" }
                     }

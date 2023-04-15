@@ -10,6 +10,7 @@ import {
   useGetForumPosts,
   useGetForumThread,
 } from "~/utils/useForum";
+import Image from "next/image";
 
 const ForumThread: NextPage = () => {
   const router = useRouter();
@@ -177,7 +178,7 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
         <div key={post.id} className="p-4 flex flex-row">
           <div className="pr-4 rounded bg-base-200 items-center justify-center flex flex-col">
             {post.creator.image && (
-              <img
+              <Image
                 className="ml-auto mr-auto w-12 rounded-full p-1 sm:w-20"
                 src={post.creator.image}
                 alt="Profile Image"

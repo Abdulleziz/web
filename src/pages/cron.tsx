@@ -10,7 +10,7 @@ import {
   useGetAllCrons,
   useLeaveCron,
 } from "~/utils/useCron";
-import cron from "./api/cron";
+import Image from "next/image";
 
 const maker = "https://crontab.guru/";
 
@@ -22,8 +22,8 @@ const calculateDiff = (cron: cronParser.CronExpression) => {
 };
 
 // not implemented yet...
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 // cron input hem custom hem alttaki seçeneklerden biri olacak
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const predefinedCrons = {
   "Her x dakikada bir": (min = 1) => `*/${min} * * * *`,
   "Her x saatte bir": (hour = 1) => `0 */${hour} * * *`,
@@ -619,7 +619,10 @@ const CronTable: React.FC = () => {
                           <div key={c.listener.id} className="avatar">
                             <div className="w-12">
                               {c.listener.image && (
-                                <img src={c.listener.image} alt="User avatar" />
+                                <Image
+                                  src={c.listener.image}
+                                  alt="User avatar"
+                                />
                               )}
                             </div>
                           </div>

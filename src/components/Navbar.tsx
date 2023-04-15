@@ -1,4 +1,5 @@
 import { signOut, signIn, useSession } from "next-auth/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useGetWallet } from "~/utils/usePayments";
 
@@ -42,7 +43,7 @@ export const Navbar: React.FC = () => {
               <label tabIndex={0} className="btn-ghost btn-circle avatar btn">
                 <div className="w-10 rounded-full">
                   {!!session.user.image && (
-                    <img src={session.user.image} alt="Profile photo" />
+                    <Image src={session.user.image} alt="Profile photo" />
                   )}
                 </div>
               </label>

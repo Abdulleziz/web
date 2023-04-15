@@ -1,6 +1,7 @@
 import type { ForumPin } from "@prisma/client";
 import classNames from "classnames";
 import type { NextPage } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { useGetAbdullezizUser } from "~/utils/useDiscord";
 import {
@@ -49,7 +50,7 @@ const Threads: NextPage = () => {
                       <h4 className="text-lg text-white">{thread.title}</h4>
                       <div className="flex flex-row items-center py-2">
                         {thread.creator.image && (
-                          <img
+                          <Image
                             alt="Profile Image"
                             src={thread.creator.image}
                             className="w-8 rounded-full"
