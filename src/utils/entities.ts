@@ -114,5 +114,7 @@ export const SystemEntities = SE.parse([
 ] satisfies SE);
 
 export function getSystemEntityById(id: number): SystemEntity {
-  return SystemEntities.find((e) => e.id === id)!;
+  const entity = SystemEntities.find((e) => e.id === id);
+  if (!entity) throw new Error("SystemEntity not found");
+  return entity;
 }

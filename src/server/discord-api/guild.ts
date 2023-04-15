@@ -25,13 +25,17 @@ export async function getGuildMember(
 
 const createGetGuildMembers = (guildId: string) => {
   // çok fazla discord api request atmasın diye 1 dakika cacheleyelim
-  return timedCache(
-    () =>
-      discordFetch<Member[]>(`guilds/${guildId}/members?limit=100`, {
-        method: "GET",
-      }),
-    1000 * 60
-  );
+  return timedCache(async () => {
+    const res = await discordFetch<Member[]>(
+      `guilds/${guildId}/members?limit=100`,
+      { method: "GET" }
+    );
+    if (res)
+      return res.map((m) => {
+        if (!m.user) throw new Error("unreachable, createGetGuildMembers");
+        return { ...m, user: m.user };
+      });
+  }, 1000 * 60);
 };
 
 const getGuildMembersIdCache = new Map<
@@ -40,10 +44,12 @@ const getGuildMembersIdCache = new Map<
 >();
 
 export async function getGuildMembers(guildId = ABDULLEZIZ_SERVER_ID) {
-  if (!getGuildMembersIdCache.has(guildId)) {
-    getGuildMembersIdCache.set(guildId, createGetGuildMembers(guildId));
+  let cache = getGuildMembersIdCache.get(guildId);
+  if (!cache) {
+    cache = createGetGuildMembers(guildId);
+    getGuildMembersIdCache.set(guildId, cache);
   }
-  return await getGuildMembersIdCache.get(guildId)!();
+  return await cache();
 }
 
 export async function modifyGuildMember(

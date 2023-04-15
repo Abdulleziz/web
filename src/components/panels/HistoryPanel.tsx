@@ -45,7 +45,7 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
       );
     }
     case "cron": {
-      const { cron, isGlobal, listeners, title, createdAt, lastRun } =
+      const { cron, isGlobal, listeners, title, createdAt } =
         step.data;
       const url = new URL("/cron", window.location.href);
       url.searchParams.set("exp", cron);
@@ -75,7 +75,7 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
     }
     case "payment":
       {
-        const { id, type, to, toId, amount, createdAt } = step.data;
+        const { id, type, to, amount, createdAt } = step.data;
         if (type === "salary") {
           return (
             <li className="step-warning step flex items-center space-x-4">
@@ -90,7 +90,7 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
           );
         }
         if (type === "transfer") {
-          const { from, fromId } = step.data;
+          const { from } = step.data;
           return (
             <li className="step-warning step flex items-center space-x-4">
               payment id: {id} from: {from.name} to: {to.name} amount: ${amount}
@@ -117,7 +117,7 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
       }
       break;
     default:
-      const _exhaustiveCheck: never = step;
+      const _exhaustiveCheck: never = step; // eslint-disable-line @typescript-eslint/no-unused-vars
       throw new Error(`Unhandled step type`);
   }
   return null;
