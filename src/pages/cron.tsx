@@ -1,5 +1,5 @@
 import type { NextPage } from "next";
-import { type ChangeEvent, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Layout } from "~/components/Layout";
 import cronParser from "cron-parser";
 import { flushSync } from "react-dom";
@@ -10,6 +10,7 @@ import {
   useGetAllCrons,
   useLeaveCron,
 } from "~/utils/useCron";
+import cron from "./api/cron";
 
 const maker = "https://crontab.guru/";
 
@@ -78,6 +79,12 @@ const CronPage: NextPage = () => {
     <Layout>
       <div>
         <div className="flex flex-col items-center justify-center gap-4 p-4">
+          <div className="border p-2">
+            <h1 className="bg-error font-extrabold">
+              WORK IN PROGRESS ÇALIŞMIO HENÜZ ELLEŞMEİN
+            </h1>
+            <CronMaker />
+          </div>
           <div className="flex gap-4">
             <p>Hatırlatıcı</p> -{" "}
             <a className="link-primary link" target="_blank" href={maker}>
@@ -151,6 +158,368 @@ const CronPage: NextPage = () => {
       <CronCreate key={validCron} cron={validCron} />
     </Layout>
   );
+};
+
+const CronMaker: React.FC = () => {
+  const [page, setPage] = useState(0);
+  const [tags, setTags] = useState(new Set<string>());
+  const [renderWeekDays, setRenderWeekDays] = useState(false);
+  const [renderMonthDays, setRenderMonthDays] = useState(false);
+  const [isInputValid, setIsInputValid] = useState<boolean>(true);
+  const [cronDetails, setCronDetails] = useState({
+    hours: "0",
+    minutes: "0",
+    month: "*",
+    dayMonth: "*",
+    dayWeek: "*",
+  });
+  console.log(cronDetails);
+  const tagRef =
+    useRef<HTMLInputElement>() as React.MutableRefObject<HTMLInputElement>;
+
+  const handleAddTag = () => {
+    if (tagRef.current && tagRef.current.value === "") return;
+
+    // Convert the input to a number
+    const tagValue = parseInt(tagRef.current?.value ?? "");
+
+    // Only add the tag if it is a number between 1 and 31
+    if (!isNaN(tagValue) && tagValue >= 1 && tagValue <= 31) {
+      const newTagSet = new Set([...tags, tagRef.current.value]);
+      setTags(newTagSet);
+      tagRef.current.value = "";
+
+      // Assign the tags to the dayMonth variable
+      const dayMonthTags = Array.from(newTagSet).sort().join(",");
+      setCronDetails((old) => ({
+        ...old,
+        dayMonth: dayMonthTags,
+      }));
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setTags((old) => new Set([...old].filter((t) => tag !== t)));
+
+    // Remove the tag from the dayMonth variable
+    setCronDetails((old) => ({
+      ...old,
+      dayMonth: [...old.dayMonth.split(",").filter((t) => tag !== t)].join(","),
+    }));
+  };
+
+  const handleInputChange = () => {
+    const tagValue = parseInt(tagRef.current?.value ?? "");
+
+    // Check if the input is a number between 1 and 31
+    if (isNaN(tagValue) || tagValue < 1 || tagValue > 31) {
+      setIsInputValid(false);
+    } else {
+      setIsInputValid(true);
+    }
+  };
+  function handleChange(
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
+    const { name, value } = event.target;
+    if (value === "weekDays") {
+      setRenderWeekDays(true);
+      setRenderMonthDays(false);
+      setCronDetails((prevCronData) => {
+        return {
+          ...prevCronData,
+          [name]: "",
+        };
+      });
+    } else if (value === "weekMonths") {
+      setRenderMonthDays(true);
+      setRenderWeekDays(false);
+      setCronDetails((prevCronData) => {
+        return {
+          ...prevCronData,
+          [name]: "",
+        };
+      });
+    } else {
+      setRenderWeekDays(false);
+      setRenderMonthDays(false);
+      setCronDetails((prevCronData) => {
+        return {
+          ...prevCronData,
+          [name]: value,
+        };
+      });
+    }
+  }
+
+  function handleSelectedDays(event: React.ChangeEvent<HTMLInputElement>) {
+    const { value, checked } = event.target;
+
+    const selectedDays = cronDetails.dayWeek.split(",").filter(Boolean);
+
+    if (checked) {
+      if (!selectedDays.includes(value)) {
+        selectedDays.push(value);
+      }
+    } else {
+      const index = selectedDays.indexOf(value);
+      if (index !== -1) {
+        selectedDays.splice(index, 1);
+      }
+    }
+
+    const dayWeekValue = selectedDays.join(",");
+
+    setCronDetails((prevDetails) => ({
+      ...prevDetails,
+      dayWeek: dayWeekValue,
+    }));
+  }
+
+  function nextPage() {
+    setPage((prevPage) => prevPage + 1);
+  }
+  function prevPage() {
+    setPage((prevPage) => prevPage - 1);
+  }
+
+  const hours = [];
+  const minutes = [];
+
+  for (let i = 0; i <= 23; i++) {
+    const value = i < 10 ? `0${i}` : `${i}`;
+    hours.push(<option key={value}>{value}</option>);
+  }
+  for (let i = 0; i <= 60; i++) {
+    const value = i < 10 ? `0${i}` : `${i}`;
+    minutes.push(<option key={value}>{value}</option>);
+  }
+
+  switch (page) {
+    case 0: {
+      return (
+        <div>
+          <h4>Hangi gün veya günler uyarılmak istiyorsun?</h4>
+          <div>
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <input
+                  type="radio"
+                  name="dayWeek"
+                  className="radio checked:bg-white"
+                  value="*"
+                  checked={cronDetails.dayWeek === "*"}
+                  onChange={handleChange}
+                />
+                <span className="label-text">Her gün</span>
+              </label>
+
+              <label className="label cursor-pointer">
+                <input
+                  type="radio"
+                  name="dayWeek"
+                  className="radio checked:bg-white"
+                  value="0,6"
+                  checked={cronDetails.dayWeek === "0,6"}
+                  onChange={handleChange}
+                />
+                <span className="label-text">Hafta Sonları</span>
+              </label>
+
+              <label className="label cursor-pointer">
+                <input
+                  type="radio"
+                  name="dayWeek"
+                  className="radio checked:bg-white"
+                  value="1-5"
+                  checked={cronDetails.dayWeek === "1-5"}
+                  onChange={handleChange}
+                />
+                <span className="label-text">Hafta İçileri</span>
+              </label>
+
+              <label className="label cursor-pointer">
+                <input
+                  type="radio"
+                  name="dayWeek"
+                  className="radio checked:bg-white"
+                  value="weekDays"
+                  checked={renderWeekDays}
+                  onChange={handleChange}
+                />
+                <span className="label-text">Haftanın belirli günleri</span>
+              </label>
+              <label className="label cursor-pointer">
+                <input
+                  type="radio"
+                  name="dayWeek"
+                  className="radio checked:bg-white"
+                  value="weekMonths"
+                  checked={renderMonthDays}
+                  onChange={handleChange}
+                />
+                <span className="label-text">Ayın belirli günleri</span>
+              </label>
+            </div>
+            {renderMonthDays && (
+              <div className="form-control">
+                <div className="input-group flex min-w-full flex-row items-center justify-center p-4">
+                  <input
+                    ref={tagRef}
+                    type="text"
+                    placeholder="Tag…"
+                    className="input-bordered input min-w-full transition-all"
+                    onChange={handleInputChange}
+                  />
+
+                  <button
+                    className={`btn-square btn ${
+                      !isInputValid ? "btn-disabled" : ""
+                    }`}
+                    onClick={handleAddTag}
+                    disabled={!isInputValid}
+                  >
+                    +
+                  </button>
+                </div>
+                <div
+                  className={`mb-3 cursor-pointer rounded-lg ${
+                    tags.size ? "bg-base-100" : "bg-base-300"
+                  }  p-2`}
+                >
+                  {[...tags].map((tag) => (
+                    <div
+                      key={tag}
+                      className=" badge-primary badge m-1 p-4 transition-all hover:scale-105 hover:bg-error"
+                      onClick={() => handleRemoveTag(tag)}
+                    >
+                      {tag}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {renderWeekDays && (
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="checkbox"
+                    name="days"
+                    value="1"
+                    onChange={handleSelectedDays}
+                  />
+                  <span className="label-text">Pazartesi</span>
+                </label>
+                <label className="label cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="checkbox"
+                    name="days"
+                    value="2"
+                    onChange={handleSelectedDays}
+                  />
+                  <span className="label-text">Salı</span>
+                </label>
+                <label className="label cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="checkbox"
+                    name="days"
+                    value="3"
+                    onChange={handleSelectedDays}
+                  />
+                  <span className="label-text">Çarşamba</span>
+                </label>
+                <label className="label cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="checkbox"
+                    name="days"
+                    value="4"
+                    onChange={handleSelectedDays}
+                  />
+                  <span className="label-text">Perşembe</span>
+                </label>
+                <label className="label cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="checkbox"
+                    name="days"
+                    value="5"
+                    onChange={handleSelectedDays}
+                  />
+                  <span className="label-text">Cuma</span>
+                </label>
+                <label className="label cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="checkbox"
+                    name="days"
+                    value="6"
+                    onChange={handleSelectedDays}
+                  />
+                  <span className="label-text">Cumartesi</span>
+                </label>
+                <label className="label cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="checkbox"
+                    name="days"
+                    value="7"
+                    onChange={handleSelectedDays}
+                  />
+                  <span className="label-text">Pazar</span>
+                </label>
+              </div>
+            )}
+          </div>
+          <button className="btn" onClick={nextPage}>
+            Next
+          </button>
+        </div>
+      );
+    }
+    case 1: {
+      return (
+        <div>
+          <h4>Hatırlatıcı hangi saate kurulsun?</h4>
+          <div className="container mx-auto p-3">
+            <div className="inline-flex rounded-md border p-2 text-lg shadow-lg">
+              <select
+                name="hours"
+                id="hourSelector"
+                onChange={(event) => handleChange(event)}
+                className="appearance-none bg-base-300 px-2 outline-none"
+              >
+                {hours}
+              </select>
+              <span className="px-2">:</span>
+              <select
+                name="minutes"
+                id="minSelector"
+                onChange={(event) => handleChange(event)}
+                className="appearance-none bg-base-300 px-2 outline-none"
+              >
+                {minutes}
+              </select>
+            </div>
+          </div>
+          <button className="btn" onClick={prevPage}>
+            prev page
+          </button>
+        </div>
+      );
+    }
+
+    default: {
+      return (
+        <div>
+          <h3>an error occured</h3>
+        </div>
+      );
+    }
+  }
 };
 
 const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
@@ -405,23 +774,5 @@ export function UTCtoTR(i: cronParser.CronExpression) {
   };
   return fields;
 }
-
-const WarningSVG: React.FC = () => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-6 w-6 flex-shrink-0 stroke-current"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-      />
-    </svg>
-  );
-};
 
 export default CronPage;
