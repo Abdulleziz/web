@@ -15,7 +15,9 @@ import { useSession } from "next-auth/react";
 export const Dashboard: React.FC = () => {
   const { data: session } = useSession();
   const { isLoading, data } = useGetAbdullezizUser();
-  const members = (useGetDiscordMembers().data ?? []).filter(m => !m.user.bot);
+  const members = (useGetDiscordMembers().data ?? []).filter(
+    (m) => !m.user.bot
+  );
 
   const panels =
     !isLoading && !!data
