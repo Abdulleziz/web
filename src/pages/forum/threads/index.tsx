@@ -54,6 +54,8 @@ const Threads: NextPage = () => {
                             alt="Profile Image"
                             src={thread.creator.image}
                             className="w-8 rounded-full"
+                            width={128}
+                            height={128}
                           />
                         )}
                         <p className="px-2">{thread.creator.name}</p>

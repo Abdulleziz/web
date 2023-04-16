@@ -622,6 +622,8 @@ const CronTable: React.FC = () => {
                                 <Image
                                   src={c.listener.image}
                                   alt="User avatar"
+                                  width={128}
+                                  height={128}
                                 />
                               )}
                             </div>

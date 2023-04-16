@@ -435,6 +435,8 @@ export const MembersPanel = createPanel(undefined, () => {
                       className="avatar w-12"
                       src={avatar}
                       alt="Profile photo"
+                      width={128}
+                      height={128}
                     />
                   )}
                 </div>

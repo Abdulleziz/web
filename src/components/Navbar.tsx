@@ -43,7 +43,12 @@ export const Navbar: React.FC = () => {
               <label tabIndex={0} className="btn-ghost btn-circle avatar btn">
                 <div className="w-10 rounded-full">
                   {!!session.user.image && (
-                    <Image src={session.user.image} alt="Profile photo" />
+                    <Image
+                      src={session.user.image}
+                      alt="Profile photo"
+                      width={128}
+                      height={128}
+                    />
                   )}
                 </div>
               </label>
