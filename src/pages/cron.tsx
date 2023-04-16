@@ -80,12 +80,6 @@ const CronPage: NextPage = () => {
     <Layout>
       <div>
         <div className="flex flex-col items-center justify-center gap-4 p-4">
-          <div className="border p-2">
-            <h1 className="bg-error font-extrabold">
-              WORK IN PROGRESS ÇALIŞMIO HENÜZ ELLEŞMEİN
-            </h1>
-            <CronMaker handleSubmit={handleSubmit} />
-          </div>
           <div className="flex gap-4">
             <p>Hatırlatıcı</p> -{" "}
             <a className="link-primary link" target="_blank" href={maker}>
@@ -96,22 +90,30 @@ const CronPage: NextPage = () => {
       </div>
       <div className="flex flex-col gap-4 p-4">
         <div className="mockup-window border bg-base-300">
-          <div className="flex justify-center gap-4 bg-base-200 px-4 py-16">
-            <input
-              type="text"
-              className="input"
-              placeholder="Cron... (0 8 * * 5)"
-              value={input}
-              onChange={(e) => handleSubmit(e.target.value)}
-            />
-            <label
-              htmlFor="create-cron"
-              className={classNames("btn", {
-                ["btn-disabled"]: !input || (diff ?? 0) < 12,
-              })}
-            >
-              Oluştur
-            </label>
+          <div className="flex flex-col items-center justify-center gap-4 bg-base-200 px-4 py-16 md:flex-row">
+            <div className="flex items-center justify-center">
+              <CronMaker handleSubmit={handleSubmit} />
+            </div>
+            <div className=" divider divider-vertical md:divider-horizontal">
+              Veya
+            </div>
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                className="input"
+                placeholder="Cron... (0 8 * * 5)"
+                value={input}
+                onChange={(e) => handleSubmit(e.target.value)}
+              />
+              <label
+                htmlFor="create-cron"
+                className={classNames("btn-success btn-sm btn", {
+                  ["btn-disabled"]: !input || (diff ?? 0) < 12,
+                })}
+              >
+                Oluştur
+              </label>
+            </div>
           </div>
           <div className="flex flex-row items-center justify-center gap-4">
             {!!nextDateString && (
@@ -213,36 +215,34 @@ const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
     submitCron(cron);
   };
 
-  switch (isPageActive ? 1 : 0) {
-    case 0: {
+  switch (isPageActive) {
+    case false: {
       return (
-        <div>
-          <h4>Hangi gün veya günler uyarılmak istiyorsun?</h4>
-          <div>
-            <div className="form-control">
-              {pages.map((p, i) => (
-                <label key={i} className="label cursor-pointer">
-                  <input
-                    type="radio"
-                    className="radio checked:bg-white"
-                    checked={p === page}
-                    onChange={() => setPage(p)}
-                  />
-                  <span className="label-text">{p}</span>
-                </label>
-              ))}
-            </div>
+        <div className="flex flex-col gap-2">
+          <h4>Nasıl uyarılmak istiyorsun?</h4>
+          <div className="form-control">
+            {pages.map((p, i) => (
+              <label key={i} className="label cursor-pointer">
+                <input
+                  type="radio"
+                  className="radio checked:bg-white"
+                  checked={p === page}
+                  onChange={() => setPage(p)}
+                />
+                <span className="label-text">{p}</span>
+              </label>
+            ))}
           </div>
-          <button className="btn" onClick={() => setIsPageActive(true)}>
-            Next
+          <button className="btn-sm btn" onClick={() => setIsPageActive(true)}>
+            Devam
           </button>
         </div>
       );
     }
-    case 1: {
+    case true: {
       const req = requires[page];
       return (
-        <div>
+        <div className="flex flex-col gap-2">
           {req.weekDays && (
             <>
               <p> Hatırlatıcı hangi günler olsun?</p>
@@ -250,29 +250,31 @@ const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
             </>
           )}
           <p>{page}</p>
-          <HourSelection
-            onlyShow={
-              !!req.hours && !!req.minutes
-                ? undefined
-                : !!req.hours
-                ? "hours"
-                : "mins"
+          {(req.hours || req.minutes) && (
+            <HourSelection
+              onlyShow={
+                req.hours && req.minutes
+                  ? undefined // both
+                  : req.hours
+                  ? "hours"
+                  : "mins"
+              }
+            />
+          )}
+          <button className="btn-sm btn" onClick={() => setIsPageActive(false)}>
+            Geri dön
+          </button>
+          <button
+            className="btn-sm btn"
+            onClick={handleSubmit}
+            disabled={
+              (req.weekDays && weekDays.size === 0) ||
+              (req.hours && !req.minutes && hours === 0) ||
+              (req.minutes && !req.hours && minutes === 0)
             }
-          />
-          <button className="btn" onClick={() => setIsPageActive(false)}>
-            prev page
+          >
+            Bunu kullan
           </button>
-          <button className="btn" onClick={handleSubmit}>
-            Apply
-          </button>
-        </div>
-      );
-    }
-
-    default: {
-      return (
-        <div>
-          <h3>an error occured</h3>
         </div>
       );
     }
@@ -377,7 +379,7 @@ const useHourSelect = () => {
             setMinutes(0);
           }}
         >
-          Reset
+          Sıfırla
         </button>
       </div>
     );
