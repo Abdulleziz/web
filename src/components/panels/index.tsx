@@ -122,7 +122,7 @@ export const AdminPanel = createPanel(
             <span className="badge-secondary badge badge-lg">Beta</span>{" "}
             <span className="badge badge-lg">Work In Progress</span>
           </h3>
-          <p className="py-4">
+          <div className="py-4">
             <div className="font-bold text-primary">
               Bu paneli tamamlamak için yardım lazım. <br />
               Fikirleriniz çok önemli. <br />
@@ -161,7 +161,7 @@ export const AdminPanel = createPanel(
                 <span className="text-success">(you are eligible 🤣)</span>
               </li>
             </ul>
-          </p>
+          </div>
         </Modal>
         <div className="menu flex items-center gap-4">
           <div className="menu-title">Yönetici İşlemleri</div>

@@ -12,14 +12,14 @@ export const useConsumeTeaHistory = (q: In["tea"]["history"]) => {
   const utils = api.useContext();
   return api.consumable.tea.history.useQuery(q, {
     // on data change, invalidate getLeftTea
-    isDataEqual(oldData, newData) {
-      if (oldData === undefined || newData === undefined) return false;
+    structuralSharing(oldData, newData) {
+      if (oldData === undefined) return newData;
       const r =
         oldData.length === newData.length &&
         oldData.every((oldItem, i) => oldItem.id === newData[i]?.id);
       if (!r) void utils.consumable.tea.getRemaining.invalidate();
       // invalidate instead of refetching; may be caused a trigger from consumeTea.mutation
-      return r;
+      return newData;
     },
   });
 };

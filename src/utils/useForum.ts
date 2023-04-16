@@ -1,28 +1,32 @@
 import { toast } from "react-hot-toast";
-import { api, type RouterInputs } from "./api";
+import { api, type RouterOutputs, type RouterInputs } from "./api";
 
 type GetThreads = RouterInputs["forum"]["getThreads"];
 type GetForum = RouterInputs["forum"]["getThreadById"];
 type GetPosts = RouterInputs["forum"]["posts"]["getMany"];
 
-export const useGetForumThreads = (input: GetThreads, prefetch = true) => {
+type Threads = RouterOutputs["forum"]["getThreads"];
+
+export const usePrefetchThreads = () => {
   const utils = api.useContext();
-  return api.forum.getThreads.useQuery(input, {
-    onSuccess: (threads) => {
-      if (prefetch)
-        threads.forEach((thread) => {
-          // prefetch the thread, posts so it's ready when we navigate to it
-          void utils.forum.getThreadById.prefetch(thread.id, {
-            staleTime: 1000 * 5,
-          });
-          void utils.forum.posts.getMany.prefetchInfinite({
-            threadId: thread.id,
-            cursor: undefined,
-          });
-        });
-    },
-  });
+
+  // TODO: useCallback
+  return (threads: Threads) => {
+    threads.forEach((thread) => {
+      // prefetch the thread, posts so it's ready when we navigate to it
+      void utils.forum.getThreadById.prefetch(thread.id, {
+        staleTime: 1000 * 5,
+      });
+      void utils.forum.posts.getMany.prefetchInfinite({
+        threadId: thread.id,
+        cursor: undefined,
+      });
+    });
+  };
 };
+
+export const useGetForumThreads = (input: GetThreads) =>
+  api.forum.getThreads.useQuery(input);
 
 export const useGetForumThread = (input: GetForum) =>
   api.forum.getThreadById.useQuery(input);

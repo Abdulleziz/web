@@ -164,7 +164,7 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
 export const HistoryPanel = createPanel([], () => {
   const buyHistory = usePaymentsHistory().data ?? [];
   const cronHistory = useGetAllCrons().data ?? [];
-  const threadHistory = useGetForumThreads(undefined, false).data ?? [];
+  const threadHistory = useGetForumThreads().data ?? [];
   const consumeTeaHistory = useConsumeTeaHistory().data ?? [];
 
   //   // DEMO, TEST DATA

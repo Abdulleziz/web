@@ -3,15 +3,22 @@ import classNames from "classnames";
 import type { NextPage } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect } from "react";
 import { useGetAbdullezizUser } from "~/utils/useDiscord";
 import {
   useCreateForumPin,
   useDeleteForumPin,
   useGetForumThreads,
+  usePrefetchThreads,
 } from "~/utils/useForum";
 
 const Threads: NextPage = () => {
   const threads = useGetForumThreads();
+  const prefecth = usePrefetchThreads();
+
+  useEffect(() => {
+    if (threads.data) prefecth(threads.data);
+  }, [prefecth, threads.data]);
 
   const currentUser = useGetAbdullezizUser();
   const createPin = useCreateForumPin();
