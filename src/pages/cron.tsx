@@ -83,7 +83,7 @@ const CronPage: NextPage = () => {
             <h1 className="bg-error font-extrabold">
               WORK IN PROGRESS ÇALIŞMIO HENÜZ ELLEŞMEİN
             </h1>
-            <CronMaker />
+            <CronMaker handleSubmit={handleSubmit} />
           </div>
           <div className="flex gap-4">
             <p>Hatırlatıcı</p> -{" "}
@@ -160,7 +160,9 @@ const CronPage: NextPage = () => {
   );
 };
 
-const CronMaker: React.FC = () => {
+const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
+  handleSubmit,
+}) => {
   const [page, setPage] = useState(0);
   const [tags, setTags] = useState(new Set<string>());
   const [renderWeekDays, setRenderWeekDays] = useState(false);
@@ -173,7 +175,6 @@ const CronMaker: React.FC = () => {
     dayMonth: "*",
     dayWeek: "*",
   });
-  console.log(cronDetails);
   const tagRef =
     useRef<HTMLInputElement>() as React.MutableRefObject<HTMLInputElement>;
 
@@ -295,6 +296,16 @@ const CronMaker: React.FC = () => {
     minutes.push(<option key={value}>{value}</option>);
   }
 
+  const weekDays = [
+    { value: "1", label: "Pazartesi" },
+    { value: "2", label: "Salı" },
+    { value: "3", label: "Çarşamba" },
+    { value: "4", label: "Perşembe" },
+    { value: "5", label: "Cuma" },
+    { value: "6", label: "Cumartesi" },
+    { value: "7", label: "Pazar" },
+  ] as const;
+
   switch (page) {
     case 0: {
       return (
@@ -401,76 +412,18 @@ const CronMaker: React.FC = () => {
             )}
             {renderWeekDays && (
               <div className="form-control">
-                <label className="label cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="checkbox"
-                    name="days"
-                    value="1"
-                    onChange={handleSelectedDays}
-                  />
-                  <span className="label-text">Pazartesi</span>
-                </label>
-                <label className="label cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="checkbox"
-                    name="days"
-                    value="2"
-                    onChange={handleSelectedDays}
-                  />
-                  <span className="label-text">Salı</span>
-                </label>
-                <label className="label cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="checkbox"
-                    name="days"
-                    value="3"
-                    onChange={handleSelectedDays}
-                  />
-                  <span className="label-text">Çarşamba</span>
-                </label>
-                <label className="label cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="checkbox"
-                    name="days"
-                    value="4"
-                    onChange={handleSelectedDays}
-                  />
-                  <span className="label-text">Perşembe</span>
-                </label>
-                <label className="label cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="checkbox"
-                    name="days"
-                    value="5"
-                    onChange={handleSelectedDays}
-                  />
-                  <span className="label-text">Cuma</span>
-                </label>
-                <label className="label cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="checkbox"
-                    name="days"
-                    value="6"
-                    onChange={handleSelectedDays}
-                  />
-                  <span className="label-text">Cumartesi</span>
-                </label>
-                <label className="label cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="checkbox"
-                    name="days"
-                    value="7"
-                    onChange={handleSelectedDays}
-                  />
-                  <span className="label-text">Pazar</span>
-                </label>
+                {weekDays.map((day) => (
+                  <label key={day.value} className="label cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="checkbox"
+                      name="days"
+                      value={day.value}
+                      onChange={handleSelectedDays}
+                    />
+                    <span className="label-text">{day.label}</span>
+                  </label>
+                ))}
               </div>
             )}
           </div>
@@ -507,6 +460,17 @@ const CronMaker: React.FC = () => {
           </div>
           <button className="btn" onClick={prevPage}>
             prev page
+          </button>
+          <button
+            className="btn"
+            onClick={() => {
+              const c = cronDetails;
+              handleSubmit(
+                `${c.minutes} ${c.hours} ${c.dayMonth} ${c.month} ${c.dayWeek}`
+              );
+            }}
+          >
+            Apply
           </button>
         </div>
       );
