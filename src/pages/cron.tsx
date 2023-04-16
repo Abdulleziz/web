@@ -1,5 +1,5 @@
 import type { NextPage } from "next";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Layout } from "~/components/Layout";
 import cronParser from "cron-parser";
 import { flushSync } from "react-dom";
@@ -11,6 +11,7 @@ import {
   useLeaveCron,
 } from "~/utils/useCron";
 import Image from "next/image";
+import { useRouter } from "next/router";
 
 const maker = "https://crontab.guru/";
 
@@ -453,10 +454,24 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
 };
 
 const CronTable: React.FC = () => {
+  const router = useRouter();
+  const routerExp = router.query.exp as string | undefined;
   const { data: session } = useSession();
   const { data } = useGetAllCrons();
   const join = useCreateOrJoinCron();
   const leave = useLeaveCron();
+
+  const routerRowRef = useRef<HTMLTableCellElement | null>(null);
+
+  // focus on the row that is in the url
+  useEffect(() => {
+    // TODO: delete, this does not work.
+    if (routerExp && data?.find((j) => j.cron === routerExp)) {
+      void new Promise((resolve) => setTimeout(resolve, 1000)).then(() => {
+        if (routerRowRef.current) routerRowRef.current.focus();
+      });
+    }
+  }, [data, routerExp]);
 
   if (!session || !data || !data.length) return <></>;
   return (
@@ -564,7 +579,23 @@ const CronTable: React.FC = () => {
                   {job.isGlobal ? "Global" : "Özel"}
                 </span>
               </td>
-              <td>{job.cron}</td>
+              <td
+                ref={routerExp === job.cron ? routerRowRef : undefined}
+                className={
+                  // TODO: popup modal instead
+                  routerExp === job.cron
+                    ? "text-2xl font-bold text-primary"
+                    : ""
+                }
+              >
+                {job.cron}
+                <br />
+                {routerExp === job.cron && (
+                  <span className="badge-ghost badge">
+                    Tıkladığınız hatırlatıcı
+                  </span>
+                )}
+              </td>
               <th>
                 {!!job.listeners.filter((u) => u.listenerId === session.user.id)
                   .length ? (
