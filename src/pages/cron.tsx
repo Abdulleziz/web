@@ -23,13 +23,14 @@ const calculateDiff = (cron: cronParser.CronExpression) => {
 
 // not implemented yet...
 // cron input hem custom hem alttaki seçeneklerden biri olacak
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const predefinedCrons = {
   "Her x dakikada bir": (min = 1) => `*/${min} * * * *`,
   "Her x saatte bir": (hour = 1) => `0 */${hour} * * *`,
   "Her Gün": (hour = 0, min = 0) => `${min} ${hour} * * *`,
   "Her Haftasonu": (hour = 0, min = 0) => `${min} ${hour} * * 0,6`, // cumartesi-pazar
   "Her Haftaiçi": (hour = 0, min = 0) => `${min} ${hour} * * 1-5`, // pazartesi-cuma
+  "Haftanın Belirli Günleri": (days: number[], hour = 0, min = 0) =>
+    `${min} ${hour} * * ${days.join(",")}`,
 } as const;
 
 const CronPage: NextPage = () => {
@@ -161,315 +162,107 @@ const CronPage: NextPage = () => {
 };
 
 const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
-  handleSubmit,
+  handleSubmit: submitCron,
 }) => {
-  const [page, setPage] = useState(0);
-  const [tags, setTags] = useState(new Set<string>());
-  const [renderWeekDays, setRenderWeekDays] = useState(false);
-  const [renderMonthDays, setRenderMonthDays] = useState(false);
-  const [isInputValid, setIsInputValid] = useState<boolean>(true);
-  const [cronDetails, setCronDetails] = useState({
-    hours: "0",
-    minutes: "0",
-    month: "*",
-    dayMonth: "*",
-    dayWeek: "*",
-  });
-  const tagRef =
-    useRef<HTMLInputElement>() as React.MutableRefObject<HTMLInputElement>;
+  type Page = keyof typeof predefinedCrons;
+  const pages = Object.keys(predefinedCrons) as Page[];
 
-  const handleAddTag = () => {
-    if (tagRef.current && tagRef.current.value === "") return;
-
-    // Convert the input to a number
-    const tagValue = parseInt(tagRef.current?.value ?? "");
-
-    // Only add the tag if it is a number between 1 and 31
-    if (!isNaN(tagValue) && tagValue >= 1 && tagValue <= 31) {
-      const newTagSet = new Set([...tags, tagRef.current.value]);
-      setTags(newTagSet);
-      tagRef.current.value = "";
-
-      // Assign the tags to the dayMonth variable
-      const dayMonthTags = Array.from(newTagSet).sort().join(",");
-      setCronDetails((old) => ({
-        ...old,
-        dayMonth: dayMonthTags,
-      }));
-    }
+  const requires: Record<
+    Page,
+    { hours?: boolean; minutes?: boolean; weekDays?: boolean }
+  > = {
+    "Her x dakikada bir": { minutes: true },
+    "Her x saatte bir": { hours: true },
+    "Her Gün": { hours: true, minutes: true },
+    "Her Haftaiçi": { hours: true, minutes: true },
+    "Her Haftasonu": { hours: true, minutes: true },
+    "Haftanın Belirli Günleri": { hours: true, minutes: true, weekDays: true },
   };
 
-  const handleRemoveTag = (tag: string) => {
-    setTags((old) => new Set([...old].filter((t) => tag !== t)));
+  const [page, setPage] = useState<Page>("Her Gün");
+  const [isPageActive, setIsPageActive] = useState(false);
 
-    // Remove the tag from the dayMonth variable
-    setCronDetails((old) => ({
-      ...old,
-      dayMonth: [...old.dayMonth.split(",").filter((t) => tag !== t)].join(","),
-    }));
+  const { HourSelection, hours, minutes } = useHourSelect();
+  const { WeekDaySelection, weekDays } = useWeeksDaySelect();
+
+  const handleSubmit = () => {
+    // çöpşiş typescript ağlamasın diye iğrençlikler
+    let cron: string;
+    const req = requires[page];
+    const callback = predefinedCrons[page];
+    if (req.hours && req.minutes && req.weekDays) {
+      const c = callback as (
+        weekDays: number[],
+        hours: number,
+        minutes: number
+      ) => string;
+      cron = c([...weekDays], hours, minutes);
+    } else if (req.hours && req.minutes) {
+      const c = callback as (hours: number, minutes: number) => string;
+      cron = c(hours, minutes);
+    } else if (req.hours) {
+      const c = callback as (hours: number) => string;
+      cron = c(hours);
+    } else if (req.minutes) {
+      const c = callback as (minutes: number) => string;
+      cron = c(minutes);
+    } else {
+      const c = callback as () => string;
+      cron = c();
+    }
+    submitCron(cron);
   };
 
-  const handleInputChange = () => {
-    const tagValue = parseInt(tagRef.current?.value ?? "");
-
-    // Check if the input is a number between 1 and 31
-    if (isNaN(tagValue) || tagValue < 1 || tagValue > 31) {
-      setIsInputValid(false);
-    } else {
-      setIsInputValid(true);
-    }
-  };
-  function handleChange(
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) {
-    const { name, value } = event.target;
-    if (value === "weekDays") {
-      setRenderWeekDays(true);
-      setRenderMonthDays(false);
-      setCronDetails((prevCronData) => {
-        return {
-          ...prevCronData,
-          [name]: "",
-        };
-      });
-    } else if (value === "weekMonths") {
-      setRenderMonthDays(true);
-      setRenderWeekDays(false);
-      setCronDetails((prevCronData) => {
-        return {
-          ...prevCronData,
-          [name]: "",
-        };
-      });
-    } else {
-      setRenderWeekDays(false);
-      setRenderMonthDays(false);
-      setCronDetails((prevCronData) => {
-        return {
-          ...prevCronData,
-          [name]: value,
-        };
-      });
-    }
-  }
-
-  function handleSelectedDays(event: React.ChangeEvent<HTMLInputElement>) {
-    const { value, checked } = event.target;
-
-    const selectedDays = cronDetails.dayWeek.split(",").filter(Boolean);
-
-    if (checked) {
-      if (!selectedDays.includes(value)) {
-        selectedDays.push(value);
-      }
-    } else {
-      const index = selectedDays.indexOf(value);
-      if (index !== -1) {
-        selectedDays.splice(index, 1);
-      }
-    }
-
-    const dayWeekValue = selectedDays.join(",");
-
-    setCronDetails((prevDetails) => ({
-      ...prevDetails,
-      dayWeek: dayWeekValue,
-    }));
-  }
-
-  function nextPage() {
-    setPage((prevPage) => prevPage + 1);
-  }
-  function prevPage() {
-    setPage((prevPage) => prevPage - 1);
-  }
-
-  const hours = [];
-  const minutes = [];
-
-  for (let i = 0; i <= 23; i++) {
-    const value = i < 10 ? `0${i}` : `${i}`;
-    hours.push(<option key={value}>{value}</option>);
-  }
-  for (let i = 0; i <= 60; i++) {
-    const value = i < 10 ? `0${i}` : `${i}`;
-    minutes.push(<option key={value}>{value}</option>);
-  }
-
-  const weekDays = [
-    { value: "1", label: "Pazartesi" },
-    { value: "2", label: "Salı" },
-    { value: "3", label: "Çarşamba" },
-    { value: "4", label: "Perşembe" },
-    { value: "5", label: "Cuma" },
-    { value: "6", label: "Cumartesi" },
-    { value: "7", label: "Pazar" },
-  ] as const;
-
-  switch (page) {
+  switch (isPageActive ? 1 : 0) {
     case 0: {
       return (
         <div>
           <h4>Hangi gün veya günler uyarılmak istiyorsun?</h4>
           <div>
             <div className="form-control">
-              <label className="label cursor-pointer">
-                <input
-                  type="radio"
-                  name="dayWeek"
-                  className="radio checked:bg-white"
-                  value="*"
-                  checked={cronDetails.dayWeek === "*"}
-                  onChange={handleChange}
-                />
-                <span className="label-text">Her gün</span>
-              </label>
-
-              <label className="label cursor-pointer">
-                <input
-                  type="radio"
-                  name="dayWeek"
-                  className="radio checked:bg-white"
-                  value="0,6"
-                  checked={cronDetails.dayWeek === "0,6"}
-                  onChange={handleChange}
-                />
-                <span className="label-text">Hafta Sonları</span>
-              </label>
-
-              <label className="label cursor-pointer">
-                <input
-                  type="radio"
-                  name="dayWeek"
-                  className="radio checked:bg-white"
-                  value="1-5"
-                  checked={cronDetails.dayWeek === "1-5"}
-                  onChange={handleChange}
-                />
-                <span className="label-text">Hafta İçileri</span>
-              </label>
-
-              <label className="label cursor-pointer">
-                <input
-                  type="radio"
-                  name="dayWeek"
-                  className="radio checked:bg-white"
-                  value="weekDays"
-                  checked={renderWeekDays}
-                  onChange={handleChange}
-                />
-                <span className="label-text">Haftanın belirli günleri</span>
-              </label>
-              <label className="label cursor-pointer">
-                <input
-                  type="radio"
-                  name="dayWeek"
-                  className="radio checked:bg-white"
-                  value="weekMonths"
-                  checked={renderMonthDays}
-                  onChange={handleChange}
-                />
-                <span className="label-text">Ayın belirli günleri</span>
-              </label>
-            </div>
-            {renderMonthDays && (
-              <div className="form-control">
-                <div className="input-group flex min-w-full flex-row items-center justify-center p-4">
+              {pages.map((p, i) => (
+                <label key={i} className="label cursor-pointer">
                   <input
-                    ref={tagRef}
-                    type="text"
-                    placeholder="Tag…"
-                    className="input-bordered input min-w-full transition-all"
-                    onChange={handleInputChange}
+                    type="radio"
+                    className="radio checked:bg-white"
+                    checked={p === page}
+                    onChange={() => setPage(p)}
                   />
-
-                  <button
-                    className={`btn-square btn ${
-                      !isInputValid ? "btn-disabled" : ""
-                    }`}
-                    onClick={handleAddTag}
-                    disabled={!isInputValid}
-                  >
-                    +
-                  </button>
-                </div>
-                <div
-                  className={`mb-3 cursor-pointer rounded-lg ${
-                    tags.size ? "bg-base-100" : "bg-base-300"
-                  }  p-2`}
-                >
-                  {[...tags].map((tag) => (
-                    <div
-                      key={tag}
-                      className=" badge-primary badge m-1 p-4 transition-all hover:scale-105 hover:bg-error"
-                      onClick={() => handleRemoveTag(tag)}
-                    >
-                      {tag}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {renderWeekDays && (
-              <div className="form-control">
-                {weekDays.map((day) => (
-                  <label key={day.value} className="label cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="checkbox"
-                      name="days"
-                      value={day.value}
-                      onChange={handleSelectedDays}
-                    />
-                    <span className="label-text">{day.label}</span>
-                  </label>
-                ))}
-              </div>
-            )}
+                  <span className="label-text">{p}</span>
+                </label>
+              ))}
+            </div>
           </div>
-          <button className="btn" onClick={nextPage}>
+          <button className="btn" onClick={() => setIsPageActive(true)}>
             Next
           </button>
         </div>
       );
     }
     case 1: {
+      const req = requires[page];
       return (
         <div>
-          <h4>Hatırlatıcı hangi saate kurulsun?</h4>
-          <div className="container mx-auto p-3">
-            <div className="inline-flex rounded-md border p-2 text-lg shadow-lg">
-              <select
-                name="hours"
-                id="hourSelector"
-                onChange={(event) => handleChange(event)}
-                className="appearance-none bg-base-300 px-2 outline-none"
-              >
-                {hours}
-              </select>
-              <span className="px-2">:</span>
-              <select
-                name="minutes"
-                id="minSelector"
-                onChange={(event) => handleChange(event)}
-                className="appearance-none bg-base-300 px-2 outline-none"
-              >
-                {minutes}
-              </select>
-            </div>
-          </div>
-          <button className="btn" onClick={prevPage}>
+          {req.weekDays && (
+            <>
+              <p> Hatırlatıcı hangi günler olsun?</p>
+              <WeekDaySelection />
+            </>
+          )}
+          <p>{page}</p>
+          <HourSelection
+            onlyShow={
+              !!req.hours && !!req.minutes
+                ? undefined
+                : !!req.hours
+                ? "hours"
+                : "mins"
+            }
+          />
+          <button className="btn" onClick={() => setIsPageActive(false)}>
             prev page
           </button>
-          <button
-            className="btn"
-            onClick={() => {
-              const c = cronDetails;
-              handleSubmit(
-                `${c.minutes} ${c.hours} ${c.dayMonth} ${c.month} ${c.dayWeek}`
-              );
-            }}
-          >
+          <button className="btn" onClick={handleSubmit}>
             Apply
           </button>
         </div>
@@ -484,6 +277,112 @@ const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
       );
     }
   }
+};
+
+const useWeeksDaySelect = () => {
+  const WEEKDAYS = [
+    { value: 1, label: "Pazartesi" },
+    { value: 2, label: "Salı" },
+    { value: 3, label: "Çarşamba" },
+    { value: 4, label: "Perşembe" },
+    { value: 5, label: "Cuma" },
+    { value: 6, label: "Cumartesi" },
+    { value: 7, label: "Pazar" },
+  ] as const;
+  type WeekDayValue = (typeof WEEKDAYS)[number]["value"];
+  const [weekDays, setWeekDays] = useState(new Set<WeekDayValue>());
+  const WeekDaySelection = () => {
+    return (
+      <div className="form-control">
+        {WEEKDAYS.map((day) => (
+          <label key={day.value} className="label cursor-pointer">
+            <input
+              type="checkbox"
+              className="checkbox"
+              value={day.value}
+              checked={weekDays.has(day.value)}
+              onChange={(e) => {
+                // weekday selection append or remove
+                const { checked, value } = e.target;
+                const val = +value as WeekDayValue;
+                if (checked) {
+                  // append
+                  setWeekDays((prev) => new Set([...prev, val]));
+                } else {
+                  // remove
+                  setWeekDays((prev) => {
+                    const newSet = new Set(prev);
+                    newSet.delete(val);
+                    return newSet;
+                  });
+                }
+              }}
+            />
+            <span className="label-text">{day.label}</span>
+          </label>
+        ))}
+      </div>
+    );
+  };
+  return { WeekDaySelection, weekDays };
+};
+
+const useHourSelect = () => {
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(0);
+  const Values = ({ length }: { length: number }) => (
+    <>
+      {Array.from({ length }, (_, i) => i).map((n) => (
+        <option
+          className={n % (length / 2) === 0 ? "text-primary" : ""}
+          key={n}
+          value={n}
+        >
+          {n < 10 ? `0${n}` : n}
+        </option>
+      ))}
+    </>
+  );
+
+  const HourSelection = ({ onlyShow }: { onlyShow?: "hours" | "mins" }) => {
+    return (
+      <div className="container mx-auto p-3">
+        <div className="inline-flex rounded-md p-2 text-lg shadow-lg">
+          {onlyShow !== "mins" && (
+            <select
+              value={hours}
+              onChange={(event) => setHours(+event.target.value)}
+              className="select-accent select"
+            >
+              <Values length={24} />
+            </select>
+          )}
+
+          {!onlyShow && <span className="p-2">:</span>}
+
+          {onlyShow !== "hours" && (
+            <select
+              value={minutes}
+              onChange={(event) => setMinutes(+event.target.value)}
+              className="select-accent select"
+            >
+              <Values length={60} />
+            </select>
+          )}
+        </div>
+        <button
+          className="btn-secondary btn-xs btn m-3"
+          onClick={() => {
+            setHours(0);
+            setMinutes(0);
+          }}
+        >
+          Reset
+        </button>
+      </div>
+    );
+  };
+  return { HourSelection, hours, minutes };
 };
 
 const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
