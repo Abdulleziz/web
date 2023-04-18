@@ -11,7 +11,9 @@ import type { ChartData, ChartOptions } from "chart.js";
 import { Radar } from "react-chartjs-2";
 
 import Link from "next/link";
+import Image from "next/image";
 import { type CSSProperties, useEffect, useState, useCallback } from "react";
+
 import {
   useGetAbdullezizUser,
   useGetAbdullezizUsers,
@@ -22,6 +24,7 @@ import classNames from "classnames";
 import { toast } from "react-hot-toast";
 import { useBuyEntities, useNextSalaryDate } from "~/utils/usePayments";
 import { createModal, createPanel } from "./utils";
+import { useConsumeTea, useGetRemainingTea } from "~/utils/useConsumable";
 
 ChartJS.register(
   RadialLinearScale,
@@ -119,7 +122,7 @@ export const AdminPanel = createPanel(
             <span className="badge-secondary badge badge-lg">Beta</span>{" "}
             <span className="badge badge-lg">Work In Progress</span>
           </h3>
-          <p className="py-4">
+          <div className="py-4">
             <div className="font-bold text-primary">
               Bu paneli tamamlamak için yardım lazım. <br />
               Fikirleriniz çok önemli. <br />
@@ -158,7 +161,7 @@ export const AdminPanel = createPanel(
                 <span className="text-success">(you are eligible 🤣)</span>
               </li>
             </ul>
-          </p>
+          </div>
         </Modal>
         <div className="menu flex items-center gap-4">
           <div className="menu-title">Yönetici İşlemleri</div>
@@ -219,6 +222,10 @@ export const DriveablePabel = createPanel(undefined, () => {
 export const ServantPanel = createPanel(undefined, () => {
   const { data, isLoading } = useGetAbdullezizUser();
 
+  const remainingTea = useGetRemainingTea();
+  const consumeTea = useConsumeTea();
+  const buyEntities = useBuyEntities();
+
   if (isLoading) return <button className="loading btn">Yükleniyor</button>;
   if (!data) return <button className="btn">Error</button>;
 
@@ -227,37 +234,26 @@ export const ServantPanel = createPanel(undefined, () => {
   const canShout = data.perms.includes("çaycıya kız");
   const ummmmm = data.perms.includes("*i*n-t*i.h?a_r ½e(t=");
 
-  const [remainingTea, setRemainingTea] = useDescendingNumberTest(70);
-
-  const buyEntities = useBuyEntities();
-
   return (
     <Panel>
       <div className="menu flex items-center gap-4">
         <div className="menu-title">Çay Paneli</div>
         <div className="menu-item">
-          <span className="text-primary">Kalan çay</span>
-          <div
-            className="radial-progress m-1 text-xs text-primary"
-            style={
-              {
-                "--value": remainingTea,
-                "--size": "2rem",
-                "--thickness": "2px",
-              } as CSSProperties
-            }
-          >
-            {remainingTea}
-          </div>
+          <span className="font-mono text-primary">Kalan çay</span>
+          <span className="p-2 font-mono font-bold">
+            {remainingTea.isLoading ||
+            consumeTea.isLoading ||
+            !remainingTea.data
+              ? "..."
+              : remainingTea.data.amountGram}
+            gr
+          </span>
         </div>
         <div className="menu-item">
           <button
             className="btn-sm btn"
-            disabled={!remainingTea}
-            onClick={() => {
-              setRemainingTea(remainingTea >= 10 ? remainingTea - 10 : 0);
-              toast.success("Çay koyuldu");
-            }}
+            disabled={!remainingTea.data?.amountGram || consumeTea.isLoading}
+            onClick={() => consumeTea.mutate()}
           >
             {canServe ? "Çay koy" : "Çay söylet"}
           </button>
@@ -265,12 +261,12 @@ export const ServantPanel = createPanel(undefined, () => {
         <div className="menu-item">
           <button
             className={classNames("btn-sm btn gap-2", {
-              ["btn-warning"]: !remainingTea,
+              ["btn-warning"]: !remainingTea.data?.amountGram,
               ["loading"]: buyEntities.isLoading,
             })}
-            disabled={!canBuy}
+            disabled={!canBuy || buyEntities.isLoading}
             onClick={() => {
-              // ilerde bu button direkt mağazaya götürsün...
+              // TODO: ilerde bu button direkt mağazaya götürsün...
               toast.loading("Çay satın alınıyor", { id: "buyTea" });
               buyEntities.mutate(
                 [
@@ -280,10 +276,10 @@ export const ServantPanel = createPanel(undefined, () => {
                 ],
                 {
                   onSuccess: () => {
-                    setRemainingTea(
-                      remainingTea <= 90 ? remainingTea + 10 : 100
+                    toast.success(
+                      "Çay satın alındı (1kg + 5x200gr) (400 serving)",
+                      { id: "buyTea" }
                     );
-                    toast.success("Çay satın alındı", { id: "buyTea" });
                   },
                   onError: () =>
                     toast.error("Çay satın alınamadı", { id: "buyTea" }),
@@ -428,6 +424,12 @@ export const MembersPanel = createPanel(undefined, () => {
         <ul className="space-y-6 p-6">
           {members.map((member) => {
             const avatar = getAvatarUrl(member.user, member.avatar);
+            const style = member.roles[0]
+              ? {
+                  color: `#${member.roles[0].color.toString(16)}`,
+                }
+              : { color: "white" };
+
             return (
               <li
                 key={member.user.id}
@@ -435,29 +437,25 @@ export const MembersPanel = createPanel(undefined, () => {
               >
                 <div className="avatar-group">
                   {avatar && (
-                    <img
+                    <Image
                       className="avatar w-12"
                       src={avatar}
                       alt="Profile photo"
+                      width={128}
+                      height={128}
                     />
                   )}
                 </div>
-                {
-                  <p
-                    style={
-                      member.roles.length > 0
-                        ? {
-                            color: `#${member.roles[0]!.color.toString(16)}`,
-                          }
-                        : { color: "white" }
-                    }
-                  >
-                    {member.nick}
-                  </p>
-                }
+                {<p style={style}>{member.nick}</p>}
                 <p className="text-gray-400">
                   {member.user.username}#{member.user.discriminator}
                 </p>
+
+                {member.roles[0] ? (
+                  <p style={style}>({member.roles[0].name})</p>
+                ) : (
+                  "(Unemployeed 🤣)"
+                )}
               </li>
             );
           })}
@@ -466,16 +464,5 @@ export const MembersPanel = createPanel(undefined, () => {
     </div>
   );
 });
-
-export const useDescendingNumberTest = (valueStart: number) => {
-  const [value, setValue] = useState(valueStart);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setValue((v) => (v <= 0 ? 0 : v - 1));
-    }, 1000);
-    return () => clearInterval(interval);
-  });
-  return [value, setValue] as const;
-};
 
 export { HistoryPanel } from "./HistoryPanel";

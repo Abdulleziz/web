@@ -1,5 +1,5 @@
 import type { NextPage } from "next";
-import { type ChangeEvent, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Layout } from "~/components/Layout";
 import cronParser from "cron-parser";
 import { flushSync } from "react-dom";
@@ -10,6 +10,8 @@ import {
   useGetAllCrons,
   useLeaveCron,
 } from "~/utils/useCron";
+import Image from "next/image";
+import { useRouter } from "next/router";
 
 const maker = "https://crontab.guru/";
 
@@ -21,7 +23,6 @@ const calculateDiff = (cron: cronParser.CronExpression) => {
 };
 
 // not implemented yet...
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 // cron input hem custom hem alttaki seçeneklerden biri olacak
 const predefinedCrons = {
   "Her x dakikada bir": (min = 1) => `*/${min} * * * *`,
@@ -29,6 +30,8 @@ const predefinedCrons = {
   "Her Gün": (hour = 0, min = 0) => `${min} ${hour} * * *`,
   "Her Haftasonu": (hour = 0, min = 0) => `${min} ${hour} * * 0,6`, // cumartesi-pazar
   "Her Haftaiçi": (hour = 0, min = 0) => `${min} ${hour} * * 1-5`, // pazartesi-cuma
+  "Haftanın Belirli Günleri": (days: number[], hour = 0, min = 0) =>
+    `${min} ${hour} * * ${days.join(",")}`,
 } as const;
 
 const CronPage: NextPage = () => {
@@ -88,22 +91,30 @@ const CronPage: NextPage = () => {
       </div>
       <div className="flex flex-col gap-4 p-4">
         <div className="mockup-window border bg-base-300">
-          <div className="flex justify-center gap-4 bg-base-200 px-4 py-16">
-            <input
-              type="text"
-              className="input"
-              placeholder="Cron... (0 8 * * 5)"
-              value={input}
-              onChange={(e) => handleSubmit(e.target.value)}
-            />
-            <label
-              htmlFor="create-cron"
-              className={classNames("btn", {
-                ["btn-disabled"]: !input || (diff ?? 0) < 12,
-              })}
-            >
-              Oluştur
-            </label>
+          <div className="flex flex-col items-center justify-center gap-4 bg-base-200 px-4 py-16 md:flex-row">
+            <div className="flex items-center justify-center">
+              <CronMaker handleSubmit={handleSubmit} />
+            </div>
+            <div className=" divider divider-vertical md:divider-horizontal">
+              Veya
+            </div>
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                className="input"
+                placeholder="Cron... (0 8 * * 5)"
+                value={input}
+                onChange={(e) => handleSubmit(e.target.value)}
+              />
+              <label
+                htmlFor="create-cron"
+                className={classNames("btn-success btn-sm btn", {
+                  ["btn-disabled"]: !input || (diff ?? 0) < 12,
+                })}
+              >
+                Oluştur
+              </label>
+            </div>
           </div>
           <div className="flex flex-row items-center justify-center gap-4">
             {!!nextDateString && (
@@ -112,7 +123,7 @@ const CronPage: NextPage = () => {
                   <span className="text-info">Sonraki hatırlatıcı: </span>
                   <p>{nextDateString}</p>
                 </div>
-                <label htmlFor="test-modal" className="btn-xs btn">
+                <label htmlFor="next-dates" className="btn-xs btn">
                   Hepsini göster
                 </label>
               </>
@@ -122,11 +133,11 @@ const CronPage: NextPage = () => {
         </div>
       </div>
       <div className="flex flex-col gap-4 p-8">
-        <CronTable />
+        <CronTable handleSubmit={handleSubmit} />
       </div>
       {!!nextDates && (
         <div>
-          <input type="checkbox" className="modal-toggle" id="test-modal" />
+          <input type="checkbox" className="modal-toggle" id="next-dates" />
           <div className="modal">
             <div className="modal-box">
               <h3 className="font-bold">Sonraki Hatırlatıcılar</h3>
@@ -140,7 +151,7 @@ const CronPage: NextPage = () => {
                   ))}
               </ul>
               <div className="modal-action">
-                <label htmlFor="test-modal" className="btn">
+                <label htmlFor="next-dates" className="btn">
                   Kapat
                 </label>
               </div>
@@ -151,6 +162,230 @@ const CronPage: NextPage = () => {
       <CronCreate key={validCron} cron={validCron} />
     </Layout>
   );
+};
+
+const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
+  handleSubmit: submitCron,
+}) => {
+  type Page = keyof typeof predefinedCrons;
+  const pages = Object.keys(predefinedCrons) as Page[];
+
+  const requires: Record<
+    Page,
+    { hours?: boolean; minutes?: boolean; weekDays?: boolean }
+  > = {
+    "Her x dakikada bir": { minutes: true },
+    "Her x saatte bir": { hours: true },
+    "Her Gün": { hours: true, minutes: true },
+    "Her Haftaiçi": { hours: true, minutes: true },
+    "Her Haftasonu": { hours: true, minutes: true },
+    "Haftanın Belirli Günleri": { hours: true, minutes: true, weekDays: true },
+  };
+
+  const [page, setPage] = useState<Page>("Her Gün");
+  const [isPageActive, setIsPageActive] = useState(false);
+
+  const { HourSelection, hours, minutes } = useHourSelect();
+  const { WeekDaySelection, weekDays } = useWeeksDaySelect();
+
+  const handleSubmit = () => {
+    // çöpşiş typescript ağlamasın diye iğrençlikler
+    let cron: string;
+    const req = requires[page];
+    const callback = predefinedCrons[page];
+    if (req.hours && req.minutes && req.weekDays) {
+      const c = callback as (
+        weekDays: number[],
+        hours: number,
+        minutes: number
+      ) => string;
+      cron = c([...weekDays], hours, minutes);
+    } else if (req.hours && req.minutes) {
+      const c = callback as (hours: number, minutes: number) => string;
+      cron = c(hours, minutes);
+    } else if (req.hours) {
+      const c = callback as (hours: number) => string;
+      cron = c(hours);
+    } else if (req.minutes) {
+      const c = callback as (minutes: number) => string;
+      cron = c(minutes);
+    } else {
+      const c = callback as () => string;
+      cron = c();
+    }
+    submitCron(cron);
+  };
+
+  switch (isPageActive) {
+    case false: {
+      return (
+        <div className="flex flex-col gap-2">
+          <h4>Nasıl uyarılmak istiyorsun?</h4>
+          <div className="form-control">
+            {pages.map((p, i) => (
+              <label key={i} className="label cursor-pointer">
+                <input
+                  type="radio"
+                  className="radio checked:bg-white"
+                  checked={p === page}
+                  onChange={() => setPage(p)}
+                />
+                <span className="label-text">{p}</span>
+              </label>
+            ))}
+          </div>
+          <button className="btn-sm btn" onClick={() => setIsPageActive(true)}>
+            Devam
+          </button>
+        </div>
+      );
+    }
+    case true: {
+      const req = requires[page];
+      return (
+        <div className="flex flex-col gap-2">
+          {req.weekDays && (
+            <>
+              <p> Hatırlatıcı hangi günler olsun?</p>
+              <WeekDaySelection />
+            </>
+          )}
+          <p>{page}</p>
+          {(req.hours || req.minutes) && (
+            <HourSelection
+              onlyShow={
+                req.hours && req.minutes
+                  ? undefined // both
+                  : req.hours
+                  ? "hours"
+                  : "mins"
+              }
+            />
+          )}
+          <button className="btn-sm btn" onClick={() => setIsPageActive(false)}>
+            Geri dön
+          </button>
+          <button
+            className="btn-sm btn"
+            onClick={handleSubmit}
+            disabled={
+              (req.weekDays && weekDays.size === 0) ||
+              (req.hours && !req.minutes && hours === 0) ||
+              (req.minutes && !req.hours && minutes === 0)
+            }
+          >
+            Bunu kullan
+          </button>
+        </div>
+      );
+    }
+  }
+};
+
+const useWeeksDaySelect = () => {
+  const WEEKDAYS = [
+    { value: 1, label: "Pazartesi" },
+    { value: 2, label: "Salı" },
+    { value: 3, label: "Çarşamba" },
+    { value: 4, label: "Perşembe" },
+    { value: 5, label: "Cuma" },
+    { value: 6, label: "Cumartesi" },
+    { value: 7, label: "Pazar" },
+  ] as const;
+  type WeekDayValue = (typeof WEEKDAYS)[number]["value"];
+  const [weekDays, setWeekDays] = useState(new Set<WeekDayValue>());
+  const WeekDaySelection = () => {
+    return (
+      <div className="form-control">
+        {WEEKDAYS.map((day) => (
+          <label key={day.value} className="label cursor-pointer">
+            <input
+              type="checkbox"
+              className="checkbox"
+              value={day.value}
+              checked={weekDays.has(day.value)}
+              onChange={(e) => {
+                // weekday selection append or remove
+                const { checked, value } = e.target;
+                const val = +value as WeekDayValue;
+                if (checked) {
+                  // append
+                  setWeekDays((prev) => new Set([...prev, val]));
+                } else {
+                  // remove
+                  setWeekDays((prev) => {
+                    const newSet = new Set(prev);
+                    newSet.delete(val);
+                    return newSet;
+                  });
+                }
+              }}
+            />
+            <span className="label-text">{day.label}</span>
+          </label>
+        ))}
+      </div>
+    );
+  };
+  return { WeekDaySelection, weekDays };
+};
+
+const useHourSelect = () => {
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(0);
+  const Values = ({ length }: { length: number }) => (
+    <>
+      {Array.from({ length }, (_, i) => i).map((n) => (
+        <option
+          className={n % (length / 2) === 0 ? "text-primary" : ""}
+          key={n}
+          value={n}
+        >
+          {n < 10 ? `0${n}` : n}
+        </option>
+      ))}
+    </>
+  );
+
+  const HourSelection = ({ onlyShow }: { onlyShow?: "hours" | "mins" }) => {
+    return (
+      <div className="container mx-auto p-3">
+        <div className="inline-flex rounded-md p-2 text-lg shadow-lg">
+          {onlyShow !== "mins" && (
+            <select
+              value={hours}
+              onChange={(event) => setHours(+event.target.value)}
+              className="select-accent select"
+            >
+              <Values length={24} />
+            </select>
+          )}
+
+          {!onlyShow && <span className="p-2">:</span>}
+
+          {onlyShow !== "hours" && (
+            <select
+              value={minutes}
+              onChange={(event) => setMinutes(+event.target.value)}
+              className="select-accent select"
+            >
+              <Values length={60} />
+            </select>
+          )}
+        </div>
+        <button
+          className="btn-secondary btn-xs btn m-3"
+          onClick={() => {
+            setHours(0);
+            setMinutes(0);
+          }}
+        >
+          Sıfırla
+        </button>
+      </div>
+    );
+  };
+  return { HourSelection, hours, minutes };
 };
 
 const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
@@ -218,11 +453,27 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
   );
 };
 
-const CronTable: React.FC = () => {
+const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
+  handleSubmit,
+}) => {
+  const router = useRouter();
+  const routerExp = router.query.exp as string | undefined;
   const { data: session } = useSession();
   const { data } = useGetAllCrons();
   const join = useCreateOrJoinCron();
   const leave = useLeaveCron();
+
+  const routerRowRef = useRef<HTMLTableCellElement | null>(null);
+
+  // focus on the row that is in the url
+  useEffect(() => {
+    // TODO: delete, this does not work.
+    if (routerExp && data?.find((j) => j.cron === routerExp)) {
+      void new Promise((resolve) => setTimeout(resolve, 1000)).then(() => {
+        if (routerRowRef.current) routerRowRef.current.focus();
+      });
+    }
+  }, [data, routerExp]);
 
   if (!session || !data || !data.length) return <></>;
   return (
@@ -250,7 +501,12 @@ const CronTable: React.FC = () => {
                           <div key={c.listener.id} className="avatar">
                             <div className="w-12">
                               {c.listener.image && (
-                                <img src={c.listener.image} alt="User avatar" />
+                                <Image
+                                  src={c.listener.image}
+                                  alt="User avatar"
+                                  width={128}
+                                  height={128}
+                                />
                               )}
                             </div>
                           </div>
@@ -325,7 +581,31 @@ const CronTable: React.FC = () => {
                   {job.isGlobal ? "Global" : "Özel"}
                 </span>
               </td>
-              <td>{job.cron}</td>
+              <td
+                ref={routerExp === job.cron ? routerRowRef : undefined}
+                className={
+                  // TODO: popup modal instead
+                  routerExp === job.cron
+                    ? "text-2xl font-bold text-primary"
+                    : ""
+                }
+              >
+                {job.cron}
+                <br />
+                <label
+                  htmlFor="next-dates"
+                  className="btn-xs btn"
+                  onClick={() => handleSubmit(job.cron)}
+                >
+                  tarihler
+                </label>
+                <br />
+                {routerExp === job.cron && (
+                  <span className="badge-ghost badge">
+                    Tıkladığınız hatırlatıcı
+                  </span>
+                )}
+              </td>
               <th>
                 {!!job.listeners.filter((u) => u.listenerId === session.user.id)
                   .length ? (
@@ -405,23 +685,5 @@ export function UTCtoTR(i: cronParser.CronExpression) {
   };
   return fields;
 }
-
-const WarningSVG: React.FC = () => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-6 w-6 flex-shrink-0 stroke-current"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-      />
-    </svg>
-  );
-};
 
 export default CronPage;

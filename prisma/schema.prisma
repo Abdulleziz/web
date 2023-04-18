@@ -113,6 +113,18 @@ model Payment {
     @@index([entityId])
 }
 
+model ConsumeTea {
+    id          String   @id @default(cuid())
+    createdAt   DateTime @default(now())
+    amountGram  Int
+    amountSugar Int
+
+    consumerId String
+    consumer   User   @relation(fields: [consumerId], references: [id], onDelete: Cascade)
+
+    @@index([consumerId])
+}
+
 model Account {
     id                String  @id @default(cuid())
     userId            String
@@ -155,8 +167,9 @@ model User {
     listenedCrons CronListener[]
     ForumPin      ForumPin[]
 
-    paymentsSent     Payment[] @relation("paymentSender")
-    paymentsRecieved Payment[] @relation("paymentReciever")
+    paymentsSent     Payment[]    @relation("paymentSender")
+    paymentsRecieved Payment[]    @relation("paymentReciever")
+    teaConsumer      ConsumeTea[]
 }
 
 model VerificationToken {

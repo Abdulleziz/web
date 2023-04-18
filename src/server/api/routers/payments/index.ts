@@ -1,18 +1,21 @@
-import type { Payment, Prisma, PrismaClient } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
-import { getSystemEntityById } from "~/utils/entities";
 import {
   createPermissionProcedure,
   createTRPCRouter,
   protectedProcedure,
-} from "../trpc";
+} from "~/server/api/trpc";
 import { z } from "zod";
 import { env } from "~/env.mjs";
-import { prisma } from "~/server/db";
 import { Client } from "@upstash/qstash/nodejs";
 import { parseExpression } from "cron-parser";
 import type { CronBody } from "~/pages/api/cron";
 import { getSalaryTakers } from "~/server/discord-api/trpc";
+import {
+  calculateEntitiesPrice,
+  calculateWallet,
+  ensurePayment,
+  poolPayments,
+} from "./utils";
 
 // validators
 export const CreateEntities = z
@@ -22,6 +25,7 @@ export const CreateEntities = z
   })
   .array()
   .nonempty();
+
 export const CreateSalary = z.object({
   multiplier: z.number().min(1).max(20).default(10),
   delay: z
@@ -32,99 +36,13 @@ export const CreateSalary = z.object({
     .describe("in seconds"),
 });
 
-type CreateEntities = z.infer<typeof CreateEntities>;
-type CreateSalary = z.infer<typeof CreateSalary>;
+export type CreateEntities = z.infer<typeof CreateEntities>;
+export type CreateSalary = z.infer<typeof CreateSalary>;
 
-// utils
-const ensurePayment = <
-  P extends Prisma.PaymentGetPayload<{ include: { from: true } }>
->(
-  p: P
-) => {
-  if (p.type === "invoice") {
-    if (!p.entityId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    // const entity = getSystemEntityById(p.entityId);
-    return { ...p, type: "invoice" as const, entityId: p.entityId };
-  } else if (p.type === "transfer") {
-    if (!p.fromId || !p.from)
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-    return { ...p, type: p.type, fromId: p.fromId, from: p.from };
-  } else if (p.type === "salary") {
-    return { ...p, type: p.type };
-  }
-  throw new TRPCError({
-    code: "INTERNAL_SERVER_ERROR",
-    message: "Unknown payment type",
-  });
-};
-
-export const calculateInvoice = (payment: Payment) => {
-  if (payment.type !== "invoice" || !payment.entityId)
-    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-  const entity = getSystemEntityById(payment.entityId);
-  return payment.amount * entity.price;
-};
-
-export const calculateEntitiesPrice = (entities: CreateEntities) => {
-  let totalPrice = 0;
-
-  for (const { entityId, amount } of entities) {
-    const entity = getSystemEntityById(entityId);
-    const price = entity.price * amount;
-
-    totalPrice += price;
-  }
-
-  return totalPrice;
-};
-
-export const calculateWallet = async (
-  userId: string,
-  transaction?: Omit<
-    PrismaClient,
-    "$connect" | "$disconnect" | "$on" | "$transaction" | "$use"
-  > // transactions support
-) => {
-  const wallet = { balance: 0 };
-  // kickstart the wallet in dev
-  if (env.NODE_ENV !== "production") wallet.balance += 1000000;
-
-  const payments = await (transaction || prisma).payment.findMany({
-    where: { OR: [{ toId: userId }, { fromId: userId }] },
-  });
-
-  for (const payment of payments) {
-    switch (payment.type) {
-      case "salary":
-        wallet.balance += payment.amount;
-        break;
-
-      case "invoice":
-        wallet.balance -= calculateInvoice(payment);
-        break;
-
-      case "transfer":
-        if (payment.toId === userId) wallet.balance += payment.amount;
-        else wallet.balance -= payment.amount;
-        break;
-
-      default:
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Unknown payment type",
-        });
-    }
-  }
-  return wallet;
-};
-
+const takeSalaryProcedure = createPermissionProcedure(["maaş al"]);
 const manageEmployeesProcedure = createPermissionProcedure([
   "çalışanları yönet",
 ]);
-
-const takeSalaryProcedure = createPermissionProcedure(["maaş al"]);
 
 // api router
 export const paymentsRouter = createTRPCRouter({
@@ -136,11 +54,13 @@ export const paymentsRouter = createTRPCRouter({
     return await calculateWallet(ctx.session.user.id);
   }),
   getAll: protectedProcedure.query(async ({ ctx }) => {
-    return (
+    const payments = (
       await ctx.prisma.payment.findMany({
         include: { from: true, to: true },
       })
     ).map(ensurePayment);
+
+    return poolPayments(payments);
   }),
   buyEntities: protectedProcedure
     .input(CreateEntities)
@@ -152,7 +72,7 @@ export const paymentsRouter = createTRPCRouter({
         if (balance < totalPrice)
           throw new TRPCError({
             code: "PRECONDITION_FAILED",
-            message: "Not enough money",
+            message: "Yetersiz bakiye",
           });
 
         return await ctx.prisma.payment.createMany({
@@ -195,7 +115,7 @@ export const paymentsRouter = createTRPCRouter({
         // currently in dev, we don't have a cron job
         const salaryTakers = await getSalaryTakers();
 
-        await prisma.payment.createMany({
+        await ctx.prisma.payment.createMany({
           data: salaryTakers.map((u) => {
             return {
               type: "salary",

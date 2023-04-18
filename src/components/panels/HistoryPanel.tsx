@@ -5,10 +5,12 @@ import type { RouterOutputs } from "~/utils/api";
 import { useGetAllCrons } from "~/utils/useCron";
 import { useGetForumThreads } from "~/utils/useForum";
 import { getSystemEntityById } from "~/utils/entities";
+import { useConsumeTeaHistory } from "~/utils/useConsumable";
 
 type PaymentData = RouterOutputs["payments"]["getAll"][number];
 type CronData = RouterOutputs["cron"]["getAll"][number];
 type ThreadData = RouterOutputs["forum"]["getThreads"][number];
+type ConsumeTeaData = RouterOutputs["consumable"]["tea"]["history"][number];
 
 type HistoryStep =
   | {
@@ -22,35 +24,62 @@ type HistoryStep =
   | {
       type: "thread";
       data: ThreadData;
+    }
+  | {
+      type: "consumeTea";
+      data: ConsumeTeaData;
     };
 
 const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
   switch (step.type) {
+    case "consumeTea": {
+      const { createdAt, amountGram, consumer } = step.data;
+      return (
+        <li
+          className="step-primary step flex items-center space-x-4"
+          data-content="★"
+        >
+          <div className="text-sm">
+            {consumer.name} kardeşimiz güzelinden{" "}
+            <span className="text-success">{(amountGram / 5).toFixed()} </span>
+            çay içti. tarih:{" "}
+            <span className="text-accent">
+              {createdAt.toLocaleString("tr-TR")}
+            </span>
+          </div>
+        </li>
+      );
+    }
     case "thread": {
       const { id, creator, title, createdAt, pin } = step.data;
       return (
-        <li className="step-warning step flex items-center space-x-4">
+        <li
+          className="step-accent step flex items-center space-x-4"
+          data-content="★"
+        >
           <div className="text-sm">
             Thread:{" "}
             <Link className="link-secondary link" href={`/forum/threads/${id}`}>
               {title}
             </Link>{" "}
-            by: {creator.name} pin: {pin ? "✅" : "🟥"} date:{" "}
+            oluşturan: {creator.name} pinli: {pin ? "✅" : "🟥"} tarih:{" "}
             <span className="text-accent">
               {createdAt.toLocaleString("tr-TR")}
             </span>
-            {!!pin && <> pin date: {pin.createdAt.toLocaleString("tr-TR")}</>}
+            {!!pin && <> pin tarihi: {pin.createdAt.toLocaleString("tr-TR")}</>}
           </div>
         </li>
       );
     }
     case "cron": {
-      const { cron, isGlobal, listeners, title, createdAt } =
-        step.data;
+      const { cron, isGlobal, listeners, title, createdAt } = step.data;
       const url = new URL("/cron", window.location.href);
       url.searchParams.set("exp", cron);
       return (
-        <li className="step-warning step flex items-center space-x-4">
+        <li
+          className="step-secondary step flex items-center space-x-4"
+          data-content="★"
+        >
           <div className="text-sm">
             Cron:{" "}
             <Link className="link-secondary link" href={url}>
@@ -75,13 +104,19 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
     }
     case "payment":
       {
-        const { id, type, to, amount, createdAt } = step.data;
+        const { type, createdAt } = step.data;
         if (type === "salary") {
+          const { pool } = step.data;
+          const total = pool.reduce((acc, s) => acc + s.amount, 0);
+          const users = pool.map((s) => s.to);
           return (
-            <li className="step-warning step flex items-center space-x-4">
+            <li
+              className="step-success step flex items-center space-x-4"
+              data-content="$"
+            >
               <div className="text-sm">
-                Salary: <span className="text-success">${amount}</span> to:{" "}
-                {to.name} date:{" "}
+                Maaş: <span className="text-success">${total}</span>{" "}
+                kullanıcılar: ({users.length} kullanıcı) tarih:{" "}
                 <span className="text-accent">
                   {createdAt.toLocaleString("tr-TR")}
                 </span>
@@ -90,23 +125,64 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
           );
         }
         if (type === "transfer") {
-          const { from } = step.data;
+          const { from, to, amount } = step.data;
           return (
-            <li className="step-warning step flex items-center space-x-4">
-              payment id: {id} from: {from.name} to: {to.name} amount: ${amount}
+            <li
+              className="step-info step flex items-center space-x-4"
+              data-content="$"
+            >
+              Transfer kimden: {from.name} kime: {to.name} miktar: ${amount}
             </li>
           );
         }
         if (type === "invoice") {
-          const { entityId } = step.data;
-          const entity = getSystemEntityById(entityId);
-          return (
-            <li className="step-warning step flex items-center space-x-4">
-              <div>
-                Invoice: {entity.type.toUpperCase()} {amount}x
+          const { to, pool: poolRaw } = step.data;
+          const pool = poolRaw.map((p) => ({
+            ...p,
+            entity: getSystemEntityById(p.entityId),
+          }));
+          const EntityDetails = (props: { data: (typeof pool)[number] }) => {
+            const { entity, amount } = props.data;
+            let name: string;
+            switch (entity.type) {
+              case "tea":
+                name = entity.tea.name;
+                break;
+
+              case "phone":
+                name = `${entity.phone.brand} ${entity.phone.model}`;
+                break;
+
+              case "car":
+                name = `${entity.car.brand} ${entity.car.model} ${entity.car.year}`;
+                break;
+            }
+
+            return (
+              <div className="text-xs">
+                {name}: {amount}x
                 <span className="text-primary">${entity.price}</span>=
-                <span className="text-success">${amount * entity.price}</span>{" "}
-                to: {to.name} date:{" "}
+                <span className="text-success">${amount * entity.price}</span>
+              </div>
+            );
+          };
+
+          const total = pool.reduce(
+            (acc, s) => acc + s.amount * s.entity.price,
+            0
+          );
+          return (
+            <li
+              className="step-primary step flex items-center space-x-4"
+              data-content="$"
+            >
+              <div>
+                Satın Alma:
+                {pool.map((d, i) => (
+                  <EntityDetails key={i} data={d} />
+                ))}{" "}
+                alıcı: {to.name} toplam:{" "}
+                <span className="text-success">${total}</span> tarih:{" "}
                 <span className="text-accent">
                   {createdAt.toLocaleString("tr-TR")}
                 </span>
@@ -126,7 +202,8 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
 export const HistoryPanel = createPanel([], () => {
   const buyHistory = usePaymentsHistory().data ?? [];
   const cronHistory = useGetAllCrons().data ?? [];
-  const threadHistory = useGetForumThreads(undefined, false).data ?? [];
+  const threadHistory = useGetForumThreads().data ?? [];
+  const consumeTeaHistory = useConsumeTeaHistory().data ?? [];
 
   //   // DEMO, TEST DATA
   //   const barkin = users.find((u) => u.user.id === "288397394465521664")!;
@@ -150,12 +227,10 @@ export const HistoryPanel = createPanel([], () => {
 
   const history: HistoryStep[] = [
     // tüm historyleri birleştiriyoruz
+    ...consumeTeaHistory.map((c) => ({ type: "consumeTea" as const, data: c })),
     ...threadHistory.map((t) => ({ type: "thread" as const, data: t })),
     ...cronHistory.map((c) => ({ type: "cron" as const, data: c })),
     ...buyHistory.map((b) => ({ type: "payment" as const, data: b })),
-    // TODO: aynı anda dağıtılan payment'ler için pool oluştur ve
-    // tek bir step olarak göster
-    // NOTE: pool oluşturmak için step.createAt.getTime() identifier olarak kullanılabilir! 😎
   ].sort((a, b) => b.data.createdAt.getTime() - a.data.createdAt.getTime());
 
   return (
@@ -166,7 +241,10 @@ export const HistoryPanel = createPanel([], () => {
       <div className="overflow-y-auto">
         <ul className="steps steps-vertical p-6">
           {history.map((h) => (
-            <HistoryStep key={`${h.type}-${h.data.id}`} step={h} />
+            <HistoryStep
+              key={`${h.type}-${h.data.createdAt.getTime()}`}
+              step={h}
+            />
           ))}
         </ul>
       </div>

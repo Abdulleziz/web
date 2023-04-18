@@ -10,6 +10,7 @@ import {
   useGetForumPosts,
   useGetForumThread,
 } from "~/utils/useForum";
+import Image from "next/image";
 
 const ForumThread: NextPage = () => {
   const router = useRouter();
@@ -46,7 +47,7 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
       <div className="flex h-auto flex-col items-center justify-center p-4 py-2">
         {!!thread.data && <DeleteThread threadId={threadId} />}
 
-        <main className="pb-auto pt-5 w-full ">
+        <main className="pb-auto w-full pt-5 ">
           {thread.isLoading && <p>Yükleniyor...</p>}
           {thread.isError && <p>Hata!</p>}
           {thread.data && (
@@ -164,7 +165,7 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
 
   if (!data?.pages.flat().length) {
     return (
-      <div className="alert alert-error pt-3 flex flex-row items-center justify-start shadow-lg">
+      <div className="alert alert-error flex flex-row items-center justify-start pt-3 shadow-lg">
         <InfoSVG />
         <span>Hiç post bulunamadı!</span>
       </div>
@@ -174,13 +175,15 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
   return (
     <div className="flex flex-col rounded bg-base-100 pt-3">
       {data.pages[page]?.posts.map((post) => (
-        <div key={post.id} className="p-4 flex flex-row">
-          <div className="pr-4 rounded bg-base-200 items-center justify-center flex flex-col">
+        <div key={post.id} className="flex flex-row p-4">
+          <div className="flex flex-col items-center justify-center rounded bg-base-200 pr-4">
             {post.creator.image && (
-              <img
+              <Image
                 className="ml-auto mr-auto w-12 rounded-full p-1 sm:w-20"
                 src={post.creator.image}
                 alt="Profile Image"
+                width={128}
+                height={128}
               />
             )}
             <p className="p-3 text-center text-sm font-bold text-white sm:text-xl">
@@ -192,7 +195,7 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
           </div>
         </div>
       ))}
-      <div className="pr-4 pb-4 flex flex-wrap justify-center space-y-0 space-x-2 md:justify-end md:space-y-0 md:space-x-4">
+      <div className="flex flex-wrap justify-center space-y-0 space-x-2 pr-4 pb-4 md:justify-end md:space-y-0 md:space-x-4">
         {Array.from({ length: data.pages.length }).map((_, i) => (
           <button
             key={i}
