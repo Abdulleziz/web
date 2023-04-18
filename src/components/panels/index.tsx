@@ -23,7 +23,8 @@ import { getAvatarUrl } from "~/server/discord-api/utils";
 import classNames from "classnames";
 import { toast } from "react-hot-toast";
 import { useBuyEntities, useNextSalaryDate } from "~/utils/usePayments";
-import { createModal, createPanel } from "./utils";
+import { createPanel } from "./utils";
+import { createModal } from "~/utils/modal";
 import { useConsumeTea, useGetRemainingTea } from "~/utils/useConsumable";
 
 ChartJS.register(
