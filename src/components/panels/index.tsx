@@ -424,6 +424,12 @@ export const MembersPanel = createPanel(undefined, () => {
         <ul className="space-y-6 p-6">
           {members.map((member) => {
             const avatar = getAvatarUrl(member.user, member.avatar);
+            const style = member.roles[0]
+              ? {
+                  color: `#${member.roles[0].color.toString(16)}`,
+                }
+              : { color: "white" };
+
             return (
               <li
                 key={member.user.id}
@@ -440,22 +446,16 @@ export const MembersPanel = createPanel(undefined, () => {
                     />
                   )}
                 </div>
-                {
-                  <p
-                    style={
-                      member.roles[0]
-                        ? {
-                            color: `#${member.roles[0].color.toString(16)}`,
-                          }
-                        : { color: "white" }
-                    }
-                  >
-                    {member.nick}
-                  </p>
-                }
+                {<p style={style}>{member.nick}</p>}
                 <p className="text-gray-400">
                   {member.user.username}#{member.user.discriminator}
                 </p>
+
+                {member.roles[0] ? (
+                  <p style={style}>({member.roles[0].name})</p>
+                ) : (
+                  "(Unemployeed 🤣)"
+                )}
               </li>
             );
           })}

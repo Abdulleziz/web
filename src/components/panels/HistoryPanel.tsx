@@ -62,11 +62,11 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
             <Link className="link-secondary link" href={`/forum/threads/${id}`}>
               {title}
             </Link>{" "}
-            by: {creator.name} pin: {pin ? "✅" : "🟥"} date:{" "}
+            oluşturan: {creator.name} pinli: {pin ? "✅" : "🟥"} tarih:{" "}
             <span className="text-accent">
               {createdAt.toLocaleString("tr-TR")}
             </span>
-            {!!pin && <> pin date: {pin.createdAt.toLocaleString("tr-TR")}</>}
+            {!!pin && <> pin tarihi: {pin.createdAt.toLocaleString("tr-TR")}</>}
           </div>
         </li>
       );
@@ -104,16 +104,19 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
     }
     case "payment":
       {
-        const { id, type, to, amount, createdAt } = step.data;
+        const { type, createdAt } = step.data;
         if (type === "salary") {
+          const { pool } = step.data;
+          const total = pool.reduce((acc, s) => acc + s.amount, 0);
+          const users = pool.map((s) => s.to);
           return (
             <li
               className="step-success step flex items-center space-x-4"
               data-content="$"
             >
               <div className="text-sm">
-                Salary: <span className="text-success">${amount}</span> to:{" "}
-                {to.name} date:{" "}
+                Maaş: <span className="text-success">${total}</span>{" "}
+                kullanıcılar: ({users.length} kullanıcı) tarih:{" "}
                 <span className="text-accent">
                   {createdAt.toLocaleString("tr-TR")}
                 </span>
@@ -122,29 +125,64 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
           );
         }
         if (type === "transfer") {
-          const { from } = step.data;
+          const { from, to, amount } = step.data;
           return (
             <li
               className="step-info step flex items-center space-x-4"
               data-content="$"
             >
-              payment id: {id} from: {from.name} to: {to.name} amount: ${amount}
+              Transfer kimden: {from.name} kime: {to.name} miktar: ${amount}
             </li>
           );
         }
         if (type === "invoice") {
-          const { entityId } = step.data;
-          const entity = getSystemEntityById(entityId);
+          const { to, pool: poolRaw } = step.data;
+          const pool = poolRaw.map((p) => ({
+            ...p,
+            entity: getSystemEntityById(p.entityId),
+          }));
+          const EntityDetails = (props: { data: (typeof pool)[number] }) => {
+            const { entity, amount } = props.data;
+            let name: string;
+            switch (entity.type) {
+              case "tea":
+                name = entity.tea.name;
+                break;
+
+              case "phone":
+                name = `${entity.phone.brand} ${entity.phone.model}`;
+                break;
+
+              case "car":
+                name = `${entity.car.brand} ${entity.car.model} ${entity.car.year}`;
+                break;
+            }
+
+            return (
+              <div className="text-xs">
+                {name}: {amount}x
+                <span className="text-primary">${entity.price}</span>=
+                <span className="text-success">${amount * entity.price}</span>
+              </div>
+            );
+          };
+
+          const total = pool.reduce(
+            (acc, s) => acc + s.amount * s.entity.price,
+            0
+          );
           return (
             <li
               className="step-primary step flex items-center space-x-4"
               data-content="$"
             >
               <div>
-                Invoice: {entity.type.toUpperCase()} {amount}x
-                <span className="text-primary">${entity.price}</span>=
-                <span className="text-success">${amount * entity.price}</span>{" "}
-                to: {to.name} date:{" "}
+                Satın Alma:
+                {pool.map((d, i) => (
+                  <EntityDetails key={i} data={d} />
+                ))}{" "}
+                alıcı: {to.name} toplam:{" "}
+                <span className="text-success">${total}</span> tarih:{" "}
                 <span className="text-accent">
                   {createdAt.toLocaleString("tr-TR")}
                 </span>
@@ -193,9 +231,6 @@ export const HistoryPanel = createPanel([], () => {
     ...threadHistory.map((t) => ({ type: "thread" as const, data: t })),
     ...cronHistory.map((c) => ({ type: "cron" as const, data: c })),
     ...buyHistory.map((b) => ({ type: "payment" as const, data: b })),
-    // TODO: aynı anda dağıtılan payment'ler için pool oluştur ve
-    // tek bir step olarak göster
-    // NOTE: pool oluşturmak için step.createAt.getTime() identifier olarak kullanılabilir! 😎
   ].sort((a, b) => b.data.createdAt.getTime() - a.data.createdAt.getTime());
 
   return (
@@ -206,7 +241,10 @@ export const HistoryPanel = createPanel([], () => {
       <div className="overflow-y-auto">
         <ul className="steps steps-vertical p-6">
           {history.map((h) => (
-            <HistoryStep key={`${h.type}-${h.data.id}`} step={h} />
+            <HistoryStep
+              key={`${h.type}-${h.data.createdAt.getTime()}`}
+              step={h}
+            />
           ))}
         </ul>
       </div>
