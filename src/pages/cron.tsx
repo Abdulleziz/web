@@ -123,7 +123,7 @@ const CronPage: NextPage = () => {
                   <span className="text-info">Sonraki hatırlatıcı: </span>
                   <p>{nextDateString}</p>
                 </div>
-                <label htmlFor="test-modal" className="btn-xs btn">
+                <label htmlFor="next-dates" className="btn-xs btn">
                   Hepsini göster
                 </label>
               </>
@@ -133,11 +133,11 @@ const CronPage: NextPage = () => {
         </div>
       </div>
       <div className="flex flex-col gap-4 p-8">
-        <CronTable />
+        <CronTable handleSubmit={handleSubmit} />
       </div>
       {!!nextDates && (
         <div>
-          <input type="checkbox" className="modal-toggle" id="test-modal" />
+          <input type="checkbox" className="modal-toggle" id="next-dates" />
           <div className="modal">
             <div className="modal-box">
               <h3 className="font-bold">Sonraki Hatırlatıcılar</h3>
@@ -151,7 +151,7 @@ const CronPage: NextPage = () => {
                   ))}
               </ul>
               <div className="modal-action">
-                <label htmlFor="test-modal" className="btn">
+                <label htmlFor="next-dates" className="btn">
                   Kapat
                 </label>
               </div>
@@ -453,7 +453,9 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
   );
 };
 
-const CronTable: React.FC = () => {
+const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
+  handleSubmit,
+}) => {
   const router = useRouter();
   const routerExp = router.query.exp as string | undefined;
   const { data: session } = useSession();
@@ -589,6 +591,14 @@ const CronTable: React.FC = () => {
                 }
               >
                 {job.cron}
+                <br />
+                <label
+                  htmlFor="next-dates"
+                  className="btn-xs btn"
+                  onClick={() => handleSubmit(job.cron)}
+                >
+                  tarihler
+                </label>
                 <br />
                 {routerExp === job.cron && (
                   <span className="badge-ghost badge">
