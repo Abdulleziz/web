@@ -6,6 +6,9 @@ export type ThreadId = z.infer<typeof ThreadId>;
 export const PostId = z.string().cuid();
 export type PostId = z.infer<typeof PostId>;
 
+export const UserId = z.string().cuid();
+export type UserId = z.infer<typeof UserId>;
+
 export const nonEmptyString = z
   .string()
   .transform((t) => t?.trim())

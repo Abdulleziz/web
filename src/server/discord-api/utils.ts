@@ -43,7 +43,7 @@ export const fetchMembersWithRoles = async <M extends Member>(
 };
 
 export const getAvatarUrl = (
-  user: Exclude<Member["user"], undefined>,
+  user: Pick<Exclude<Member["user"], undefined>, "avatar" | "id">,
   guildAvatar?: Member["avatar"],
   guildId = ABDULLEZIZ_SERVER_ID
 ) => {
@@ -57,6 +57,8 @@ export const getAvatarUrl = (
   if (avatar) {
     return `${CDN}/avatars/${id}/${avatar}`;
   }
+
+  throw new Error("no avatar in getAvatarUrl");
 };
 
 export const connectMembersWithIds = async <

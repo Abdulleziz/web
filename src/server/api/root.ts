@@ -4,6 +4,7 @@ import { discordRouter } from "./routers/discord";
 import { cronRouter } from "./routers/cron";
 import { paymentsRouter } from "./routers/payments";
 import { consumableRouter } from "./routers/consumable";
+import { profilesRouter } from "./routers/profiles";
 
 /**
  * This is the primary router for your server.
@@ -15,6 +16,7 @@ export const appRouter = createTRPCRouter({
   discord: discordRouter,
   cron: cronRouter,
   payments: paymentsRouter,
+  profile: profilesRouter,
   consumable: consumableRouter,
 });
 

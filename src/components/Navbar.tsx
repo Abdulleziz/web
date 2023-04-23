@@ -68,7 +68,12 @@ export const Navbar: React.FC = () => {
               className="dropdown-content menu rounded-box menu-compact mt-3 w-52 bg-base-300 p-2 shadow"
             >
               <li>
-                <a className="justify-between">Profile</a>
+                <Link
+                  className="justify-between"
+                  href={`/profiles/${session.user.id}`}
+                >
+                  Profile
+                </Link>
               </li>
               <li>
                 <SettingsModalTrigger onClick={() => setModalOpen(true)} />

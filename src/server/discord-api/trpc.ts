@@ -29,6 +29,15 @@ export const getGuildMembersWithRoles = async () => {
   );
 };
 
+// discord member + verified roles + abdulleziz perms
+export const getAbdullezizUser = async (discordId: string) => {
+  const member = await getGuildMemberWithRoles(discordId);
+  const verifiedRoles = getAbdullezizRoles(member.roles);
+  const verifiedPerms = permissionDecider(verifiedRoles.map((r) => r.name));
+
+  return { ...member, roles: verifiedRoles, perms: verifiedPerms };
+};
+
 // discord members + their verified roles + their abdulleziz perms
 export const getAbdullezizUsers = async () => {
   const members = await getGuildMembersWithRoles();
