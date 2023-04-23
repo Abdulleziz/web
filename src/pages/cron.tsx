@@ -9,6 +9,7 @@ import {
   useCreateOrJoinCron,
   useGetAllCrons,
   useLeaveCron,
+  useToggleCron,
 } from "~/utils/useCron";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -462,6 +463,7 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
   const { data } = useGetAllCrons();
   const join = useCreateOrJoinCron();
   const leave = useLeaveCron();
+  const toggle = useToggleCron();
 
   const routerRowRef = useRef<HTMLTableCellElement | null>(null);
 
@@ -609,25 +611,44 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
               <th>
                 {!!job.listeners.filter((u) => u.listenerId === session.user.id)
                   .length ? (
-                  <button
-                    onClick={() => leave.mutate(job.cron)}
-                    disabled={leave.isLoading}
-                    className={classNames("btn-secondary btn-xs btn", {
-                      ["loading"]: leave.isLoading,
-                    })}
-                  >
-                    Ayrıl
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => toggle.mutate(job.cron)}
+                      disabled={toggle.isLoading}
+                      className={classNames("btn-warning btn-xs btn", {
+                        ["loading"]: toggle.isLoading,
+                      })}
+                    >
+                      {job.listeners.find(
+                        (u) => u.listenerId === session.user.id
+                      )!.isActive
+                        ? "Kapat"
+                        : "Aç"}
+                    </button>
+                    <button
+                      onClick={() => leave.mutate(job.cron)}
+                      disabled={leave.isLoading}
+                      className={classNames("btn-error btn-xs btn", {
+                        ["loading"]: leave.isLoading,
+                      })}
+                    >
+                      Ayrıl
+                    </button>
+                  </div>
                 ) : (
-                  <button
-                    onClick={() => join.mutate({ title: "31", cron: job.cron })}
-                    disabled={join.isLoading}
-                    className={classNames("btn-secondary btn-xs btn", {
-                      ["loading"]: join.isLoading,
-                    })}
-                  >
-                    Katıl
-                  </button>
+                  <div className="flex flex-col">
+                    <button
+                      onClick={() =>
+                        join.mutate({ title: "31", cron: job.cron })
+                      }
+                      disabled={join.isLoading}
+                      className={classNames("btn-success btn-xs btn", {
+                        ["loading"]: join.isLoading,
+                      })}
+                    >
+                      Katıl
+                    </button>
+                  </div>
                 )}
               </th>
             </tr>

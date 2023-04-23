@@ -2,11 +2,21 @@ import { signOut, signIn, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useGetWallet } from "~/utils/usePayments";
+import { type Theme, useThemeStore, Themes } from "./Layout";
+import { createModal } from "~/utils/modal";
+import { useHydrated } from "~/pages/_app";
+import { useState } from "react";
 
 export const Navbar: React.FC = () => {
   const { data: session } = useSession();
   const wallet = useGetWallet();
+  const hydrated = useHydrated();
   const balance = wallet.data?.balance ?? 0;
+  const { theme, setTheme } = useThemeStore();
+  const [modalOpen, setModalOpen] = useState(false); // disable (outside-click +or+ on re-render) closing
+
+  const { Modal: SettingsModal, ModalTrigger: SettingsModalTrigger } =
+    createModal("user-settings", "settings", modalOpen, setModalOpen);
 
   return (
     <div className="navbar sticky top-0 z-50 bg-base-300">
@@ -61,7 +71,7 @@ export const Navbar: React.FC = () => {
                 <a className="justify-between">Profile</a>
               </li>
               <li>
-                <a>Settings</a>
+                <SettingsModalTrigger onClick={() => setModalOpen(true)} />
               </li>
               <li>
                 <button onClick={() => void signOut()}>Logout</button>
@@ -77,6 +87,30 @@ export const Navbar: React.FC = () => {
           </button>
         )}
       </div>
+      {hydrated && (
+        <SettingsModal>
+          <p className="text-bold text-xl text-primary">Settings</p>
+          <div className="modal-body p-4">
+            <p className="text-accent">Theme</p>
+            <select
+              className="select max-w-xs"
+              onChange={(e) => setTheme(e.target.value as Theme)}
+            >
+              <option className="hidden">{theme}</option>
+              {Themes.map((t) => (
+                <option
+                  className="disabled:text-primary"
+                  key={t}
+                  defaultValue={t}
+                  disabled={theme === t}
+                >
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+        </SettingsModal>
+      )}
     </div>
   );
 };

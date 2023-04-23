@@ -5,6 +5,11 @@ import { env } from "~/env.mjs";
 import { nonEmptyString } from "~/utils/zod-utils";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import type { CronBody } from "~/pages/api/cron";
+import { REST } from "@discordjs/rest";
+import {
+  type RESTPostAPIChannelMessageJSONBody,
+  Routes,
+} from "discord-api-types/v10";
 
 export const cronRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
@@ -19,6 +24,100 @@ export const cronRouter = createTRPCRouter({
     });
     return crons;
   }),
+  toggleEnabled: protectedProcedure
+    .input(nonEmptyString)
+    .mutation(async ({ ctx, input: cron }) => {
+      const job = await ctx.prisma.cronJob.findUnique({
+        where: { cron },
+        select: {
+          id: true,
+          jobId: true,
+          title: true,
+          isGlobal: true,
+          listeners: {
+            where: { isAuthor: true },
+            select: {
+              listenerId: true,
+              isActive: true,
+              listener: { select: { name: true } },
+            },
+          },
+        },
+      });
+      if (!job) throw new TRPCError({ code: "NOT_FOUND" });
+      const listenedCron = job.listeners[0]; // only one author
+      if (!listenedCron)
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Bu cronu dinlemiyorsun veya yetkin yok",
+          // Veya author yok
+          // TODO: auto author seç!
+        });
+      const enabled = listenedCron.isActive;
+
+      await ctx.prisma.cronListener.update({
+        where: {
+          listenerId_cronJobId: {
+            cronJobId: job.id,
+            listenerId: listenedCron.listenerId,
+          },
+        },
+        data: { isActive: !enabled },
+      });
+
+      // No need to send discord message if it's not production
+      if (env.NODE_ENV !== "production") return;
+
+      // send discord message
+      // TODO: fix this mess
+      const url = new URL(
+        (env.NODE_ENV === "production"
+          ? "https://abdulleziz.com"
+          : env.NEXTAUTH_URL) + "/cron"
+      );
+      url.searchParams.set("exp", cron);
+
+      const content = `${job.title} hatırlatıcısı ${
+        enabled ? "kapatıldı" : "tekrar açıldı"
+      }. <@${ctx.session.user.discordId}>`;
+      type MessageBody = RESTPostAPIChannelMessageJSONBody;
+      const postBody: MessageBody = {
+        content,
+        // embeds: [
+        //   {
+        //     title: `Hatırlatıcı!`,
+        //     color: 0x41ffff,
+        //     fields: [
+        //       {
+        //         name: `Abdulleziz hatırlatıcı tarafından uyarıldınız!`,
+        //         value: `\`\`\`\nCron: ${cron}\n\`\`\``,
+        //       },
+        //     ],
+        //   },
+        // ],
+        components: [
+          {
+            type: 1,
+            components: [
+              {
+                type: 2,
+                label: "Hatırlatıcıyı göster",
+                style: 5,
+                url: url.toString(),
+              },
+            ],
+          },
+        ],
+      };
+      const discord = new REST({ version: "10" }).setToken(env.DISCORD_TOKEN);
+      const announce = (id: string) =>
+        discord.post(Routes.channelMessages(id), { body: postBody });
+
+      if (job.isGlobal) {
+        const channelId = "1087476743142637579";
+        await announce(channelId);
+      }
+    }),
   leave: protectedProcedure
     .input(nonEmptyString)
     .mutation(async ({ ctx, input: cron }) => {

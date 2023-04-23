@@ -19,6 +19,27 @@ export const useCreateOrJoinCron = () => {
   });
 };
 
+export const useToggleCron = () => {
+  const utils = api.useContext();
+  return api.cron.toggleEnabled.useMutation({
+    onSuccess: () => {
+      toast.success("Cron durumu değiştirildi!", {
+        id: "cron.toggleEnabled",
+      });
+      void utils.cron.getAll.invalidate();
+    },
+    onMutate: () =>
+      toast.loading("Cron durumu değiştiriliyor...", {
+        id: "cron.toggleEnabled",
+      }),
+    onError: (error) => {
+      toast.error(error.data?.zodError || error.message, {
+        id: "cron.toggleEnabled",
+      });
+    },
+  });
+};
+
 export const useLeaveCron = () => {
   const utils = api.useContext();
   return api.cron.leave.useMutation({
