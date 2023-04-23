@@ -46,7 +46,7 @@ export const cronRouter = createTRPCRouter({
       });
       if (!job) throw new TRPCError({ code: "NOT_FOUND" });
       const listenedCron = job.listeners[0]; // only one author
-      if (!listenedCron)
+      if (!listenedCron || listenedCron.listenerId !== ctx.session.user.id)
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Bu cronu dinlemiyorsun veya yetkin yok",

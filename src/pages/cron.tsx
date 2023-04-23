@@ -614,14 +614,17 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                   <div className="flex flex-col gap-2">
                     <button
                       onClick={() => toggle.mutate(job.cron)}
-                      disabled={toggle.isLoading}
+                      disabled={
+                        toggle.isLoading ||
+                        !job.listeners.find(
+                          (u) => u.listenerId === session.user.id
+                        )!.isAuthor
+                      }
                       className={classNames("btn-warning btn-xs btn", {
                         ["loading"]: toggle.isLoading,
                       })}
                     >
-                      {job.listeners.find(
-                        (u) => u.listenerId === session.user.id
-                      )!.isActive
+                      {job.listeners.find((u) => u.isAuthor)?.isActive
                         ? "Kapat"
                         : "Aç"}
                     </button>
