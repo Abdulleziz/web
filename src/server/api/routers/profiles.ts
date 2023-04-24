@@ -22,7 +22,10 @@ async function getUser(id: UserId) {
       name: true,
       email: true,
       image: true,
-      accounts: { select: { providerAccountId: true } },
+      accounts: {
+        where: { provider: "discord" },
+        select: { providerAccountId: true },
+      },
       _count: {
         select: {
           forumPosts: true,

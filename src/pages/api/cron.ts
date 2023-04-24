@@ -82,6 +82,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return;
     }
 
+    if (job.listeners.some((l) => !l.isActive)) {
+      res.status(200).send("OK - cron.inactive");
+      return;
+    }
+
     const users = job.listeners.map((l) => l.listener.id);
     const discordProvider = await prisma.user.findMany({
       where: { id: { in: users } },
