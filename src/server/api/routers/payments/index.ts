@@ -16,6 +16,7 @@ import {
   ensurePayment,
   poolPayments,
 } from "./utils";
+import { getBaseUrl } from "~/utils/api";
 
 // validators
 export const CreateEntities = z
@@ -97,12 +98,9 @@ export const paymentsRouter = createTRPCRouter({
         if (salaryMessages.length > 0)
           throw new TRPCError({ code: "PRECONDITION_FAILED" });
 
-        const url = process.env.VERCEL
-          ? "https://abdulleziz.com"
-          : env.NEXTAUTH_URL;
-
+        const url = getBaseUrl() + "/api/cron";
         return await c.publishJSON({
-          url: url + "/api/cron",
+          url,
           delay,
           body: {
             type: "salary",

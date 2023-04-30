@@ -10,6 +10,7 @@ import {
   type RESTPostAPIChannelMessageJSONBody,
   Routes,
 } from "discord-api-types/v10";
+import { getBaseUrl } from "~/utils/api";
 
 export const cronRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
@@ -70,11 +71,7 @@ export const cronRouter = createTRPCRouter({
 
       // send discord message
       // TODO: fix this mess
-      const url = new URL(
-        (env.NODE_ENV === "production"
-          ? "https://abdulleziz.com"
-          : env.NEXTAUTH_URL) + "/cron"
-      );
+      const url = new URL("/cron", getBaseUrl());
       url.searchParams.set("exp", cron);
 
       const content = `${job.title} hatırlatıcısı ${
@@ -200,12 +197,9 @@ export const cronRouter = createTRPCRouter({
       let jobId: string; // development reasons...
       if (env.NEXT_PUBLIC_VERCEL_ENV === "production") {
         const c = new Client({ token: env.QSTASH_TOKEN });
-        const url = process.env.VERCEL
-          ? "https://abdulleziz.com"
-          : env.NEXTAUTH_URL;
-
+        const url = getBaseUrl() + "/api/cron";
         const res = await c.publishJSON({
-          url: url + "/api/cron",
+          url,
           cron,
           body: { cron } as z.input<typeof CronBody>,
         });
