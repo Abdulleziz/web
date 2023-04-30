@@ -66,7 +66,7 @@ export const cronRouter = createTRPCRouter({
       });
 
       // No need to send discord message if it's not production
-      if (env.NODE_ENV !== "production") return;
+      if (env.NEXT_PUBLIC_VERCEL_ENV !== "production") return;
 
       // send discord message
       // TODO: fix this mess
@@ -136,7 +136,7 @@ export const cronRouter = createTRPCRouter({
         throw new TRPCError({ code: "FORBIDDEN" });
 
       if (dbCron.listeners.length === 1) {
-        if (env.NODE_ENV === "production") {
+        if (env.NEXT_PUBLIC_VERCEL_ENV === "production") {
           const c = new Client({ token: env.QSTASH_TOKEN });
           await c.schedules.delete({ id: dbCron.jobId });
         }
@@ -198,7 +198,7 @@ export const cronRouter = createTRPCRouter({
           },
         });
       let jobId: string; // development reasons...
-      if (env.NODE_ENV === "production") {
+      if (env.NEXT_PUBLIC_VERCEL_ENV === "production") {
         const c = new Client({ token: env.QSTASH_TOKEN });
         const url = process.env.VERCEL
           ? "https://abdulleziz.com"

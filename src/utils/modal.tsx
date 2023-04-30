@@ -25,13 +25,15 @@ export const createModal = (
           <label className="modal-box relative" htmlFor="">
             {children}
             <div className="modal-action">
-              <label
-                htmlFor={id}
-                className="btn"
-                onClick={() => setOpen && setOpen(false)}
-              >
-                Kapat
-              </label>
+              {setOpen && (
+                <label
+                  htmlFor={id}
+                  className="btn"
+                  onClick={() => setOpen(false)}
+                >
+                  Kapat
+                </label>
+              )}
             </div>
           </label>
         </label>

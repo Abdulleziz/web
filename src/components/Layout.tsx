@@ -2,7 +2,9 @@ import Head from "next/head";
 import { Navbar } from "./Navbar";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { createModal } from "~/utils/modal";
 import { useHydrated } from "~/pages/_app";
+import { useNotificationStage } from "~/lib/pusher/notifications";
 
 export const Themes = [
   "dracula",
@@ -51,6 +53,12 @@ export const Layout: React.FC<Props> = ({
 }) => {
   const { theme } = useThemeStore();
   const isHydrated = useHydrated();
+  const notifStage = useNotificationStage();
+  const { Modal } = createModal(
+    "notif",
+    "unreachable",
+    notifStage === "loading"
+  );
 
   return (
     <>
@@ -75,8 +83,63 @@ export const Layout: React.FC<Props> = ({
         data-theme={isHydrated ? forcedTheme || theme : emptyThemeStore.theme}
       >
         <Navbar />
+        {notifStage === "denied" && <Alert />}
+        <Modal>
+          <div className="flex flex-col items-center justify-center">
+            <div className="loader h-32 w-32 rounded-full border-8 border-t-8 border-gray-200 ease-linear"></div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold">
+              Bekleniyor...
+            </h2>
+            <p className="mt-2 text-center text-sm">
+              Abdülleziz bildirimlerini kabul etmeniz bekleniyor.
+            </p>
+            <p className="mt-2 text-center text-sm text-info">
+              Not: Bildirimleri açmak, Abdülleziz{"'"}in daha iyi çalışmasını
+              sağlar.
+            </p>
+          </div>
+        </Modal>
         {children}
       </main>
     </>
   );
 };
+
+const Alert = () => {
+  return (
+    <div className="flex items-center justify-center p-4">
+      <div className="alert alert-error flex flex-row shadow-lg">
+        <div>
+          <ErrorSVG />
+          <span>
+            Abdülleziz bildirimleri şu anda kapalı. Bildirimleri açmak için
+            butona tıklayın.
+          </span>
+        </div>
+        <button
+          onClick={() => {
+            void Notification.requestPermission();
+          }}
+        >
+          Bildirimleri aç
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const ErrorSVG = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-6 w-6 flex-shrink-0 stroke-current"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
+  </svg>
+);

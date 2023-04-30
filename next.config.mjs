@@ -20,5 +20,6 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
+  transpilePackages: ["@pusher/push-notifications-web"],
 };
 export default config;

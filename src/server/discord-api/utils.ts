@@ -58,7 +58,7 @@ export const getAvatarUrl = (
     return `${CDN}/avatars/${id}/${avatar}`;
   }
 
-  throw new Error("no avatar in getAvatarUrl");
+  return `${CDN}/embed/avatars/${Number(id) % 5}.png`;
 };
 
 export const connectMembersWithIds = async <

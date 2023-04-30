@@ -8,6 +8,8 @@ import {
 } from "~/server/api/trpc";
 import { nonEmptyString, ThreadId } from "~/utils/zod-utils";
 import { forumPostsRouter } from "./posts";
+import { getEnv } from "~/lib/pusher/notifications";
+import { env } from "~/env.mjs";
 
 const managePinsProcedure = createPermissionProcedure(["forum thread pinle"]);
 
@@ -61,8 +63,8 @@ export const forumRouter = createTRPCRouter({
         message: nonEmptyString,
       })
     )
-    .mutation(({ ctx, input: { title, tags, message } }) => {
-      return ctx.prisma.forumThread.create({
+    .mutation(async ({ ctx, input: { title, tags, message } }) => {
+      const thread = await ctx.prisma.forumThread.create({
         data: {
           title,
           tags: {
@@ -82,6 +84,18 @@ export const forumRouter = createTRPCRouter({
           },
         },
       });
+      await ctx.pushNotification.publishToInterests([`${getEnv()}-all`], {
+        web: {
+          notification: {
+            title: `Yeni Thread: ${title.slice(0, 50)}`,
+            body: `${ctx.session.user.name ?? ""}: ${message.slice(0, 100)}`,
+            deep_link: `${env.NEXTAUTH_URL}/forum/threads/${thread.id}`,
+            // hide_notification_if_site_has_focus: true,
+            icon: `${env.NEXTAUTH_URL}/favicon.ico`,
+          },
+        },
+      });
+      return thread;
     }),
   deleteThreadById: protectedProcedure
     .input(ThreadId)
