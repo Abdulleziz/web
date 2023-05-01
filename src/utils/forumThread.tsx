@@ -28,12 +28,17 @@ const extractUrl = (token: Token & { type: "url" }, key: number) => {
   if (ext === "jpg" || ext === "jpeg" || ext === "png" || ext === "gif")
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img className="max-h-xs max-w-xs" key={key} src={url} alt="image" />
+      <img
+        className="max-h-[10rem] max-w-[10rem] sm:max-h-[15rem] sm:max-w-[15rem] md:max-h-[20rem] md:max-w-[20rem]"
+        key={key}
+        src={url}
+        alt="image"
+      />
     );
   else if (ext === "mp4" || ext === "webm" || ext === "ogg")
     return (
       <video
-        className="max-h-xs max-w-xs"
+        className="max-h-[10rem] max-w-[10rem] sm:max-h-[15rem] sm:max-w-[15rem] md:max-h-[20rem] md:max-w-[20rem]"
         key={key}
         src={url}
         autoPlay
@@ -41,6 +46,13 @@ const extractUrl = (token: Token & { type: "url" }, key: number) => {
       />
     );
   // unsupported media
+  else if (url.includes("https://tenor.com/view"))
+    // TODO: custom tenor api endpoint
+    return (
+      <a className="link-error link" href={url}>
+        *tenor gif not supported yet*
+      </a>
+    );
   else return url;
 };
 
@@ -48,6 +60,8 @@ export const tokenizePostContent = (content: string) => {
   const tokens = tokenize(content);
   return tokens.map((token, i) => {
     if (token.type === "url") return extractUrl(token, i);
+    if (token.type === "newline") return <div className="w-full" key={i} />;
+    if (token.type === "space") return <span key={i}>&nbsp;</span>;
     return token.content;
   });
 };
