@@ -9,7 +9,7 @@ import {
 import { nonEmptyString, ThreadId } from "~/utils/zod-utils";
 import { forumPostsRouter } from "./posts";
 import { getEnv } from "~/lib/pusher/notifications";
-import { getBaseUrl } from "~/utils/api";
+import { getDomainUrl } from "~/utils/api";
 
 const managePinsProcedure = createPermissionProcedure(["forum thread pinle"]);
 
@@ -89,9 +89,9 @@ export const forumRouter = createTRPCRouter({
           notification: {
             title: `Yeni Thread: ${title.slice(0, 50)}`,
             body: `${ctx.session.user.name ?? ""}: ${message.slice(0, 100)}`,
-            deep_link: `${getBaseUrl()}/forum/threads/${thread.id}`,
+            deep_link: `${getDomainUrl()}/forum/threads/${thread.id}`,
             hide_notification_if_site_has_focus: true,
-            icon: `${getBaseUrl()}/favicon.ico`,
+            icon: `${getDomainUrl()}/favicon.ico`,
           },
         },
       });

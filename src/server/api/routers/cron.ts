@@ -10,7 +10,7 @@ import {
   type RESTPostAPIChannelMessageJSONBody,
   Routes,
 } from "discord-api-types/v10";
-import { getBaseUrl } from "~/utils/api";
+import { getDomainUrl } from "~/utils/api";
 
 export const cronRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
@@ -71,7 +71,7 @@ export const cronRouter = createTRPCRouter({
 
       // send discord message
       // TODO: fix this mess
-      const url = new URL("/cron", getBaseUrl());
+      const url = new URL("/cron", getDomainUrl());
       url.searchParams.set("exp", cron);
 
       const content = `${job.title} hatırlatıcısı ${
@@ -197,7 +197,7 @@ export const cronRouter = createTRPCRouter({
       let jobId: string; // development reasons...
       if (env.NEXT_PUBLIC_VERCEL_ENV === "production") {
         const c = new Client({ token: env.QSTASH_TOKEN });
-        const url = getBaseUrl() + "/api/cron";
+        const url = getDomainUrl() + "/api/cron";
         const res = await c.publishJSON({
           url,
           cron,

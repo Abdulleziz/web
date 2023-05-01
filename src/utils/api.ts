@@ -8,8 +8,20 @@ import { httpBatchLink, loggerLink } from "@trpc/client";
 import { createTRPCNext } from "@trpc/next";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
 import superjson from "superjson";
+import { env } from "~/env.mjs";
 
 import { type AppRouter } from "~/server/api/root";
+
+export const getDomainUrl = () => {
+  switch (env.NEXT_PUBLIC_VERCEL_ENV) {
+    case "production":
+      return "https://abdulleziz.com" as const;
+    case "preview":
+      return "https://dev.abdulleziz.com" as const;
+    case "development":
+      return `http://localhost:${process.env.PORT ?? 3000}` as const;
+  }
+};
 
 export const getBaseUrl = () => {
   if (typeof window !== "undefined") return ""; // browser should use relative url

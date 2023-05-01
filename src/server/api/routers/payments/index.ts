@@ -16,7 +16,7 @@ import {
   ensurePayment,
   poolPayments,
 } from "./utils";
-import { getBaseUrl } from "~/utils/api";
+import { getDomainUrl } from "~/utils/api";
 
 // validators
 export const CreateEntities = z
@@ -98,7 +98,7 @@ export const paymentsRouter = createTRPCRouter({
         if (salaryMessages.length > 0)
           throw new TRPCError({ code: "PRECONDITION_FAILED" });
 
-        const url = getBaseUrl() + "/api/cron";
+        const url = getDomainUrl() + "/api/cron";
         return await c.publishJSON({
           url,
           delay,

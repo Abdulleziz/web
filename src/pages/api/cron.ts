@@ -12,7 +12,7 @@ import { env } from "~/env.mjs";
 import { REST } from "@discordjs/rest";
 import { CreateSalary } from "~/server/api/routers/payments";
 import { getSalaryTakers } from "~/server/discord-api/trpc";
-import { getBaseUrl } from "~/utils/api";
+import { getDomainUrl } from "~/utils/api";
 
 // const CronHeader = z.object({
 //   "upstash-message-id": z.string(),
@@ -110,7 +110,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       .join(", ")}`;
     if (debug) content = `[🧪TEST💻] ${content}`;
 
-    const url = new URL("/cron", getBaseUrl());
+    const url = new URL("/cron", getDomainUrl());
     url.searchParams.set("exp", cron);
 
     const postBody: MessageBody = {

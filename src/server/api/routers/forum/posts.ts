@@ -3,7 +3,7 @@ import { z } from "zod";
 import { nonEmptyString, PostId, ThreadId } from "~/utils/zod-utils";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { getEnv } from "~/lib/pusher/notifications";
-import { getBaseUrl } from "~/utils/api";
+import { getDomainUrl } from "~/utils/api";
 
 export const forumPostsRouter = createTRPCRouter({
   getMany: protectedProcedure
@@ -48,9 +48,9 @@ export const forumPostsRouter = createTRPCRouter({
           notification: {
             title: `Yeni Mesaj: ${post.thread.title.slice(0, 50)}`,
             body: `${ctx.session.user.name ?? ""}: ${message.slice(0, 100)}`,
-            deep_link: `${getBaseUrl()}/forum/threads/${threadId}`,
+            deep_link: `${getDomainUrl()}/forum/threads/${threadId}`,
             hide_notification_if_site_has_focus: true,
-            icon: `${getBaseUrl()}/favicon.ico`,
+            icon: `${getDomainUrl()}/favicon.ico`,
           },
         },
       });
