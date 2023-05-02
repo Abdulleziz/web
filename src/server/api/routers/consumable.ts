@@ -26,7 +26,7 @@ export const consumableRouter = createTRPCRouter({
           .default({})
       )
       .mutation(async ({ ctx, input: { amountGram, amountSugar } }) => {
-        if (env.NODE_ENV === "production")
+        if (env.NEXT_PUBLIC_VERCEL_ENV === "production")
           // TODO: feature-flags with qstash
           throw new TRPCError({
             code: "FORBIDDEN",

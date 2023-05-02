@@ -7,6 +7,7 @@ import { Toaster } from "react-hot-toast";
 import { api } from "~/utils/api";
 
 import "~/styles/globals.css";
+import { useRegisterSW } from "~/lib/pusher/notifications";
 
 export const useHydrated = () => {
   const [hydrated, setHydrated] = useState(false);
@@ -18,6 +19,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
   Component,
   pageProps: { session, ...pageProps },
 }) => {
+  useRegisterSW();
   return (
     <SessionProvider session={session}>
       <Component {...pageProps} />

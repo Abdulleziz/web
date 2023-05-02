@@ -11,6 +11,7 @@ import {
   useGetForumThread,
 } from "~/utils/useForum";
 import Image from "next/image";
+import { tokenizePostContent } from "~/utils/forumThread";
 
 const ForumThread: NextPage = () => {
   const router = useRouter();
@@ -191,7 +192,9 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
             </p>
           </div>
           <div className="flex w-full min-w-0 flex-1 rounded bg-base-200 ">
-            <h3 className="p-8">{post.message}</h3>
+            <h3 className="flex flex-wrap overflow-auto p-8">
+              {tokenizePostContent(post.message)}
+            </h3>
           </div>
         </div>
       ))}

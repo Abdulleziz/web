@@ -10,6 +10,7 @@ import {
   type RESTPostAPIChannelMessageJSONBody,
   Routes,
 } from "discord-api-types/v10";
+import { getDomainUrl } from "~/utils/api";
 
 export const cronRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
@@ -66,15 +67,11 @@ export const cronRouter = createTRPCRouter({
       });
 
       // No need to send discord message if it's not production
-      if (env.NODE_ENV !== "production") return;
+      if (env.NEXT_PUBLIC_VERCEL_ENV !== "production") return;
 
       // send discord message
       // TODO: fix this mess
-      const url = new URL(
-        (env.NODE_ENV === "production"
-          ? "https://abdulleziz.com"
-          : env.NEXTAUTH_URL) + "/cron"
-      );
+      const url = new URL("/cron", getDomainUrl());
       url.searchParams.set("exp", cron);
 
       const content = `${job.title} hatırlatıcısı ${
@@ -136,7 +133,7 @@ export const cronRouter = createTRPCRouter({
         throw new TRPCError({ code: "FORBIDDEN" });
 
       if (dbCron.listeners.length === 1) {
-        if (env.NODE_ENV === "production") {
+        if (env.NEXT_PUBLIC_VERCEL_ENV === "production") {
           const c = new Client({ token: env.QSTASH_TOKEN });
           await c.schedules.delete({ id: dbCron.jobId });
         }
@@ -198,14 +195,11 @@ export const cronRouter = createTRPCRouter({
           },
         });
       let jobId: string; // development reasons...
-      if (env.NODE_ENV === "production") {
+      if (env.NEXT_PUBLIC_VERCEL_ENV === "production") {
         const c = new Client({ token: env.QSTASH_TOKEN });
-        const url = process.env.VERCEL
-          ? "https://abdulleziz.com"
-          : env.NEXTAUTH_URL;
-
+        const url = getDomainUrl() + "/api/cron";
         const res = await c.publishJSON({
-          url: url + "/api/cron",
+          url,
           cron,
           body: { cron } as z.input<typeof CronBody>,
         });

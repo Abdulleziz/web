@@ -2,6 +2,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { nonEmptyString, PostId, ThreadId } from "~/utils/zod-utils";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
+import { getEnv } from "~/lib/pusher/notifications";
+import { getDomainUrl } from "~/utils/api";
 
 export const forumPostsRouter = createTRPCRouter({
   getMany: protectedProcedure
@@ -33,13 +35,26 @@ export const forumPostsRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input: { threadId, message } }) => {
-      return ctx.prisma.forumPost.create({
+      const post = await ctx.prisma.forumPost.create({
         data: {
           message,
           thread: { connect: { id: threadId } },
           creator: { connect: { id: ctx.session.user.id } },
         },
+        include: { thread: { select: { title: true } } },
       });
+      await ctx.pushNotification.publishToInterests([`${getEnv()}-all`], {
+        web: {
+          notification: {
+            title: `Yeni Mesaj: ${post.thread.title.slice(0, 50)}`,
+            body: `${ctx.session.user.name ?? ""}: ${message.slice(0, 100)}`,
+            deep_link: `${getDomainUrl()}/forum/threads/${threadId}`,
+            hide_notification_if_site_has_focus: true,
+            icon: `${getDomainUrl()}/favicon.ico`,
+          },
+        },
+      });
+      return post;
     }),
   deleteById: protectedProcedure
     .input(PostId)

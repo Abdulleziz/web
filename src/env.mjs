@@ -25,6 +25,7 @@ const server = z.object({
   QSTASH_TOKEN: z.string().min(1),
   QSTASH_CURRENT_SIGNING_KEY: z.string().min(1),
   QSTASH_NEXT_SIGNING_KEY: z.string().min(1),
+  BEAMS_SECRET: z.string().min(1),
 });
 
 /**
@@ -32,7 +33,10 @@ const server = z.object({
  * built with invalid env vars. To expose them to the client, prefix them with `NEXT_PUBLIC_`.
  */
 const client = z.object({
-  // NEXT_PUBLIC_CLIENTVAR: z.string().min(1),
+  NEXT_PUBLIC_BEAMS: z.string().min(1),
+  NEXT_PUBLIC_VERCEL_ENV: z
+    .enum(["production", "preview", "development"])
+    .default("development"),
 });
 
 /**
@@ -44,6 +48,7 @@ const client = z.object({
 const processEnv = {
   DATABASE_URL: process.env.DATABASE_URL,
   NODE_ENV: process.env.NODE_ENV,
+  NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   NEXTAUTH_URL: process.env.NEXTAUTH_URL,
   DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
@@ -52,7 +57,8 @@ const processEnv = {
   QSTASH_TOKEN: process.env.QSTASH_TOKEN,
   QSTASH_CURRENT_SIGNING_KEY: process.env.QSTASH_CURRENT_SIGNING_KEY,
   QSTASH_NEXT_SIGNING_KEY: process.env.QSTASH_NEXT_SIGNING_KEY,
-  // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+  NEXT_PUBLIC_BEAMS: process.env.NEXT_PUBLIC_BEAMS,
+  BEAMS_SECRET: process.env.BEAMS_SECRET,
 };
 
 // Don't touch the part below
