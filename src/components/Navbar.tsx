@@ -6,6 +6,7 @@ import { type Theme, useThemeStore, Themes } from "./Layout";
 import { createModal } from "~/utils/modal";
 import { useHydrated } from "~/pages/_app";
 import { useState } from "react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 export const Navbar: React.FC = () => {
   const { data: session } = useSession();
@@ -15,11 +16,13 @@ export const Navbar: React.FC = () => {
   const { theme, setTheme } = useThemeStore();
   const [modalOpen, setModalOpen] = useState(false); // disable (outside-click +or+ on re-render) closing
 
+  const [ref] = useAutoAnimate();
+
   const { Modal: SettingsModal, ModalTrigger: SettingsModalTrigger } =
     createModal("user-settings", "settings", modalOpen, setModalOpen);
 
   return (
-    <div className="navbar sticky top-0 z-50 bg-base-300">
+    <div className="navbar sticky top-0 z-50 bg-base-300" ref={ref}>
       <div className="navbar-start">
         <div className="dropdown-hover dropdown">
           <Link

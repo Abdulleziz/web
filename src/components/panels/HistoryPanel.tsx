@@ -6,6 +6,7 @@ import { useGetAllCrons } from "~/utils/useCron";
 import { useGetForumThreads } from "~/utils/useForum";
 import { getSystemEntityById } from "~/utils/entities";
 import { useConsumeTeaHistory } from "~/utils/useConsumable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 type PaymentData = RouterOutputs["payments"]["getAll"][number];
 type CronData = RouterOutputs["cron"]["getAll"][number];
@@ -60,7 +61,8 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
           <div className="text-sm">
             Thread:{" "}
             <Link className="link-secondary link" href={`/forum/threads/${id}`}>
-              {title}
+              {title.slice(0, 20)}
+              {title.length > 20 && <span className="text-xs">...</span>}
             </Link>{" "}
             oluşturan: {creator.name} pinli: {pin ? "✅" : "🟥"} tarih:{" "}
             <span className="text-accent">
@@ -204,6 +206,7 @@ export const HistoryPanel = createPanel([], () => {
   const cronHistory = useGetAllCrons().data ?? [];
   const threadHistory = useGetForumThreads().data ?? [];
   const consumeTeaHistory = useConsumeTeaHistory().data ?? [];
+  const [ref] = useAutoAnimate();
 
   //   // DEMO, TEST DATA
   //   const barkin = users.find((u) => u.user.id === "288397394465521664")!;
@@ -239,7 +242,7 @@ export const HistoryPanel = createPanel([], () => {
         <span>Geçmiş Paneli</span>
       </div>
       <div className="overflow-y-auto">
-        <ul className="steps steps-vertical p-6">
+        <ul className="steps steps-vertical p-6" ref={ref}>
           {history.map((h) => (
             <HistoryStep
               key={`${h.type}-${h.data.createdAt.getTime()}`}

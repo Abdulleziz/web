@@ -1,3 +1,4 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import type { ForumPin } from "@prisma/client";
 import classNames from "classnames";
 import type { NextPage } from "next";
@@ -21,6 +22,8 @@ type Thread = RouterOutputs["forum"]["getThreads"][number];
 const Threads: NextPage = () => {
   const threads = useGetForumThreads();
   const prefecth = usePrefetchThreads();
+  const [threadRef] = useAutoAnimate();
+  const [threadItemsRef] = useAutoAnimate();
 
   useEffect(() => {
     if (threads.data) prefecth(threads.data);
@@ -42,7 +45,7 @@ const Threads: NextPage = () => {
   };
 
   return (
-    <div className="flex flex-col justify-center p-10">
+    <div className="flex flex-col justify-center p-10" ref={threadRef}>
       <h1 className="rounded-t bg-base-100 p-2 text-2xl text-white">
         Threadler
       </h1>
@@ -51,7 +54,7 @@ const Threads: NextPage = () => {
       )}
       {threads.isError && <p className="text-error">Hata!</p>}
       {threads.data && (
-        <ul>
+        <ul ref={threadItemsRef}>
           {threads.data
             .sort((a, b) => sortByPin(a.pin, b.pin))
             .map((thread) => (
