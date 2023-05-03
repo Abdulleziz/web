@@ -20,17 +20,22 @@ const createBeams = async (swr: ServiceWorkerRegistration) => {
     instanceId: env.NEXT_PUBLIC_BEAMS,
     serviceWorkerRegistration: swr,
   });
-  const state = await b.getRegistrationState();
+  let state = await b.getRegistrationState();
   console.info(`[PSN] Created beams with registration state: ${state}`);
 
-  if (state === RegistrationState.PERMISSION_GRANTED_NOT_REGISTERED_WITH_BEAMS)
+  if (
+    state === RegistrationState.PERMISSION_GRANTED_NOT_REGISTERED_WITH_BEAMS
+  ) {
     await b.start();
+    state = await b.getRegistrationState();
+  }
   // TOOD: addDeviceInterest via trpc 😁😅
-  console.log("notifs: ", await swr.getNotifications());
-  await b.addDeviceInterest(`${getEnv()}-all`);
-  console.info(
-    `[PSN] Subscribed to ${(await b.getDeviceInterests()).join(", ")}`
-  );
+  if (state === RegistrationState.PERMISSION_GRANTED_REGISTERED_WITH_BEAMS) {
+    await b.addDeviceInterest(`${getEnv()}-all`);
+    console.info(
+      `[PSN] Subscribed to ${(await b.getDeviceInterests()).join(", ")}`
+    );
+  }
   return b;
 };
 

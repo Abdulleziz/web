@@ -3,14 +3,20 @@ import classNames from "classnames";
 import type { NextPage } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
+import { useNotificationStage } from "~/lib/pusher/notifications";
+import type { RouterOutputs } from "~/utils/api";
+import { createModal } from "~/utils/modal";
 import { useGetAbdullezizUser } from "~/utils/useDiscord";
 import {
   useCreateForumPin,
   useDeleteForumPin,
+  useDeleteForumThread,
   useGetForumThreads,
   usePrefetchThreads,
 } from "~/utils/useForum";
+
+type Thread = RouterOutputs["forum"]["getThreads"][number];
 
 const Threads: NextPage = () => {
   const threads = useGetForumThreads();
@@ -21,10 +27,12 @@ const Threads: NextPage = () => {
   }, [prefecth, threads.data]);
 
   const currentUser = useGetAbdullezizUser();
-  const createPin = useCreateForumPin();
-  const deletePin = useDeleteForumPin();
+
+  const canMute = useNotificationStage() === "granted";
   const canPin =
     currentUser.data?.perms.includes("forum thread pinle") ?? false;
+  const canDelete =
+    currentUser.data?.perms.includes("forum thread sil") ?? false;
 
   const sortByPin = (a: ForumPin | null, b: ForumPin | null) => {
     // threads with pins first
@@ -47,72 +55,230 @@ const Threads: NextPage = () => {
           {threads.data
             .sort((a, b) => sortByPin(a.pin, b.pin))
             .map((thread) => (
-              <div key={thread.id}>
-                <li className=" relative bg-base-200 transition-all hover:bg-base-300">
-                  <Link href={`/forum/threads/${thread.id}`}>
-                    <div className="p-3">
-                      {!!thread.pin && (
-                        <span>Pinned by {thread.pin.pinnedBy.name}</span>
+              <div
+                key={thread.id}
+                className="relative bg-base-200 transition-all hover:bg-base-300"
+              >
+                <Link href={`/forum/threads/${thread.id}`}>
+                  <div className="p-3">
+                    {!!thread.pin && (
+                      <span>Pinned by {thread.pin.pinnedBy.name}</span>
+                    )}
+                    <div
+                      className="group flex overflow-auto"
+                      data-size={thread.title.length > 50 ? "long" : "short"}
+                    >
+                      <p className="text-ellipsis text-lg text-white">
+                        {thread.title.slice(0, 50)}
+                      </p>
+                      <span className="text-secondary group-data-[size=short]:hidden">
+                        ...
+                      </span>
+                    </div>
+                    <div className="flex flex-row items-center py-2">
+                      {thread.creator.image && (
+                        <Image
+                          alt="Profile Image"
+                          src={thread.creator.image}
+                          className="w-8 rounded-full"
+                          width={128}
+                          height={128}
+                        />
                       )}
-                      <h4 className="text-lg text-white">{thread.title}</h4>
-                      <div className="flex flex-row items-center py-2">
-                        {thread.creator.image && (
-                          <Image
-                            alt="Profile Image"
-                            src={thread.creator.image}
-                            className="w-8 rounded-full"
-                            width={128}
-                            height={128}
-                          />
-                        )}
-                        <p className="px-2">{thread.creator.name}</p>
-                        <div className="ml-auto flex items-center justify-center gap-4 text-sm">
-                          <p>
-                            Oluşturuldu: {thread.createdAt.toLocaleString()}
-                          </p>
-                        </div>
+                      <p className="px-2">{thread.creator.name}</p>
+                      <div className="ml-auto flex items-center justify-center gap-4 text-sm">
+                        <p>Oluşturuldu: {thread.createdAt.toLocaleString()}</p>
                       </div>
                     </div>
-                  </Link>
+                  </div>
+                </Link>
 
-                  {canPin && (
-                    <div className="absolute top-3 right-3">
-                      {!thread.pin ? (
-                        <button
-                          onClick={() => createPin.mutate(thread.id)}
-                          className={classNames(
-                            "btn-accent btn-sm btn rounded-full",
-                            {
-                              loading: createPin.isLoading,
-                              disabled: createPin.isLoading,
-                            }
-                          )}
-                        >
-                          <PinSVG />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => deletePin.mutate(thread.id)}
-                          className={classNames(
-                            "btn-error btn-sm btn rounded-full",
-                            {
-                              loading: deletePin.isLoading,
-                              disabled: createPin.isLoading,
-                            }
-                          )}
-                        >
-                          <UnpinSVG />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </li>
+                <div className="absolute top-3 right-3 flex items-center justify-center gap-1 md:gap-2">
+                  {canPin && <PinThread thread={thread} />}
+                  {canMute && <MuteThread thread={thread} />}
+                  {canDelete && <DeleteThread threadId={thread.id} />}
+                </div>
                 <div className="divider m-0 bg-base-200" />
               </div>
             ))}
         </ul>
       )}
     </div>
+  );
+};
+
+const DeleteThread = ({ threadId }: { threadId: Thread["id"] }) => {
+  const deleteThread = useDeleteForumThread();
+
+  return (
+    <button
+      onClick={() => deleteThread.mutate(threadId)}
+      className={classNames("btn-error btn-sm btn rounded-full", {
+        loading: deleteThread.isLoading,
+        disabled: deleteThread.isLoading,
+      })}
+    >
+      <DeleteSVG />
+    </button>
+  );
+};
+
+const PinThread = ({ thread }: { thread: Thread }) => {
+  const createPin = useCreateForumPin();
+  const deletePin = useDeleteForumPin();
+
+  if (!thread.pin)
+    return (
+      <button
+        onClick={() => createPin.mutate(thread.id)}
+        className={classNames("btn-info btn-sm btn rounded-full", {
+          loading: createPin.isLoading,
+          disabled: createPin.isLoading,
+        })}
+      >
+        <PinSVG />
+      </button>
+    );
+
+  return (
+    <button
+      onClick={() => deletePin.mutate(thread.id)}
+      className={classNames("btn-accent btn-sm btn rounded-full", {
+        loading: deletePin.isLoading,
+        disabled: createPin.isLoading,
+      })}
+    >
+      <UnpinSVG />
+    </button>
+  );
+};
+
+const MuteThread = ({ thread }: { thread: Thread }) => {
+  const state: "muted" | "mentions" | "all" = "all";
+  const { Modal, ModalTrigger } = createModal(
+    `mute-thread-${thread.id}-modal`,
+    <UnmutedSVG />
+  );
+  return (
+    <>
+      <ModalTrigger className="btn-sm btn rounded-full" />
+      <Modal>
+        <div className="modal-middle">
+          <div className="form-control">
+            <label className="label cursor-pointer">
+              <span className="label-text">Bildirimler Açık</span>
+              <input
+                type="radio"
+                className="radio checked:bg-primary"
+                defaultChecked={state === "all"}
+                onClick={(e) => {
+                  e.preventDefault();
+                  return;
+                }}
+              />
+            </label>
+            <label className="label cursor-pointer">
+              <span className="label-text">Sadece Bahsetmeler</span>
+              <input
+                type="radio"
+                className="radio checked:bg-secondary"
+                defaultChecked={state !== "all"}
+                onClick={(e) => {
+                  e.preventDefault();
+                  return;
+                }}
+              />
+            </label>
+            <label className="label cursor-pointer">
+              <span className="label-text">Sustur</span>
+              <input
+                type="radio"
+                className="radio checked:bg-accent"
+                defaultChecked={state !== "all"}
+                onClick={(e) => {
+                  e.preventDefault();
+                  return;
+                }}
+              />
+            </label>
+          </div>
+        </div>
+      </Modal>
+    </>
+  );
+};
+
+export const DeleteSVG: React.FC = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      className="h-6 w-6"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+      />
+    </svg>
+  );
+};
+
+export const MutedSVG: React.FC = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      className="h-6 w-6"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9.143 17.082a24.248 24.248 0 003.844.148m-3.844-.148a23.856 23.856 0 01-5.455-1.31 8.964 8.964 0 002.3-5.542m3.155 6.852a3 3 0 005.667 1.97m1.965-2.277L21 21m-4.225-4.225a23.81 23.81 0 003.536-1.003A8.967 8.967 0 0118 9.75V9A6 6 0 006.53 6.53m10.245 10.245L6.53 6.53M3 3l3.53 3.53"
+      />
+    </svg>
+  );
+};
+export const UnmutedSVG: React.FC = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      className="h-6 w-6"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0M3.124 7.5A8.969 8.969 0 015.292 3m13.416 0a8.969 8.969 0 012.168 4.5"
+      />
+    </svg>
+  );
+};
+export const PartialMutedSVG: React.FC = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      className="h-6 w-6"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0M10.5 8.25h3l-3 4.5h3"
+      />
+    </svg>
   );
 };
 

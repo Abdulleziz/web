@@ -152,7 +152,7 @@ export const createPermissionProcedure = (requiredPerms: AbdullezizPerm[]) =>
         requiredPerms.length &&
         !verifiedPerms.some((perm) => requiredPerms.includes(perm))
       ) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Perms not met" });
+        throw new TRPCError({ code: "FORBIDDEN", message: "Yetersiz yetki" });
       }
       return next({
         ctx: {

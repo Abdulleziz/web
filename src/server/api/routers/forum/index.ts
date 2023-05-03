@@ -12,6 +12,7 @@ import { getEnv } from "~/lib/pusher/notifications";
 import { getDomainUrl } from "~/utils/api";
 
 const managePinsProcedure = createPermissionProcedure(["forum thread pinle"]);
+const deleteThreadsProcedure = createPermissionProcedure(["forum thread sil"]);
 
 export const forumRouter = createTRPCRouter({
   posts: forumPostsRouter,
@@ -97,7 +98,7 @@ export const forumRouter = createTRPCRouter({
       });
       return thread;
     }),
-  deleteThreadById: protectedProcedure
+  deleteThreadById: deleteThreadsProcedure
     .input(ThreadId)
     .mutation(({ ctx, input: id }) => {
       return ctx.prisma.forumThread.delete({

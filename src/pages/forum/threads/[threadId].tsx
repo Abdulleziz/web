@@ -12,6 +12,7 @@ import {
 } from "~/utils/useForum";
 import Image from "next/image";
 import { tokenizePostContent } from "~/utils/forumThread";
+import { useGetAbdullezizUser } from "~/utils/useDiscord";
 
 const ForumThread: NextPage = () => {
   const router = useRouter();
@@ -104,6 +105,7 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
 
 const DeleteThread: React.FC<ThreadProps> = ({ threadId }) => {
   const router = useRouter();
+  const user = useGetAbdullezizUser();
   const deleteThread = useDeleteForumThread();
 
   const onDelete = async () => {
@@ -114,6 +116,9 @@ const DeleteThread: React.FC<ThreadProps> = ({ threadId }) => {
       console.error(error);
     }
   };
+
+  const canDelete = user.data?.perms.includes("forum thread sil");
+  if (!canDelete) return null;
 
   return (
     <div className="alert alert-info flex flex-row shadow-lg">
