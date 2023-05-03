@@ -15,13 +15,18 @@ export const useHydrated = () => {
   return hydrated;
 };
 
+const Notifications = () => {
+  useRegisterSW();
+  return null;
+};
+
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
   pageProps: { session, ...pageProps },
 }) => {
-  useRegisterSW();
   return (
     <SessionProvider session={session}>
+      <Notifications />
       <Component {...pageProps} />
       <Toaster />
     </SessionProvider>

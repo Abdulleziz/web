@@ -8,7 +8,6 @@ import {
 } from "~/server/api/trpc";
 import { nonEmptyString, ThreadId } from "~/utils/zod-utils";
 import { forumPostsRouter } from "./posts";
-import { getEnv } from "~/lib/pusher/notifications";
 import { getDomainUrl } from "~/utils/api";
 import { env } from "~/env.mjs";
 
@@ -88,19 +87,25 @@ export const forumRouter = createTRPCRouter({
         },
       });
       if (notify)
-        await ctx.pushNotification.publishToInterests([`${getEnv()}-all`], {
-          web: {
-            notification: {
-              title: `Yeni Thread: ${title.slice(0, 50)}`,
-              body: `${ctx.session.user.name ?? ""}: ${message.slice(0, 100)}`,
-              deep_link: `${getDomainUrl()}/forum/threads/${thread.id}`,
-              hide_notification_if_site_has_focus: true,
-              icon: ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
+        await ctx.pushNotification.publishToUsers(
+          (await ctx.prisma.user.findMany()).map((u) => u.id),
+          {
+            web: {
+              notification: {
+                title: `Yeni Thread: ${title.slice(0, 50)}`,
+                body: `${ctx.session.user.name ?? ""}: ${message.slice(
+                  0,
+                  100
+                )}`,
+                deep_link: `${getDomainUrl()}/forum/threads/${thread.id}`,
+                hide_notification_if_site_has_focus: true,
+                icon: ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
+              },
+              time_to_live:
+                env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
             },
-            time_to_live:
-              env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
-          },
-        });
+          }
+        );
       return thread;
     }),
   deleteThreadById: deleteThreadsProcedure

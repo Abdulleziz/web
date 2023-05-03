@@ -2,7 +2,9 @@ import { create } from "zustand";
 import { Client, RegistrationState } from "@pusher/push-notifications-web";
 import { env } from "~/env.mjs";
 import { useHydrated } from "~/pages/_app";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { api } from "~/utils/api";
+import { useSession } from "next-auth/react";
 
 export const getEnv = () => {
   const e = env.NEXT_PUBLIC_VERCEL_ENV;
@@ -20,6 +22,7 @@ const createBeams = async (swr: ServiceWorkerRegistration) => {
     instanceId: env.NEXT_PUBLIC_BEAMS,
     serviceWorkerRegistration: swr,
   });
+  setStage({ beams: b });
   let state = await b.getRegistrationState();
   console.info(`[PSN] Created beams with registration state: ${state}`);
 
@@ -61,7 +64,17 @@ export const useGetBeams = () => {
 };
 
 export const useRegisterSW = () => {
+  const session = useSession();
+  const getTokenDone = useRef(false);
+  const getToken = api.notifications.getToken.useMutation({
+    onSuccess: () => {
+      console.log("[PSN (internal)] Successfully fetched token");
+      getTokenDone.current = true;
+    },
+  });
+
   const hydrated = useHydrated();
+  const beams = useBeams((s) => s.beams);
   const setBeams = useBeams((s) => s.set);
   useEffect(() => {
     if (hydrated && "serviceWorker" in navigator) {
@@ -72,7 +85,9 @@ export const useRegisterSW = () => {
             "[Main Worker] SW registered (for PSN): ",
             registration.scope
           );
-          void createBeams(registration).then(setBeams);
+          createBeams(registration).catch((e) =>
+            console.error("[PSN] Failed to create beams", e)
+          );
         })
         .catch((registrationError) => {
           console.error(
@@ -82,4 +97,24 @@ export const useRegisterSW = () => {
         });
     }
   }, [hydrated, setBeams]);
+  useEffect(() => {
+    if (getTokenDone.current || getToken.isLoading) return;
+    if (beams && session.data) {
+      console.log("[PSN] Setting user id");
+      beams
+        .setUserId(session.data.user.id, {
+          fetchToken: () => getToken.mutateAsync(),
+        })
+        .catch((e) => {
+          console.error("[PSN] Failed to set user id", e);
+        });
+    }
+  }, [
+    beams,
+    getToken.isLoading,
+    getToken.data,
+    getTokenDone,
+    session.data,
+    getToken,
+  ]);
 };

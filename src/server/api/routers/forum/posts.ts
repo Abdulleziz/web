@@ -2,7 +2,6 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { nonEmptyString, PostId, ThreadId } from "~/utils/zod-utils";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
-import { getEnv } from "~/lib/pusher/notifications";
 import { getDomainUrl } from "~/utils/api";
 import { env } from "~/env.mjs";
 
@@ -44,19 +43,22 @@ export const forumPostsRouter = createTRPCRouter({
         },
         include: { thread: { select: { title: true } } },
       });
-      await ctx.pushNotification.publishToInterests([`${getEnv()}-all`], {
-        web: {
-          notification: {
-            title: `Yeni Mesaj: ${post.thread.title.slice(0, 50)}`,
-            body: `${ctx.session.user.name ?? ""}: ${message.slice(0, 100)}`,
-            deep_link: `${getDomainUrl()}/forum/threads/${threadId}`,
-            hide_notification_if_site_has_focus: true,
-            icon: ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
+      await ctx.pushNotification.publishToUsers(
+        (await ctx.prisma.user.findMany()).map((u) => u.id),
+        {
+          web: {
+            notification: {
+              title: `Yeni Mesaj: ${post.thread.title.slice(0, 50)}`,
+              body: `${ctx.session.user.name ?? ""}: ${message.slice(0, 100)}`,
+              deep_link: `${getDomainUrl()}/forum/threads/${threadId}`,
+              hide_notification_if_site_has_focus: true,
+              icon: ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
+            },
+            time_to_live:
+              env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
           },
-          time_to_live:
-            env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
-        },
-      });
+        }
+      );
       return post;
     }),
   deleteById: protectedProcedure

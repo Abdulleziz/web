@@ -5,6 +5,7 @@ import { cronRouter } from "./routers/cron";
 import { paymentsRouter } from "./routers/payments";
 import { consumableRouter } from "./routers/consumable";
 import { profilesRouter } from "./routers/profiles";
+import { notificationsRouter } from "./routers/notifications";
 
 /**
  * This is the primary router for your server.
@@ -18,6 +19,7 @@ export const appRouter = createTRPCRouter({
   payments: paymentsRouter,
   profile: profilesRouter,
   consumable: consumableRouter,
+  notifications: notificationsRouter,
 });
 
 // export type definition of API
