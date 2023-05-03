@@ -103,7 +103,17 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
 };
 
 const DeleteThread: React.FC<ThreadProps> = ({ threadId }) => {
+  const router = useRouter();
   const deleteThread = useDeleteForumThread();
+
+  const onDelete = async () => {
+    try {
+      await deleteThread.mutateAsync(threadId);
+      await router.push("/forum");
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <div className="alert alert-info flex flex-row shadow-lg">
@@ -123,7 +133,7 @@ const DeleteThread: React.FC<ThreadProps> = ({ threadId }) => {
           deleteThread.isSuccess ||
           deleteThread.isError
         }
-        onClick={() => deleteThread.mutate(threadId)}
+        onClick={() => void onDelete()}
       >
         Sil
       </button>
