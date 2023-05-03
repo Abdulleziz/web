@@ -7,6 +7,29 @@ import { flushSync } from "react-dom";
 import { Layout } from "~/components/Layout";
 import { useCreateForumThread } from "~/utils/useForum";
 
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { useHydrated } from "~/pages/_app";
+
+type CreateThreadOptionsStore = {
+  notify: boolean;
+  setNotify: (notify: boolean) => void;
+};
+
+const createThreadOptionsDefault = {
+  notify: true,
+} as const satisfies Partial<CreateThreadOptionsStore>;
+
+const useCreateThreadOptionsStore = create<CreateThreadOptionsStore>()(
+  persist(
+    (set) => ({
+      ...createThreadOptionsDefault,
+      setNotify: (notify) => set({ notify }),
+    }),
+    { name: "create-thread-options" }
+  )
+);
+
 const NewThread: NextPage = () => {
   return (
     <Layout>
@@ -24,12 +47,19 @@ const CreateThread: NextPage = () => {
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
   const createThread = useCreateForumThread();
+  const notifyStore = useCreateThreadOptionsStore();
+  const hydrated = useHydrated();
 
   const tagRef =
     useRef<HTMLInputElement>() as React.MutableRefObject<HTMLInputElement>;
 
   const handlePublish = () =>
-    createThread.mutate({ tags: [...tags], title, message: content });
+    createThread.mutate({
+      tags: [...tags],
+      title,
+      message: content,
+      notify: notifyStore.notify,
+    });
 
   return (
     <>
@@ -38,9 +68,8 @@ const CreateThread: NextPage = () => {
       </h1>
       <div className="title-div justify-centerp-4 mt-8 flex w-full flex-col items-center md:w-6/12">
         <input
-          id="titleInput"
           type="text"
-          placeholder="Title..."
+          placeholder="Başlık..."
           className={
             title
               ? "input-success input w-full transition-all"
@@ -50,9 +79,8 @@ const CreateThread: NextPage = () => {
           onChange={(e) => setTitle(e.target.value)}
         />
         <input
-          id="contentInput"
           type="text"
-          placeholder="Content..."
+          placeholder="İlk Mesaj..."
           className={classNames(
             "input mt-4 w-full transition-all",
             title ? "input-success" : "input-error"
@@ -60,6 +88,20 @@ const CreateThread: NextPage = () => {
           defaultValue={content}
           onChange={(e) => setContent(e.target.value)}
         />
+      </div>
+
+      <div>
+        <div className="mt-4 flex items-center justify-center">
+          <input
+            type="checkbox"
+            className="checkbox-primary checkbox"
+            checked={
+              hydrated ? notifyStore.notify : createThreadOptionsDefault.notify
+            }
+            onChange={(e) => notifyStore.setNotify(e.target.checked)}
+          />
+          <span className="ml-2 text-white">Herkese bildirim gönder</span>
+        </div>
       </div>
 
       <div className="form-control">
@@ -118,9 +160,9 @@ const CreateThread: NextPage = () => {
           onClick={handlePublish}
           disabled={createThread.isLoading}
         >
-          {createThread.isIdle && "Publish"}
-          {createThread.isSuccess && "finished"}
-          {createThread.isError && "error try again"}
+          {createThread.isIdle && "Paylaş"}
+          {createThread.isSuccess && "Paylaşıldı!"}
+          {createThread.isError && "Paylaşırken bir hata oluştu."}
         </button>
       )}
     </>

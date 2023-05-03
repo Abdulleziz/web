@@ -4,6 +4,7 @@ import { nonEmptyString, PostId, ThreadId } from "~/utils/zod-utils";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { getEnv } from "~/lib/pusher/notifications";
 import { getDomainUrl } from "~/utils/api";
+import { env } from "~/env.mjs";
 
 export const forumPostsRouter = createTRPCRouter({
   getMany: protectedProcedure
@@ -50,8 +51,10 @@ export const forumPostsRouter = createTRPCRouter({
             body: `${ctx.session.user.name ?? ""}: ${message.slice(0, 100)}`,
             deep_link: `${getDomainUrl()}/forum/threads/${threadId}`,
             hide_notification_if_site_has_focus: true,
-            icon: `${getDomainUrl()}/favicon.ico`,
+            icon: ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
           },
+          time_to_live:
+            env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
         },
       });
       return post;

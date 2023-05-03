@@ -10,6 +10,7 @@ import { nonEmptyString, ThreadId } from "~/utils/zod-utils";
 import { forumPostsRouter } from "./posts";
 import { getEnv } from "~/lib/pusher/notifications";
 import { getDomainUrl } from "~/utils/api";
+import { env } from "~/env.mjs";
 
 const managePinsProcedure = createPermissionProcedure(["forum thread pinle"]);
 const deleteThreadsProcedure = createPermissionProcedure(["forum thread sil"]);
@@ -62,9 +63,10 @@ export const forumRouter = createTRPCRouter({
         title: nonEmptyString,
         tags: nonEmptyString.array(),
         message: nonEmptyString,
+        notify: z.boolean().default(true),
       })
     )
-    .mutation(async ({ ctx, input: { title, tags, message } }) => {
+    .mutation(async ({ ctx, input: { title, tags, message, notify } }) => {
       const thread = await ctx.prisma.forumThread.create({
         data: {
           title,
@@ -85,17 +87,20 @@ export const forumRouter = createTRPCRouter({
           },
         },
       });
-      await ctx.pushNotification.publishToInterests([`${getEnv()}-all`], {
-        web: {
-          notification: {
-            title: `Yeni Thread: ${title.slice(0, 50)}`,
-            body: `${ctx.session.user.name ?? ""}: ${message.slice(0, 100)}`,
-            deep_link: `${getDomainUrl()}/forum/threads/${thread.id}`,
-            hide_notification_if_site_has_focus: true,
-            icon: `${getDomainUrl()}/favicon.ico`,
+      if (notify)
+        await ctx.pushNotification.publishToInterests([`${getEnv()}-all`], {
+          web: {
+            notification: {
+              title: `Yeni Thread: ${title.slice(0, 50)}`,
+              body: `${ctx.session.user.name ?? ""}: ${message.slice(0, 100)}`,
+              deep_link: `${getDomainUrl()}/forum/threads/${thread.id}`,
+              hide_notification_if_site_has_focus: true,
+              icon: ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
+            },
+            time_to_live:
+              env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
           },
-        },
-      });
+        });
       return thread;
     }),
   deleteThreadById: deleteThreadsProcedure
