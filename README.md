@@ -1,28 +1,89 @@
-# Create T3 App
+# Abdulleziz
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+## [Yetkiler](/src/utils/abdulleziz.ts)
 
-## What's next? How do I make an app with this?
+- forum thread sil
+- oylamaya katıl
+- maaş al
+- çay koy
+- *i*n-t*i.h?a_r ½et=
+- çay satın
+- çaycıya kız
+- zam iste
+- araba sür
+- stajları yönet
+- forum thread
+- arabaları yönet
+- çalışanları yönet
+- forumu yönet
+<!-- ***[yetki değerleri](/src/utils/zod-utils.ts)*** -->
+### [yetki değerleri](/src/utils/zod-utils.ts, "rs")
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+## Roller
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+- CEO seçme oylaması
+  - en fazla haftada bir olmalı
+  - en fazla 3 gün sürmeli
+  - en az 6 oy gerekli (toplam 9 kullanıcı); %66.6 seçilme oranı
+- Rol düşürme
+  - oylamayla yapılmalı*
+  - CEO düşürülemez. (oylama ile seçilir)
+  - tamamlanması için oy verenlerin [**yetki değer**](#yetki-değerleri)lerinin toplamı düşürülen rolün [**yetki değer**](#yetki-değerleri)inin **2** katı olmalı.
+  - *Örneğin; CEO Servant'ı tek oy ile düşürebilir. Veya Driver, Servant'ı düşürmek için en az bir kişiden yardım almalıdır.*
+- Rol yükseltme
+  - oylamayla yapılmalı*
+  - CEO'ya yükseltilemez. (oylama ile seçilir)
+  - tamamlanması için oy verenlerin [**yetki değer**](#yetki-değerleri)lerinin toplamı yükseltilen rolün [**yetki değer**](#yetki-değerleri)inin **1,5** katı olmalı.
+  - *Örneğin; CEO, Kullanıcıyı tek oy ile HR'a yükseltebilir. Veya QA Lead, kullanıcıyı HR yapmak için en az bir kişiden yardım almalıdır.*
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+## Mağaza
 
-## Learn More
+### [Ürünler](/src/utils/entities.ts)
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+- Çay
+- Araba
+- Telefon
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+## [Geçmiş](src/components/panels/HistoryPanel.tsx)
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+- Para Transferleri (maaş, gönderme, satın alma)
+- Çay içme
+- Yeni Hatırlatıcı
+- Yeni Thread
 
-## How do I deploy this?
+## Bildirimler
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+### Forum
+
+```diff
+Forum Bildirim Seçenekleri:
+++ Bildirimler Açık
+.. Sadece Bahsetmeler
+-- Sustur
+```
+
+- [X] Yeni Thread
+- [X] Yeni Post
+
+### Hatırlatıcı
+
+```diff
+Hatırlatıcı Bildirim Seçenekleri:
+++ Bildirimler Açık
+.. Sadece Uyarılar
+-- Sustur
+```
+
+- [ ] Yeni Hatırlatıcı
+- [ ] Hatırlatıcı Uyarısı (belki?)
+- [ ] Hatırlatıcı Silme (belki?)
+- [ ] Hatırlatıcı Kapatılma/Açılma (belki?)
+
+### Kullanıcı Bildirimleri
+
+`TODO: Seçenekler`
+
+- [ ] Rol Değişikliği
+- [ ] Yeni Oy
+- [ ] 6 Kere çaycıya kızma -> atılma
+- [ ] Maaş* (12 saatte bir bildirim pek mantıklı olmayabilir)
