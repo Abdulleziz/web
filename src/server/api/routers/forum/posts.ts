@@ -54,6 +54,7 @@ export const forumPostsRouter = createTRPCRouter({
               hide_notification_if_site_has_focus: true,
               icon: ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
             },
+            data: { tag: `new-thread-post-${post.id}` },
             time_to_live:
               env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
           },
@@ -66,7 +67,7 @@ export const forumPostsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input: id }) => {
       const post = await ctx.prisma.forumPost.findUnique({
         where: { id },
-        select: { creatorId: true },
+        select: { createdAt: true, creatorId: true },
       });
       if (!post)
         throw new TRPCError({ code: "NOT_FOUND", message: "Post bulunamadı!" });
@@ -75,6 +76,23 @@ export const forumPostsRouter = createTRPCRouter({
           code: "FORBIDDEN",
           message: "Post'un sahibi değilsin!",
         });
+
+      // less than 28 days, clear notifications
+      if (
+        new Date().getTime() - post.createdAt.getTime() <
+        1000 * 60 * 60 * 24 * 28
+      )
+        await ctx.pushNotification.publishToUsers(
+          (await ctx.prisma.user.findMany()).map((u) => u.id),
+          {
+            web: {
+              data: { tag: `new-thread-post-${id}`, delete: true },
+              time_to_live:
+                env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
+            },
+          }
+        );
+
       return await ctx.prisma.forumPost.delete({ where: { id } });
     }),
 });

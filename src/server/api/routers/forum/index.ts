@@ -101,6 +101,7 @@ export const forumRouter = createTRPCRouter({
                 hide_notification_if_site_has_focus: true,
                 icon: ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
               },
+              data: { tag: `new-thread-${thread.id}` },
               time_to_live:
                 env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
             },
@@ -110,9 +111,53 @@ export const forumRouter = createTRPCRouter({
     }),
   deleteThreadById: deleteThreadsProcedure
     .input(ThreadId)
-    .mutation(({ ctx, input: id }) => {
-      return ctx.prisma.forumThread.delete({
+    .mutation(async ({ ctx, input: id }) => {
+      const thread = await ctx.prisma.forumThread.findUniqueOrThrow({
         where: { id },
+        select: {
+          createdAt: true,
+          posts: {
+            skip: 1,
+            where: {
+              createdAt: {
+                gt: new Date(new Date().getTime() - 1000 * 60 * 60 * 24 * 28),
+              },
+            },
+          },
+        },
       });
+
+      // less than 28 days, clear notifications
+      if (
+        new Date().getTime() - thread.createdAt.getTime() <
+        1000 * 60 * 60 * 24 * 28
+      )
+        await ctx.pushNotification.publishToUsers(
+          (await ctx.prisma.user.findMany()).map((u) => u.id),
+          {
+            web: {
+              data: { tag: `new-thread-${id}`, delete: true },
+              time_to_live:
+                env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
+            },
+          }
+        );
+
+      const allUsers = await ctx.prisma.user.findMany();
+      const publish = thread.posts.map((post) =>
+        ctx.pushNotification.publishToUsers(
+          allUsers.map((u) => u.id),
+          {
+            web: {
+              data: { tag: `new-thread-post-${post.id}`, delete: true },
+              time_to_live:
+                env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
+            },
+          }
+        )
+      );
+      await Promise.all(publish);
+
+      return await ctx.prisma.forumThread.delete({ where: { id } });
     }),
 });
