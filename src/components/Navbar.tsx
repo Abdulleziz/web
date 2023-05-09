@@ -6,20 +6,29 @@ import { type Theme, useThemeStore, Themes } from "./Layout";
 import { createModal } from "~/utils/modal";
 import { useHydrated } from "~/pages/_app";
 import { useState } from "react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import {
+  useGetUserNotification,
+  useSetUserNotification,
+} from "~/utils/useForum";
 
 export const Navbar: React.FC = () => {
   const { data: session } = useSession();
   const wallet = useGetWallet();
   const hydrated = useHydrated();
+  const forumNotif = useGetUserNotification();
+  const setForumNotif = useSetUserNotification();
   const balance = wallet.data?.balance ?? 0;
   const { theme, setTheme } = useThemeStore();
   const [modalOpen, setModalOpen] = useState(false); // disable (outside-click +or+ on re-render) closing
+
+  const [ref] = useAutoAnimate();
 
   const { Modal: SettingsModal, ModalTrigger: SettingsModalTrigger } =
     createModal("user-settings", "settings", modalOpen, setModalOpen);
 
   return (
-    <div className="navbar sticky top-0 z-50 bg-base-300">
+    <div className="navbar sticky top-0 z-50 bg-base-300" ref={ref}>
       <div className="navbar-start">
         <div className="dropdown-hover dropdown">
           <Link
@@ -94,9 +103,9 @@ export const Navbar: React.FC = () => {
       </div>
       {hydrated && (
         <SettingsModal>
-          <p className="text-bold text-xl text-primary">Settings</p>
+          <p className="text-bold text-xl text-primary">Ayarlar</p>
           <div className="modal-body p-4">
-            <p className="text-accent">Theme</p>
+            <p className="text-accent">Tema</p>
             <select
               className="select max-w-xs"
               onChange={(e) => setTheme(e.target.value as Theme)}
@@ -113,6 +122,39 @@ export const Navbar: React.FC = () => {
                 </option>
               ))}
             </select>
+            {!!forumNotif.data && (
+              <>
+                <p className="text-accent">Forum Bildirimleri</p>
+                <select
+                  className="select max-w-xs"
+                  disabled={
+                    forumNotif.isLoading ||
+                    !forumNotif.data ||
+                    setForumNotif.isLoading
+                  }
+                  onChange={(e) =>
+                    setForumNotif.mutate(e.target.value as "all" | "mentions")
+                  }
+                >
+                  {/* TODO: toggle */}
+                  {/* hızlıca yaptım düzenlicem... */}
+                  <option className="hidden">
+                    {forumNotif.data.defaultThreadNotify}
+                  </option>
+                  <option
+                    defaultValue={
+                      forumNotif.data.defaultThreadNotify === "all"
+                        ? "mentions"
+                        : "all"
+                    }
+                  >
+                    {forumNotif.data.defaultThreadNotify === "all"
+                      ? "mentions"
+                      : "all"}
+                  </option>
+                </select>
+              </>
+            )}
           </div>
         </SettingsModal>
       )}

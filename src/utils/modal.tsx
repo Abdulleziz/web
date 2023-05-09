@@ -1,5 +1,4 @@
 import type { LabelHTMLAttributes } from "react";
-import React from "react";
 
 type Props = {
   children: string | JSX.Element | JSX.Element[] | null;
@@ -7,7 +6,7 @@ type Props = {
 
 export const createModal = (
   id: string,
-  openText: string,
+  openText: string | React.ReactNode,
   isOpen?: boolean,
   setOpen?: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
@@ -21,15 +20,16 @@ export const createModal = (
           checked={isOpen}
           onChange={() => setOpen && setOpen(false)}
         />
-        <label htmlFor={id} className="modal cursor-pointer">
+        <label key={id} htmlFor={id} className="modal cursor-pointer">
           <label className="modal-box relative" htmlFor="">
             {children}
             <div className="modal-action">
-              {setOpen && (
+              {/* render close button when setOpen is defined or isOpen is not defined */}
+              {(setOpen || isOpen === undefined) && (
                 <label
                   htmlFor={id}
                   className="btn"
-                  onClick={() => setOpen(false)}
+                  onClick={() => setOpen && setOpen(false)}
                 >
                   Kapat
                 </label>

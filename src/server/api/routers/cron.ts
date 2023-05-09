@@ -2,7 +2,6 @@ import { TRPCError } from "@trpc/server";
 import { Client } from "@upstash/qstash/nodejs";
 import { z } from "zod";
 import { env } from "~/env.mjs";
-import { nonEmptyString } from "~/utils/zod-utils";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import type { CronBody } from "~/pages/api/cron";
 import { REST } from "@discordjs/rest";
@@ -11,6 +10,16 @@ import {
   Routes,
 } from "discord-api-types/v10";
 import { getDomainUrl } from "~/utils/api";
+
+const CronInput = z
+  .string({ required_error: "Hatırlatıcı ifadesi boş olamaz" })
+  .trim()
+  .min(1, "Hatırlatıcı ifadesi en az 1 karakter olmalıdır");
+
+const CronTitle = z
+  .string({ required_error: "Hatırlatıcı başlığı boş olamaz" })
+  .trim()
+  .min(1, "Hatırlatıcı başlığı en az 1 karakter olmalıdır");
 
 export const cronRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
@@ -26,7 +35,7 @@ export const cronRouter = createTRPCRouter({
     return crons;
   }),
   toggleEnabled: protectedProcedure
-    .input(nonEmptyString)
+    .input(CronInput)
     .mutation(async ({ ctx, input: cron }) => {
       const job = await ctx.prisma.cronJob.findUnique({
         where: { cron },
@@ -116,7 +125,7 @@ export const cronRouter = createTRPCRouter({
       }
     }),
   leave: protectedProcedure
-    .input(nonEmptyString)
+    .input(CronInput)
     .mutation(async ({ ctx, input: cron }) => {
       const dbCron = await ctx.prisma.cronJob.findUnique({
         where: { cron },
@@ -152,8 +161,8 @@ export const cronRouter = createTRPCRouter({
   createOrJoin: protectedProcedure
     .input(
       z.object({
-        cron: nonEmptyString,
-        title: nonEmptyString,
+        cron: CronInput,
+        title: CronTitle,
         isGlobal: z.boolean().default(true),
       })
     )

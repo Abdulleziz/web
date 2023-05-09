@@ -16,6 +16,7 @@
  */
 import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 import { type Session } from "next-auth";
+import { env } from "~/env.mjs";
 
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "~/server/db";
@@ -55,9 +56,13 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
   // Get the session from the server using the getServerSession wrapper function
   const session = await getServerAuthSession({ req, res });
 
-  return createInnerTRPCContext({
-    session,
-  });
+  return {
+    ...createInnerTRPCContext({
+      session,
+    }),
+    req,
+    res,
+  };
 };
 
 /**
@@ -69,7 +74,7 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
  */
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 
 const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,
@@ -127,6 +132,48 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
   });
 });
 
+const UserIdWithToken = z.object({
+  "x-abdulleziz-user-id": z.string().min(1),
+  // TODO: refine/validate
+  authorization: z.literal(env.DISCORD_TOKEN),
+});
+
+const enforceIsInternal = t.middleware(async ({ ctx, next }) => {
+  const parsed = UserIdWithToken.safeParse(ctx.req.headers);
+  if (parsed.success) {
+    const user = await prisma.user.findFirst({
+      where: {
+        accounts: {
+          some: { providerAccountId: parsed.data["x-abdulleziz-user-id"] },
+        },
+      },
+    });
+    if (!user)
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Henüz Abdülleziz'e kayıtlı değilsin! Lütfen kayıt ol!",
+      });
+
+    return next({
+      ctx: {
+        ...ctx,
+        session: {
+          user: {
+            ...user,
+            discordId: parsed.data["x-abdulleziz-user-id"],
+            inAbdullezizServer: true,
+          },
+          expires: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
+        } satisfies Session,
+      },
+    });
+  }
+
+  return next({ ctx });
+});
+
+const internalProcedure = t.procedure.use(enforceIsInternal);
+
 /**
  * Protected (authenticated) procedure
  *
@@ -135,7 +182,7 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+export const protectedProcedure = internalProcedure.use(enforceUserIsAuthed);
 
 import { type AbdullezizPerm, permissionDecider } from "~/utils/abdulleziz";
 import { getAbdullezizRoles } from "../discord-api/utils";
@@ -152,7 +199,7 @@ export const createPermissionProcedure = (requiredPerms: AbdullezizPerm[]) =>
         requiredPerms.length &&
         !verifiedPerms.some((perm) => requiredPerms.includes(perm))
       ) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Perms not met" });
+        throw new TRPCError({ code: "FORBIDDEN", message: "Yetersiz yetki" });
       }
       return next({
         ctx: {

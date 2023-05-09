@@ -13,6 +13,7 @@ import {
 } from "~/utils/useCron";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 const maker = "https://crontab.guru/";
 
@@ -40,6 +41,8 @@ const CronPage: NextPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [parser, setParser] = useState<cronParser.CronExpression | null>(null);
+  const [animateRef] = useAutoAnimate();
+  const [tableAnimateRef] = useAutoAnimate();
 
   const diff = parser ? calculateDiff(parser) : null;
   const validCron = parser ? parser.stringify() : "";
@@ -93,7 +96,7 @@ const CronPage: NextPage = () => {
       <div className="flex flex-col gap-4 p-4">
         <div className="mockup-window border bg-base-300">
           <div className="flex flex-col items-center justify-center gap-4 bg-base-200 px-4 py-16 md:flex-row">
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center" ref={animateRef}>
               <CronMaker handleSubmit={handleSubmit} />
             </div>
             <div className=" divider divider-vertical md:divider-horizontal">
@@ -133,7 +136,7 @@ const CronPage: NextPage = () => {
           </div>
         </div>
       </div>
-      <div className="flex flex-col gap-4 p-8">
+      <div className="flex flex-col gap-4 p-8" ref={tableAnimateRef}>
         <CronTable handleSubmit={handleSubmit} />
       </div>
       {!!nextDates && (
@@ -220,7 +223,7 @@ const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
   switch (isPageActive) {
     case false: {
       return (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2" key={1}>
           <h4>Nasıl uyarılmak istiyorsun?</h4>
           <div className="form-control">
             {pages.map((p, i) => (
@@ -244,7 +247,7 @@ const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
     case true: {
       const req = requires[page];
       return (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2" key={2}>
           {req.weekDays && (
             <>
               <p> Hatırlatıcı hangi günler olsun?</p>
@@ -464,6 +467,7 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
   const join = useCreateOrJoinCron();
   const leave = useLeaveCron();
   const toggle = useToggleCron();
+  const [rowAnimateRef] = useAutoAnimate();
 
   const routerRowRef = useRef<HTMLTableCellElement | null>(null);
 
@@ -490,7 +494,7 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
             <th>Hepsi: {data.length}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody ref={rowAnimateRef}>
           {/* row 1 */}
           {data.map((job) => (
             <tr key={job.id}>

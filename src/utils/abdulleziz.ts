@@ -34,6 +34,7 @@ type RequiredSeverity = { perm: string } & (
 
 // sadece rolü olanlar
 export const requiredSeverity = [
+  { perm: "forum thread sil", min: 2 }, // şimdilik herkes thread silebilir, ilerde silme olmayacak
   { perm: "oylamaya katıl", min: 2 }, // TODO: TOP PRIORITIY
   // oylama oluştur ??? (toplu request lazım) (timeout olcak cron yardımıyla)
   { perm: "maaş al", min: 2, exclude: ["Intern"] }, // INTERN'E MAAŞ YOK ZAAAA

@@ -54,7 +54,7 @@ export const Dashboard: React.FC = () => {
           </section>
           <section className="grid animate-pulse gap-6 md:grid-cols-2 xl:grid-flow-col xl:grid-cols-4 xl:grid-rows-3">
             <div className="row-span-2 rounded-lg bg-base-100 shadow">
-              <div className="p-52"></div>
+              <div className="py-52"></div>
             </div>
             <div className="row-span-2 rounded-lg bg-base-100 shadow"></div>
 

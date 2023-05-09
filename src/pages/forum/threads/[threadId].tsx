@@ -12,6 +12,8 @@ import {
 } from "~/utils/useForum";
 import Image from "next/image";
 import { tokenizePostContent } from "~/utils/forumThread";
+import { useGetAbdullezizUser } from "~/utils/useDiscord";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 const ForumThread: NextPage = () => {
   const router = useRouter();
@@ -42,13 +44,17 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
   const thread = useGetForumThread(threadId);
   const createPost = useCreateForumPost();
   const [content, setContent] = useState("");
+  const [threadRef] = useAutoAnimate();
 
   return (
     <Layout>
-      <div className="flex h-auto flex-col items-center justify-center p-4 py-2">
+      <div
+        className="flex h-auto flex-col items-center justify-center p-4 py-2"
+        ref={threadRef}
+      >
         {!!thread.data && <DeleteThread threadId={threadId} />}
 
-        <main className="pb-auto w-full pt-5 ">
+        <main className="pb-auto w-full pt-5">
           {thread.isLoading && <p>Yükleniyor...</p>}
           {thread.isError && <p>Hata!</p>}
           {thread.data && (
@@ -59,7 +65,8 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
                 </h1>
                 <p className="pt-1 text-sm sm:text-base">
                   {thread.data.creator.name} •{" "}
-                  {thread.data.createdAt.toLocaleString()}
+                  {thread.data.createdAt.toLocaleString()} • Forum ayarları:
+                  [Bildirimler: {thread.data.defaultNotify}]
                 </p>
               </div>
               <Posts threadId={threadId} />
@@ -103,7 +110,21 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
 };
 
 const DeleteThread: React.FC<ThreadProps> = ({ threadId }) => {
+  const router = useRouter();
+  const user = useGetAbdullezizUser();
   const deleteThread = useDeleteForumThread();
+
+  const onDelete = async () => {
+    try {
+      await deleteThread.mutateAsync(threadId);
+      await router.push("/forum");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const canDelete = user.data?.perms.includes("forum thread sil");
+  if (!canDelete) return null;
 
   return (
     <div className="alert alert-info flex flex-row shadow-lg">
@@ -123,7 +144,7 @@ const DeleteThread: React.FC<ThreadProps> = ({ threadId }) => {
           deleteThread.isSuccess ||
           deleteThread.isError
         }
-        onClick={() => deleteThread.mutate(threadId)}
+        onClick={() => void onDelete()}
       >
         Sil
       </button>
@@ -158,6 +179,7 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
     isLoadingError,
   } = useGetForumPosts({ threadId });
   const [page, setPage] = useState(0);
+  const [postsRef] = useAutoAnimate();
 
   const handleNext = async () => {
     await fetchNextPage();
@@ -174,8 +196,8 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
   }
 
   return (
-    <div className="flex flex-col rounded bg-base-100 pt-3">
-      {data.pages[page]?.posts.map((post) => (
+    <div className="flex flex-col rounded bg-base-100 pt-3" ref={postsRef}>
+      {(data.pages[page]?.posts ?? []).map((post) => (
         <div key={post.id} className="flex flex-row p-4">
           <div className="flex flex-col items-center justify-center rounded bg-base-200 pr-4">
             {post.creator.image && (
