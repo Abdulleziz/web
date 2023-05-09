@@ -7,9 +7,10 @@ import {
   protectedProcedure,
 } from "~/server/api/trpc";
 import { nonEmptyString, ThreadId } from "~/utils/zod-utils";
-import { forumPostsRouter } from "./posts";
 import { getDomainUrl } from "~/utils/api";
 import { env } from "~/env.mjs";
+import { forumPostsRouter } from "./posts";
+import { forumNotificationsRouter } from "./notifications";
 import { getForumNotificationListeners } from "./trpc";
 
 const ThreadTitle = z
@@ -27,12 +28,14 @@ const deleteThreadsProcedure = createPermissionProcedure(["forum thread sil"]);
 
 export const forumRouter = createTRPCRouter({
   posts: forumPostsRouter,
+  notifications: forumNotificationsRouter,
   getThreads: protectedProcedure.query(({ ctx }) => {
     return ctx.prisma.forumThread.findMany({
       include: {
         creator: true,
         tags: true,
         pin: { include: { pinnedBy: true } },
+        notifications: { where: { userId: ctx.session.user.id } },
       },
     });
   }),
@@ -80,6 +83,7 @@ export const forumRouter = createTRPCRouter({
       const thread = await ctx.prisma.forumThread.create({
         data: {
           title,
+          defaultNotify: notify ? "all" : "mentions",
           tags: {
             connectOrCreate: tags.map((tag) => ({
               where: { name: tag },
@@ -98,12 +102,12 @@ export const forumRouter = createTRPCRouter({
         },
         include: { notifications: true },
       });
-      if (notify) {
-        const notifyUsers = await getForumNotificationListeners(
-          ctx.prisma,
-          [],
-          thread
-        );
+      const notifyUsers = await getForumNotificationListeners(
+        ctx.prisma,
+        [],
+        thread
+      );
+      if (notifyUsers.length > 0)
         await ctx.pushNotification.publishToUsers(
           notifyUsers.map((u) => u.id),
           {
@@ -124,7 +128,6 @@ export const forumRouter = createTRPCRouter({
             },
           }
         );
-      }
       return thread;
     }),
   deleteThreadById: deleteThreadsProcedure
@@ -146,43 +149,48 @@ export const forumRouter = createTRPCRouter({
           },
         },
       });
+      const del = await ctx.prisma.forumThread.delete({ where: { id } });
 
       const notifyUsers = await getForumNotificationListeners(
         ctx.prisma,
         [],
         thread
       );
-      // less than 28 days, clear notifications
-      if (
-        new Date().getTime() - thread.createdAt.getTime() <
-        1000 * 60 * 60 * 24 * 28
-      ) {
-        await ctx.pushNotification.publishToUsers(
-          notifyUsers.map((u) => u.id),
-          {
-            web: {
-              data: { tag: `new-thread-${id}`, delete: true },
-              time_to_live:
-                env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
-            },
-          }
+
+      if (notifyUsers.length > 0) {
+        // less than 28 days, clear notifications
+        if (
+          new Date().getTime() - thread.createdAt.getTime() <
+          1000 * 60 * 60 * 24 * 28
+        ) {
+          await ctx.pushNotification.publishToUsers(
+            notifyUsers.map((u) => u.id),
+            {
+              web: {
+                data: { tag: `new-thread-${id}`, delete: true },
+                time_to_live:
+                  env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
+              },
+            }
+          );
+        }
+
+        const publish = thread.posts.map((post) =>
+          // TODO: post.createdAt less than 28 days
+          ctx.pushNotification.publishToUsers(
+            notifyUsers.map((u) => u.id),
+            {
+              web: {
+                data: { tag: `new-thread-post-${post.id}`, delete: true },
+                time_to_live:
+                  env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
+              },
+            }
+          )
         );
+        await Promise.all(publish);
       }
 
-      const publish = thread.posts.map((post) =>
-        ctx.pushNotification.publishToUsers(
-          notifyUsers.map((u) => u.id),
-          {
-            web: {
-              data: { tag: `new-thread-post-${post.id}`, delete: true },
-              time_to_live:
-                env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
-            },
-          }
-        )
-      );
-      await Promise.all(publish);
-
-      return await ctx.prisma.forumThread.delete({ where: { id } });
+      return del;
     }),
 });

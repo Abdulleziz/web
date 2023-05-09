@@ -53,23 +53,27 @@ export const forumPostsRouter = createTRPCRouter({
         [],
         post.thread
       );
-      await ctx.pushNotification.publishToUsers(
-        notifyUsers.map((u) => u.id),
-        {
-          web: {
-            notification: {
-              title: `Yeni Mesaj: ${post.thread.title.slice(0, 50)}`,
-              body: `${ctx.session.user.name ?? ""}: ${message.slice(0, 100)}`,
-              deep_link: `${getDomainUrl()}/forum/threads/${threadId}`,
-              hide_notification_if_site_has_focus: true,
-              icon: ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
+      if (notifyUsers.length > 0)
+        await ctx.pushNotification.publishToUsers(
+          notifyUsers.map((u) => u.id),
+          {
+            web: {
+              notification: {
+                title: `Yeni Mesaj: ${post.thread.title.slice(0, 50)}`,
+                body: `${ctx.session.user.name ?? ""}: ${message.slice(
+                  0,
+                  100
+                )}`,
+                deep_link: `${getDomainUrl()}/forum/threads/${threadId}`,
+                hide_notification_if_site_has_focus: true,
+                icon: ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
+              },
+              data: { tag: `new-thread-post-${post.id}` },
+              time_to_live:
+                env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
             },
-            data: { tag: `new-thread-post-${post.id}` },
-            time_to_live:
-              env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
-          },
-        }
-      );
+          }
+        );
       return post;
     }),
   deleteById: protectedProcedure
@@ -91,6 +95,8 @@ export const forumPostsRouter = createTRPCRouter({
           message: "Post'un sahibi değilsin!",
         });
 
+      const del = await ctx.prisma.forumPost.delete({ where: { id } });
+
       // less than 28 days, clear notifications
       if (
         new Date().getTime() - post.createdAt.getTime() <
@@ -101,18 +107,19 @@ export const forumPostsRouter = createTRPCRouter({
           [],
           post.thread
         );
-        await ctx.pushNotification.publishToUsers(
-          notifyUsers.map((u) => u.id),
-          {
-            web: {
-              data: { tag: `new-thread-post-${id}`, delete: true },
-              time_to_live:
-                env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
-            },
-          }
-        );
+        if (notifyUsers.length > 0)
+          await ctx.pushNotification.publishToUsers(
+            notifyUsers.map((u) => u.id),
+            {
+              web: {
+                data: { tag: `new-thread-post-${id}`, delete: true },
+                time_to_live:
+                  env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
+              },
+            }
+          );
       }
 
-      return await ctx.prisma.forumPost.delete({ where: { id } });
+      return del;
     }),
 });

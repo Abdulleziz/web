@@ -65,7 +65,8 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
                 </h1>
                 <p className="pt-1 text-sm sm:text-base">
                   {thread.data.creator.name} •{" "}
-                  {thread.data.createdAt.toLocaleString()}
+                  {thread.data.createdAt.toLocaleString()} • Forum ayarları:
+                  [Bildirimler: {thread.data.defaultNotify}]
                 </p>
               </div>
               <Posts threadId={threadId} />

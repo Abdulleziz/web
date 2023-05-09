@@ -72,6 +72,33 @@ export const useDeleteForumPin = () => {
   });
 };
 
+export const useGetUserNotification = () =>
+  api.forum.notifications.getUserNotification.useQuery();
+
+export const useSetUserNotification = () => {
+  const utils = api.useContext();
+  return api.forum.notifications.setUserNotification.useMutation({
+    onSuccess: async () => {
+      toast.success("Bildirim ayarları kaydedildi!", {
+        id: "forum.setUserNotification",
+      });
+      await utils.forum.notifications.getUserNotification.invalidate();
+    },
+  });
+};
+
+export const useSetForumUserNotification = () => {
+  const utils = api.useContext();
+  return api.forum.notifications.setForumUserNotification.useMutation({
+    onSuccess: async () => {
+      toast.success("Bildirim ayarları kaydedildi!", {
+        id: "forum.setForumUserNotification",
+      });
+      await utils.forum.getThreads.invalidate();
+    },
+  });
+};
+
 export const useCreateForumThread = () => {
   const utils = api.useContext();
   return api.forum.createThread.useMutation({

@@ -35,6 +35,9 @@ export const getForumNotificationListeners = async (
     )?.preference;
     const total = [userN, threadN, userThreadN];
 
+    // TODO: bypass thread defaults by userThreadN
+    // may be bypass user defaults too
+
     // None
     if (total.includes("none")) return false;
     // Mentions

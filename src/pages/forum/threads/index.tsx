@@ -15,6 +15,7 @@ import {
   useDeleteForumThread,
   useGetForumThreads,
   usePrefetchThreads,
+  useSetForumUserNotification,
 } from "~/utils/useForum";
 
 type Thread = RouterOutputs["forum"]["getThreads"][number];
@@ -157,10 +158,18 @@ const PinThread = ({ thread }: { thread: Thread }) => {
 };
 
 const MuteThread = ({ thread }: { thread: Thread }) => {
-  const state: "muted" | "mentions" | "all" = "all";
+  const svgMap = {
+    all: <UnmutedSVG />,
+    mentions: <PartialMutedSVG />,
+    none: <MutedSVG />,
+  };
+  const state = thread.notifications[0]?.preference;
+  const setNotif = useSetForumUserNotification();
+  const svg = svgMap[state || thread.defaultNotify];
+
   const { Modal, ModalTrigger } = createModal(
     `mute-thread-${thread.id}-modal`,
-    <UnmutedSVG />
+    svg
   );
   return (
     <>
@@ -176,6 +185,7 @@ const MuteThread = ({ thread }: { thread: Thread }) => {
                 defaultChecked={state === "all"}
                 onClick={(e) => {
                   e.preventDefault();
+                  setNotif.mutate({ threadId: thread.id, preference: "all" });
                   return;
                 }}
               />
@@ -185,9 +195,13 @@ const MuteThread = ({ thread }: { thread: Thread }) => {
               <input
                 type="radio"
                 className="radio checked:bg-secondary"
-                defaultChecked={state !== "all"}
+                defaultChecked={state === "mentions"}
                 onClick={(e) => {
                   e.preventDefault();
+                  setNotif.mutate({
+                    threadId: thread.id,
+                    preference: "mentions",
+                  });
                   return;
                 }}
               />
@@ -197,13 +211,23 @@ const MuteThread = ({ thread }: { thread: Thread }) => {
               <input
                 type="radio"
                 className="radio checked:bg-accent"
-                defaultChecked={state !== "all"}
+                defaultChecked={state === "none"}
                 onClick={(e) => {
                   e.preventDefault();
+                  setNotif.mutate({ threadId: thread.id, preference: "none" });
                   return;
                 }}
               />
             </label>
+            <button
+              disabled={!state}
+              className={classNames("btn-primary btn-sm btn mt-4", {
+                ["loading"]: setNotif.isLoading,
+              })}
+              onClick={() => setNotif.mutate({ threadId: thread.id })}
+            >
+              Sil
+            </button>
           </div>
         </div>
       </Modal>
