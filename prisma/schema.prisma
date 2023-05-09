@@ -8,6 +8,26 @@ datasource db {
     relationMode = "prisma"
 }
 
+enum ForumNotification {
+    all
+    mentions
+    none
+}
+
+model ForumNotify {
+    thread   ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+    threadId String
+
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String
+
+    preference ForumNotification
+
+    @@id([threadId, userId])
+    @@index([threadId])
+    @@index([userId])
+}
+
 model ForumTag {
     id        String        @id @default(cuid())
     createdAt DateTime      @default(now())
@@ -30,16 +50,18 @@ model ForumPin {
 }
 
 model ForumThread {
-    id        String      @id @default(cuid())
-    title     String      @db.TinyText
-    createdAt DateTime    @default(now())
-    updatedAt DateTime    @updatedAt
-    locked    Boolean     @default(false)
-    creatorId String
-    posts     ForumPost[]
-    tags      ForumTag[]
-    creator   User        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-    pin       ForumPin?
+    id            String            @id @default(cuid())
+    title         String            @db.TinyText
+    createdAt     DateTime          @default(now())
+    updatedAt     DateTime          @updatedAt
+    locked        Boolean           @default(false)
+    creatorId     String
+    posts         ForumPost[]
+    tags          ForumTag[]
+    creator       User              @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+    pin           ForumPin?
+    notifications ForumNotify[]
+    defaultNotify ForumNotification @default(all)
 
     @@index([creatorId])
 }
@@ -155,21 +177,22 @@ model Session {
 }
 
 model User {
-    id            String         @id @default(cuid())
-    name          String?
-    email         String?        @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
-    forumThreads  ForumThread[]
-    forumPosts    ForumPost[]
-    listenedCrons CronListener[]
-    ForumPin      ForumPin[]
-
-    paymentsSent     Payment[]    @relation("paymentSender")
-    paymentsRecieved Payment[]    @relation("paymentReciever")
-    teaConsumer      ConsumeTea[]
+    id                  String            @id @default(cuid())
+    name                String?
+    email               String?           @unique
+    emailVerified       DateTime?
+    image               String?
+    accounts            Account[]
+    sessions            Session[]
+    forumThreads        ForumThread[]
+    forumPosts          ForumPost[]
+    listenedCrons       CronListener[]
+    ForumPin            ForumPin[]
+    paymentsSent        Payment[]         @relation("paymentSender")
+    paymentsRecieved    Payment[]         @relation("paymentReciever")
+    teaConsumer         ConsumeTea[]
+    threadNotify        ForumNotify[]
+    defaultThreadNotify ForumNotification @default(all)
 }
 
 model VerificationToken {
@@ -178,13 +201,4 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
-}
-
-model ForumTagToForumThread {
-    A String
-    B String
-
-    @@unique([A, B], map: "_ForumTagToForumThread_AB_unique")
-    @@index([B], map: "_ForumTagToForumThread_B_index")
-    @@map("_ForumTagToForumThread")
 }

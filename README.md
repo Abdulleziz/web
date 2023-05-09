@@ -17,7 +17,7 @@
 - çalışanları yönet
 - forumu yönet
 <!-- ***[yetki değerleri](/src/utils/zod-utils.ts)*** -->
-### [yetki değerleri](/src/utils/zod-utils.ts, "rs")
+### [yetki değerleri](/src/utils/zod-utils.ts)
 
 ## Roller
 
@@ -55,11 +55,29 @@
 
 ### Forum
 
+Genel:
+
 ```diff
-Forum Bildirim Seçenekleri:
+Kullanıcı: Genel Forum Bildirim Seçenekleri:
+++ Bildirimler Açık
+.. Sadece Bahsetmeler
+```
+
+Thread Başına:
+
+```diff
+Spesifik Forum Bildirim Seçenekleri (Kullanıcı Ayarı):
+Örneğin; kullanıcı bu threadi dinlemek istemiyor olabilir.
 ++ Bildirimler Açık
 .. Sadece Bahsetmeler
 -- Sustur
+```
+
+```diff
+Spesifik Forum Bildirim Seçenekleri (Thread Ayarı):
+Örneğin; thread sahibi, yeni mesajların sessiz iletilmesini isteyebilir.
+++ Bildirimler Açık
+.. Sadece Bahsetmeler
 ```
 
 - [X] Yeni Thread

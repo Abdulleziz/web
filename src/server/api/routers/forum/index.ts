@@ -10,6 +10,7 @@ import { nonEmptyString, ThreadId } from "~/utils/zod-utils";
 import { forumPostsRouter } from "./posts";
 import { getDomainUrl } from "~/utils/api";
 import { env } from "~/env.mjs";
+import { getForumNotificationListeners } from "./trpc";
 
 const ThreadTitle = z
   .string({ required_error: "Thread başlığı boş olamaz" })
@@ -95,10 +96,16 @@ export const forumRouter = createTRPCRouter({
             },
           },
         },
+        include: { notifications: true },
       });
-      if (notify)
+      if (notify) {
+        const notifyUsers = await getForumNotificationListeners(
+          ctx.prisma,
+          [],
+          thread
+        );
         await ctx.pushNotification.publishToUsers(
-          (await ctx.prisma.user.findMany()).map((u) => u.id),
+          notifyUsers.map((u) => u.id),
           {
             web: {
               notification: {
@@ -117,6 +124,7 @@ export const forumRouter = createTRPCRouter({
             },
           }
         );
+      }
       return thread;
     }),
   deleteThreadById: deleteThreadsProcedure
@@ -125,6 +133,8 @@ export const forumRouter = createTRPCRouter({
       const thread = await ctx.prisma.forumThread.findUniqueOrThrow({
         where: { id },
         select: {
+          notifications: true,
+          defaultNotify: true,
           createdAt: true,
           posts: {
             skip: 1,
@@ -137,13 +147,18 @@ export const forumRouter = createTRPCRouter({
         },
       });
 
+      const notifyUsers = await getForumNotificationListeners(
+        ctx.prisma,
+        [],
+        thread
+      );
       // less than 28 days, clear notifications
       if (
         new Date().getTime() - thread.createdAt.getTime() <
         1000 * 60 * 60 * 24 * 28
-      )
+      ) {
         await ctx.pushNotification.publishToUsers(
-          (await ctx.prisma.user.findMany()).map((u) => u.id),
+          notifyUsers.map((u) => u.id),
           {
             web: {
               data: { tag: `new-thread-${id}`, delete: true },
@@ -152,11 +167,11 @@ export const forumRouter = createTRPCRouter({
             },
           }
         );
+      }
 
-      const allUsers = await ctx.prisma.user.findMany();
       const publish = thread.posts.map((post) =>
         ctx.pushNotification.publishToUsers(
-          allUsers.map((u) => u.id),
+          notifyUsers.map((u) => u.id),
           {
             web: {
               data: { tag: `new-thread-post-${post.id}`, delete: true },

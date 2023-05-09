@@ -4,6 +4,7 @@ import { nonEmptyString, PostId, ThreadId } from "~/utils/zod-utils";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { getDomainUrl } from "~/utils/api";
 import { env } from "~/env.mjs";
+import { getForumNotificationListeners } from "./trpc";
 
 export const forumPostsRouter = createTRPCRouter({
   getMany: protectedProcedure
@@ -41,10 +42,19 @@ export const forumPostsRouter = createTRPCRouter({
           thread: { connect: { id: threadId } },
           creator: { connect: { id: ctx.session.user.id } },
         },
-        include: { thread: { select: { title: true } } },
+        include: {
+          thread: {
+            select: { title: true, notifications: true, defaultNotify: true },
+          },
+        },
       });
+      const notifyUsers = await getForumNotificationListeners(
+        ctx.prisma,
+        [],
+        post.thread
+      );
       await ctx.pushNotification.publishToUsers(
-        (await ctx.prisma.user.findMany()).map((u) => u.id),
+        notifyUsers.map((u) => u.id),
         {
           web: {
             notification: {
@@ -67,7 +77,11 @@ export const forumPostsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input: id }) => {
       const post = await ctx.prisma.forumPost.findUnique({
         where: { id },
-        select: { createdAt: true, creatorId: true },
+        select: {
+          createdAt: true,
+          creatorId: true,
+          thread: { select: { notifications: true, defaultNotify: true } },
+        },
       });
       if (!post)
         throw new TRPCError({ code: "NOT_FOUND", message: "Post bulunamadı!" });
@@ -81,9 +95,14 @@ export const forumPostsRouter = createTRPCRouter({
       if (
         new Date().getTime() - post.createdAt.getTime() <
         1000 * 60 * 60 * 24 * 28
-      )
+      ) {
+        const notifyUsers = await getForumNotificationListeners(
+          ctx.prisma,
+          [],
+          post.thread
+        );
         await ctx.pushNotification.publishToUsers(
-          (await ctx.prisma.user.findMany()).map((u) => u.id),
+          notifyUsers.map((u) => u.id),
           {
             web: {
               data: { tag: `new-thread-post-${id}`, delete: true },
@@ -92,6 +111,7 @@ export const forumPostsRouter = createTRPCRouter({
             },
           }
         );
+      }
 
       return await ctx.prisma.forumPost.delete({ where: { id } });
     }),
