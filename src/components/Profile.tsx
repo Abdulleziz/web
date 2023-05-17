@@ -1,14 +1,9 @@
-import classNames from "classnames";
 import Image from "next/image";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import { useGetProfile } from "~/utils/useProfile";
-import { type UserId, abdullezizRoleSeverities } from "~/utils/zod-utils";
+import { type UserId } from "~/utils/zod-utils";
 
 type ProfileProps = { profileId: UserId };
-
-const gradient = classNames(
-  "font-extrabold text-transparent text-xl md:text-4xl bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600"
-);
 
 export const Profile = ({ profileId }: ProfileProps) => {
   const { data: user, isLoading } = useGetProfile(profileId);
@@ -45,17 +40,17 @@ export const Profile = ({ profileId }: ProfileProps) => {
   const memberImage =
     !!user.member.avatar &&
     getAvatarUrl(
-      { avatar: user.image, id: user.discordId },
+      { avatar: user.image, id: user.member.user.id },
       user.member.avatar
     );
 
-  const topRole = user.member.roles[0];
+  // const topRole = user.member.roles[0];
 
-  const style = topRole
-    ? {
-        color: `#${topRole.color.toString(16)}`,
-      }
-    : { color: "white" };
+  // const style = topRole
+  //   ? {
+  //       color: `#${topRole.color.toString(16)}`,
+  //     }
+  //   : { color: "white" };
   return (
     <div className="flex h-screen flex-col items-center justify-center">
       <div className="rounded bg-base-100 p-10">

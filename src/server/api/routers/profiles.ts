@@ -54,5 +54,5 @@ async function getUser(id: UserId) {
   const discordId = user.accounts[0]?.providerAccountId;
   if (!discordId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
   const member = await getAbdullezizUser(discordId);
-  return { ...user, member, discordId };
+  return { ...user, member };
 }
