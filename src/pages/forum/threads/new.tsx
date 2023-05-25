@@ -11,7 +11,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useHydrated } from "~/pages/_app";
 
-import { Mention, MentionsInput } from "react-mentions";
+import { Mention, type MentionItem, MentionsInput } from "react-mentions";
 import { useGetAbdullezizUsers } from "~/utils/useDiscord";
 
 type CreateThreadOptionsStore = {
@@ -47,6 +47,7 @@ const NewThread: NextPage = () => {
 
 const CreateThread: NextPage = () => {
   const [tags, setTags] = useState(new Set<string>());
+  const [mentions, setMentions] = useState<MentionItem[]>();
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
   const createThread = useCreateForumThread();
@@ -62,6 +63,7 @@ const CreateThread: NextPage = () => {
       tags: [...tags],
       title,
       message: content,
+      mentions: mentions?.map((mention) => mention.id),
       notify: notifyStore.notify,
     });
 
@@ -91,7 +93,10 @@ const CreateThread: NextPage = () => {
               : "input-error focus:border-error"
           )}
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(event, _newValue, _newPlainTextValue, mentions) => {
+            setContent(event.target.value);
+            setMentions(mentions);
+          }}
         >
           <Mention
             trigger="@"

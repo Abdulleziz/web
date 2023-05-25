@@ -12,8 +12,13 @@ import {
 } from "~/utils/useForum";
 import Image from "next/image";
 import { tokenizePostContent } from "~/utils/forumThread";
-import { useGetAbdullezizUser } from "~/utils/useDiscord";
+import {
+  useGetAbdullezizUser,
+  useGetAbdullezizUsers,
+} from "~/utils/useDiscord";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Mention, type MentionItem, MentionsInput } from "react-mentions";
+import { useGetUserIdsByDiscordIds } from "~/utils/useProfile";
 
 const ForumThread: NextPage = () => {
   const router = useRouter();
@@ -42,9 +47,16 @@ type ThreadProps = { threadId: ThreadId };
 
 const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
   const thread = useGetForumThread(threadId);
+  const [mentions, setMentions] = useState<MentionItem[]>();
   const createPost = useCreateForumPost();
   const [content, setContent] = useState("");
   const [threadRef] = useAutoAnimate();
+
+  const users = (useGetAbdullezizUsers().data ?? []).filter((m) => !m.user.bot);
+
+  const getUserIdFromDiscordId = () => {
+    mentions?.map((m) => useGetUserIdsByDiscordIds({ user: { id: m.id } }));
+  };
 
   return (
     <Layout>
@@ -73,13 +85,32 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
 
               <div className="form-control mt-3">
                 <div className="input-group flex items-center justify-center">
-                  <textarea
-                    className="input-bordered input w-full max-w-2xl"
+                  <MentionsInput
+                    className="h-14 w-full max-w-2xl rounded border"
                     placeholder="Mesajınızı giriniz..."
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                    onChange={(
+                      event,
+                      _newValue,
+                      _newPlainTextValue,
+                      mentions
+                    ) => {
+                      setContent(event.target.value);
+                      setMentions(mentions);
+                    }}
                     disabled={createPost.isLoading}
-                  />
+                  >
+                    <Mention
+                      trigger="@"
+                      data={users.map((member) => ({
+                        id: member.user.id,
+                        display: member.nick
+                          ? member.nick
+                          : member.user.username,
+                      }))}
+                      className="bg-accent text-black"
+                    />
+                  </MentionsInput>
                   <button
                     className={classNames("btn-primary btn", {
                       loading: createPost.isLoading,
@@ -87,7 +118,11 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
                     disabled={createPost.isLoading}
                     onClick={() =>
                       createPost.mutate(
-                        { threadId, message: content },
+                        {
+                          threadId,
+                          message: content,
+                          mentions: mentions?.map((m) => m.id),
+                        },
                         { onSuccess: () => setContent("") }
                       )
                     }
