@@ -1,17 +1,36 @@
+import Link from "next/link";
+
 const urlRegex = /https:\/\/[^\s]+/g;
+const mentionsRegex = /@\[([^\]]+)\]\(([^)]+)\)/;
+const tokenRegex = new RegExp(
+  `(${urlRegex.source})|(${mentionsRegex.source})|([^\\s]+)`,
+  "g"
+);
 
 function tokenize(content: string) {
   const result = [];
-  const words = content.split(/(\s|\n)/);
-  for (const word of words) {
-    if (word === " ") {
-      result.push({ type: "space", content: word } as const);
-    } else if (word === "\n") {
-      result.push({ type: "newline" as const, content: word } as const);
-    } else if (word.match(urlRegex)) {
-      result.push({ type: "url" as const, content: word } as const);
+  const tokens = content.match(tokenRegex);
+  if (!tokens) throw new Error("no tokens found in tokenize()!");
+  for (const token of tokens) {
+    if (token === " ") {
+      result.push({ type: "space", content: token } as const);
+    } else if (token === "\n") {
+      result.push({ type: "newline" as const, content: token } as const);
+    } else if (token.match(urlRegex)) {
+      result.push({ type: "url" as const, content: token } as const);
+    } else if (token.match(mentionsRegex)) {
+      const matches = token.match(mentionsRegex);
+      if (!matches) continue;
+      const userId = matches[2];
+      const userName = matches[1];
+      if (!userId || !userName) continue;
+      result.push({
+        type: "mention" as const,
+        content: userName,
+        userId,
+      });
     } else {
-      result.push({ type: "text" as const, content: word } as const);
+      result.push({ type: "text" as const, content: token } as const);
     }
   }
   return result;
@@ -62,6 +81,17 @@ export const tokenizePostContent = (content: string) => {
     if (token.type === "url") return extractUrl(token, i);
     if (token.type === "newline") return <div className="w-full" key={i} />;
     if (token.type === "space") return <span key={i}>&nbsp;</span>;
+    if (token.type === "mention") {
+      return (
+        <Link
+          className="link-secondary link"
+          href={`/profiles/${token.userId}`}
+          key={i}
+        >
+          @{token.content}
+        </Link>
+      );
+    }
     return token.content;
   });
 };
