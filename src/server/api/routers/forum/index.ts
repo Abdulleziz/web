@@ -16,12 +16,14 @@ import { getForumNotificationListeners } from "./trpc";
 const ThreadTitle = z
   .string({ required_error: "Thread başlığı boş olamaz" })
   .trim()
-  .min(1, "Thread başlığı en az 1 karakter olmalıdır");
+  .min(1, "Thread başlığı en az 1 karakter olmalıdır")
+  .max(100, "Thread başlığı en fazla 100 karakter olmalıdır");
 
 const ThreadMessage = z
   .string({ required_error: "Thread mesajı boş olamaz" })
   .trim()
-  .min(1, "Thread mesajı en az 1 karakter olmalıdır");
+  .min(1, "Thread mesajı en az 1 karakter olmalıdır")
+  .max(1000, "Thread mesajı en fazla 1000 karakter olmalıdır");
 
 const managePinsProcedure = createPermissionProcedure(["forum thread pinle"]);
 const deleteThreadsProcedure = createPermissionProcedure(["forum thread sil"]);

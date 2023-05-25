@@ -32,7 +32,7 @@ export const forumPostsRouter = createTRPCRouter({
     .input(
       z.object({
         threadId: ThreadId,
-        message: nonEmptyString.and(z.string().max(1000)),
+        message: nonEmptyString.max(1000),
         mentions: UserId.array().default([]),
       })
     )
