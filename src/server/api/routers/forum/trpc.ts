@@ -33,16 +33,16 @@ export const getForumNotificationListeners = async (
     const userThreadN = thread.notifications.find(
       (n) => n.userId === member.id
     )?.preference;
-    const total = [userN, threadN, userThreadN];
 
-    // TODO: bypass thread defaults by userThreadN
-    // may be bypass user defaults too
+    if (userThreadN) {
+      if (userThreadN === "none") return false;
+      if (userThreadN === "mentions") return mentions.includes(member.id);
+      return true;
+    }
 
-    // None
+    const total = [userN, threadN];
     if (total.includes("none")) return false;
-    // Mentions
     if (total.includes("mentions")) return mentions.includes(member.id);
-    // All
     return true;
   });
 };
