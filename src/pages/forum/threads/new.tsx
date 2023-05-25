@@ -1,6 +1,7 @@
 import classNames from "classnames";
 import type { NextPage } from "next";
 import Link from "next/link";
+import Image from "next/image";
 
 import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
@@ -10,6 +11,10 @@ import { useCreateForumThread } from "~/utils/useForum";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useHydrated } from "~/pages/_app";
+
+import { Mention, MentionsInput } from "react-mentions";
+import { useGetAbdullezizUsers } from "~/utils/useDiscord";
+import { getAvatarUrl } from "~/server/discord-api/utils";
 
 type CreateThreadOptionsStore = {
   notify: boolean;
@@ -44,12 +49,17 @@ const NewThread: NextPage = () => {
 
 const CreateThread: NextPage = () => {
   const [tags, setTags] = useState(new Set<string>());
+  const [mentions, setMentions] = useState(new Set<string>());
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
   const createThread = useCreateForumThread();
   const notifyStore = useCreateThreadOptionsStore();
+  const abdullezizUsers = useGetAbdullezizUsers();
   const hydrated = useHydrated();
 
+  const users = (abdullezizUsers.data ?? []).filter(
+    (m) => !m.user.bot && m.id !== undefined
+  );
   const tagRef =
     useRef<HTMLInputElement>() as React.MutableRefObject<HTMLInputElement>;
 
@@ -58,6 +68,7 @@ const CreateThread: NextPage = () => {
       tags: [...tags],
       title,
       message: content,
+      mentions: [...mentions],
       notify: notifyStore.notify,
     });
 
@@ -78,7 +89,55 @@ const CreateThread: NextPage = () => {
           defaultValue={title}
           onChange={(e) => setTitle(e.target.value)}
         />
-        <input
+        <MentionsInput
+          allowSuggestionsAboveCursor
+          allowSpaceInQuery
+          placeholder="İlk Mesaj..."
+          className={classNames(
+            "mt-4 h-14 w-full rounded border transition-all",
+            title
+              ? "input-success focus:border-success"
+              : "input-error focus:border-error"
+          )}
+          value={content}
+          onChange={(event, _v, _t, mentions) => {
+            setContent(event.target.value);
+            setMentions((m) => new Set([...m, ...mentions.map((m) => m.id)]));
+          }}
+        >
+          <Mention
+            trigger="@"
+            appendSpaceOnAdd
+            className="bg-accent text-accent-content"
+            isLoading={abdullezizUsers.isLoading}
+            displayTransform={(_id, display) => "@" + display}
+            data={users.map((member) => ({
+              id: member.id ?? "",
+              display: member.nick ? member.nick : member.user.username,
+            }))}
+            renderSuggestion={(suggest, _search, display) => {
+              const u = users.find((u) => suggest.id === u.id);
+              const image = u ? getAvatarUrl(u.user) : undefined;
+              return (
+                <div className="flex items-center justify-between border-2 border-base-300 bg-base-100 p-2 hover:bg-base-200">
+                  <div className="flex items-center">
+                    {image && (
+                      <Image
+                        src={image}
+                        alt="avatar"
+                        width={32}
+                        height={32}
+                        className="rounded-full"
+                      />
+                    )}
+                    <span className="ml-2">{display}</span>
+                  </div>
+                </div>
+              );
+            }}
+          />
+        </MentionsInput>
+        {/*<input
           type="text"
           placeholder="İlk Mesaj..."
           className={classNames(
@@ -87,7 +146,7 @@ const CreateThread: NextPage = () => {
           )}
           defaultValue={content}
           onChange={(e) => setContent(e.target.value)}
-        />
+        />*/}
       </div>
 
       <div>

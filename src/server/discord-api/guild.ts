@@ -9,8 +9,10 @@ import type {
 import { discordFetch } from ".";
 import { timedCache } from "./utils";
 
-export type Member = RESTGetAPIGuildMemberResult;
 export type Roles = RESTGetAPIGuildRolesResult;
+export type Member = RESTGetAPIGuildMemberResult & {
+  user: NonNullable<RESTGetAPIGuildMemberResult["user"]>;
+};
 
 export const ABDULLEZIZ_SERVER_ID = "918833527389315092";
 
@@ -26,15 +28,9 @@ export async function getGuildMember(
 const createGetGuildMembers = (guildId: string) => {
   // çok fazla discord api request atmasın diye 1 dakika cacheleyelim
   return timedCache(async () => {
-    const res = await discordFetch<Member[]>(
-      `guilds/${guildId}/members?limit=100`,
-      { method: "GET" }
-    );
-    if (res)
-      return res.map((m) => {
-        if (!m.user) throw new Error("unreachable, createGetGuildMembers");
-        return { ...m, user: m.user };
-      });
+    return await discordFetch<Member[]>(`guilds/${guildId}/members?limit=100`, {
+      method: "GET",
+    });
   }, 1000 * 60);
 };
 

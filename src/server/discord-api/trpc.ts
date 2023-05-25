@@ -40,7 +40,12 @@ export const getAbdullezizUser = async (discordId: string) => {
 
 // discord members + their verified roles + their abdulleziz perms
 export const getAbdullezizUsers = async () => {
-  const members = await getGuildMembersWithRoles();
+  const dcMembers = await getGuildMembersWithRoles();
+  const dbMembers = await connectMembersWithIds(prisma, dcMembers);
+  const members = dcMembers.map((m) => ({
+    ...m,
+    id: dbMembers.find((mem) => mem.user.id === m.user.id)?.id,
+  }));
   const verifiedRoles = members.map((m) => getAbdullezizRoles(m.roles));
   const verifiedPerms = verifiedRoles.map((r) =>
     permissionDecider(r.map((r) => r.name))
@@ -57,9 +62,7 @@ export const getAbdullezizUsers = async () => {
 
 export const getSalaryTakers = async () => {
   const users = await getAbdullezizUsers();
-  const salaryTakers = (await connectMembersWithIds(prisma, users)).filter(
-    (u) => u.perms.includes("maaş al")
-  );
+  const salaryTakers = users.filter((u) => u.perms.includes("maaş al"));
   return salaryTakers.map((u) => {
     const [highestRole] = sortRoles(u.roles);
     if (!highestRole) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });

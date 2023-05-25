@@ -79,7 +79,7 @@ export const SystemEntities = SE.parse([
     },
     price: 9000,
     image:
-      "http://images5.ikincielaraba.net.tr/ilanresim/ikinci-el-otomobil-renault-megane-1-5-dci-dynamique-180169_4.jpg",
+      "https://www.auto-data.net/images/f32/Renault-Megane-II-Classic_1.jpg",
   },
   {
     id: 4,

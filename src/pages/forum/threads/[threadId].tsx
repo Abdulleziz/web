@@ -12,8 +12,13 @@ import {
 } from "~/utils/useForum";
 import Image from "next/image";
 import { tokenizePostContent } from "~/utils/forumThread";
-import { useGetAbdullezizUser } from "~/utils/useDiscord";
+import {
+  useGetAbdullezizUser,
+  useGetAbdullezizUsers,
+} from "~/utils/useDiscord";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Mention, MentionsInput } from "react-mentions";
+import { getAvatarUrl } from "~/server/discord-api/utils";
 
 const ForumThread: NextPage = () => {
   const router = useRouter();
@@ -43,8 +48,14 @@ type ThreadProps = { threadId: ThreadId };
 const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
   const thread = useGetForumThread(threadId);
   const createPost = useCreateForumPost();
+  const abdullezizUsers = useGetAbdullezizUsers();
+  const [mentions, setMentions] = useState(new Set<string>());
   const [content, setContent] = useState("");
   const [threadRef] = useAutoAnimate();
+
+  const users = (abdullezizUsers.data ?? []).filter(
+    (m) => !m.user.bot && m.id !== undefined
+  );
 
   return (
     <Layout>
@@ -72,23 +83,73 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
               <Posts threadId={threadId} />
 
               <div className="form-control mt-3">
-                <div className="input-group flex items-center justify-center">
-                  <textarea
-                    className="input-bordered input w-full max-w-2xl"
+                <div className="flex items-center justify-center">
+                  <MentionsInput
+                    allowSuggestionsAboveCursor
+                    allowSpaceInQuery
                     placeholder="Mesajınızı giriniz..."
+                    className="h-14 w-full max-w-2xl rounded border"
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
                     disabled={createPost.isLoading}
-                  />
+                    onChange={(event, _v, _t, mentions) => {
+                      setContent(event.target.value);
+                      setMentions(
+                        (m) => new Set([...m, ...mentions.map((m) => m.id)])
+                      );
+                    }}
+                  >
+                    <Mention
+                      trigger="@"
+                      appendSpaceOnAdd
+                      className="bg-accent text-accent-content"
+                      isLoading={abdullezizUsers.isLoading}
+                      displayTransform={(_id, display) => "@" + display}
+                      data={users.map((member) => ({
+                        id: member.id ?? "",
+                        display: member.nick
+                          ? member.nick
+                          : member.user.username,
+                      }))}
+                      renderSuggestion={(suggest, _search, display) => {
+                        const u = users.find((u) => suggest.id === u.id);
+                        const image = u ? getAvatarUrl(u.user) : undefined;
+                        return (
+                          <div className="flex items-center justify-between border-2 border-base-300 bg-base-100 p-2 hover:bg-base-200">
+                            <div className="flex items-center">
+                              {image && (
+                                <Image
+                                  src={image}
+                                  alt="avatar"
+                                  width={32}
+                                  height={32}
+                                  className="rounded-full"
+                                />
+                              )}
+                              <span className="ml-2">{display}</span>
+                            </div>
+                          </div>
+                        );
+                      }}
+                    />
+                  </MentionsInput>
                   <button
+                    disabled={createPost.isLoading}
                     className={classNames("btn-primary btn", {
                       loading: createPost.isLoading,
                     })}
-                    disabled={createPost.isLoading}
                     onClick={() =>
                       createPost.mutate(
-                        { threadId, message: content },
-                        { onSuccess: () => setContent("") }
+                        {
+                          threadId,
+                          message: content,
+                          mentions: [...mentions],
+                        },
+                        {
+                          onSuccess: () => {
+                            setContent("");
+                            setMentions(new Set());
+                          },
+                        }
                       )
                     }
                   >

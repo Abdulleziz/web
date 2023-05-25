@@ -13,7 +13,7 @@ const AllNotif = Notif.or(z.literal("none", vError));
 
 export const forumNotificationsRouter = createTRPCRouter({
   getUserNotification: protectedProcedure.query(({ ctx }) => {
-    return ctx.prisma.user.findUnique({
+    return ctx.prisma.user.findUniqueOrThrow({
       where: { id: ctx.session.user.id },
       select: { defaultThreadNotify: true },
     });
