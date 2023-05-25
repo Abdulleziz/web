@@ -144,7 +144,12 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
                           message: content,
                           mentions: [...mentions],
                         },
-                        { onSuccess: () => setContent("") }
+                        {
+                          onSuccess: () => {
+                            setContent("");
+                            setMentions(new Set());
+                          },
+                        }
                       )
                     }
                   >

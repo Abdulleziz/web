@@ -49,14 +49,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const salaryTakers = await getSalaryTakers();
 
       const result = await prisma.payment.createMany({
-        data: salaryTakers.map((u) => ({
-          type: "salary",
-          toId: u.id,
-          fromId: parsed.fromId,
-          amount:
-            // highest_role.severity x multiplier (90 * 10 = 900)
-            u.severity * parsed.multiplier,
-        })),
+        data: salaryTakers
+          .filter((u) => u.id !== undefined)
+          .map((u) => ({
+            type: "salary",
+            toId: u.id!,
+            fromId: parsed.fromId,
+            amount:
+              // highest_role.severity x multiplier (90 * 10 = 900)
+              u.severity * parsed.multiplier,
+          })),
       });
       console.log({ result });
 
