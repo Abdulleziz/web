@@ -6,7 +6,7 @@ import {
   createTRPCRouter,
   protectedProcedure,
 } from "~/server/api/trpc";
-import { nonEmptyString, ThreadId } from "~/utils/zod-utils";
+import { nonEmptyString, ThreadId, UserId } from "~/utils/zod-utils";
 import { getDomainUrl } from "~/utils/api";
 import { env } from "~/env.mjs";
 import { forumPostsRouter } from "./posts";
@@ -76,60 +76,64 @@ export const forumRouter = createTRPCRouter({
         title: ThreadTitle,
         tags: nonEmptyString.array(),
         message: ThreadMessage,
+        mentions: UserId.array().default([]),
         notify: z.boolean().default(true),
       })
     )
-    .mutation(async ({ ctx, input: { title, tags, message, notify } }) => {
-      const thread = await ctx.prisma.forumThread.create({
-        data: {
-          title,
-          defaultNotify: notify ? "all" : "mentions",
-          tags: {
-            connectOrCreate: tags.map((tag) => ({
-              where: { name: tag },
-              create: { name: tag },
-            })),
-          },
-          creator: {
-            connect: { id: ctx.session.user.id },
-          },
-          posts: {
-            create: {
-              message,
-              creator: { connect: { id: ctx.session.user.id } },
+    .mutation(
+      async ({ ctx, input: { title, tags, message, notify, mentions } }) => {
+        const thread = await ctx.prisma.forumThread.create({
+          data: {
+            title,
+            defaultNotify: notify ? "all" : "mentions",
+            tags: {
+              connectOrCreate: tags.map((tag) => ({
+                where: { name: tag },
+                create: { name: tag },
+              })),
             },
-          },
-        },
-        include: { notifications: true },
-      });
-      const notifyUsers = await getForumNotificationListeners(
-        ctx.prisma,
-        [],
-        thread
-      );
-      if (notifyUsers.length > 0)
-        await ctx.pushNotification.publishToUsers(
-          notifyUsers.map((u) => u.id),
-          {
-            web: {
-              notification: {
-                title: `Yeni Thread: ${title.slice(0, 50)}`,
-                body: `${ctx.session.user.name ?? ""}: ${message.slice(
-                  0,
-                  100
-                )}`,
-                deep_link: `${getDomainUrl()}/forum/threads/${thread.id}`,
-                hide_notification_if_site_has_focus: true,
-                icon: ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
+            creator: {
+              connect: { id: ctx.session.user.id },
+            },
+            posts: {
+              create: {
+                message,
+                creator: { connect: { id: ctx.session.user.id } },
               },
-              data: { tag: `new-thread-${thread.id}` },
-              time_to_live:
-                env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
             },
-          }
+          },
+          include: { notifications: true },
+        });
+        const notifyUsers = await getForumNotificationListeners(
+          ctx.prisma,
+          mentions,
+          thread
         );
-      return thread;
-    }),
+        if (notifyUsers.length > 0)
+          await ctx.pushNotification.publishToUsers(
+            notifyUsers.map((u) => u.id),
+            {
+              web: {
+                notification: {
+                  title: `Yeni Thread: ${title.slice(0, 50)}`,
+                  body: `${ctx.session.user.name ?? ""}: ${message.slice(
+                    0,
+                    100
+                  )}`,
+                  deep_link: `${getDomainUrl()}/forum/threads/${thread.id}`,
+                  hide_notification_if_site_has_focus: true,
+                  icon:
+                    ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
+                },
+                data: { tag: `new-thread-${thread.id}` },
+                time_to_live:
+                  env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
+              },
+            }
+          );
+        return thread;
+      }
+    ),
   deleteThreadById: deleteThreadsProcedure
     .input(ThreadId)
     .mutation(async ({ ctx, input: id }) => {

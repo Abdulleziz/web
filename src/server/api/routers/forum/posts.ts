@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { nonEmptyString, PostId, ThreadId } from "~/utils/zod-utils";
+import { nonEmptyString, PostId, ThreadId, UserId } from "~/utils/zod-utils";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { getDomainUrl } from "~/utils/api";
 import { env } from "~/env.mjs";
@@ -33,9 +33,10 @@ export const forumPostsRouter = createTRPCRouter({
       z.object({
         threadId: ThreadId,
         message: nonEmptyString.and(z.string().max(1000)),
+        mentions: UserId.array().default([]),
       })
     )
-    .mutation(async ({ ctx, input: { threadId, message } }) => {
+    .mutation(async ({ ctx, input: { threadId, message, mentions } }) => {
       const post = await ctx.prisma.forumPost.create({
         data: {
           message,
@@ -50,7 +51,7 @@ export const forumPostsRouter = createTRPCRouter({
       });
       const notifyUsers = await getForumNotificationListeners(
         ctx.prisma,
-        [],
+        mentions,
         post.thread
       );
       if (notifyUsers.length > 0)
