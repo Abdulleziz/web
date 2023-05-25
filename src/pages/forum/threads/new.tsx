@@ -11,6 +11,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useHydrated } from "~/pages/_app";
 
+import { Mention, MentionsInput } from "react-mentions";
+import { useGetAbdullezizUsers } from "~/utils/useDiscord";
+
 type CreateThreadOptionsStore = {
   notify: boolean;
   setNotify: (notify: boolean) => void;
@@ -49,6 +52,7 @@ const CreateThread: NextPage = () => {
   const createThread = useCreateForumThread();
   const notifyStore = useCreateThreadOptionsStore();
   const hydrated = useHydrated();
+  const users = (useGetAbdullezizUsers().data ?? []).filter((m) => !m.user.bot);
 
   const tagRef =
     useRef<HTMLInputElement>() as React.MutableRefObject<HTMLInputElement>;
@@ -78,7 +82,27 @@ const CreateThread: NextPage = () => {
           defaultValue={title}
           onChange={(e) => setTitle(e.target.value)}
         />
-        <input
+        <MentionsInput
+          placeholder="İlk Mesaj..."
+          className={classNames(
+            "mt-4 h-14 w-full rounded border transition-all",
+            title
+              ? "input-success focus:border-success"
+              : "input-error focus:border-error"
+          )}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+        >
+          <Mention
+            trigger="@"
+            data={users.map((member) => ({
+              id: member.user.id,
+              display: member.nick ? member.nick : member.user.username,
+            }))}
+            className="bg-accent text-black"
+          />
+        </MentionsInput>
+        {/*<input
           type="text"
           placeholder="İlk Mesaj..."
           className={classNames(
@@ -87,7 +111,7 @@ const CreateThread: NextPage = () => {
           )}
           defaultValue={content}
           onChange={(e) => setContent(e.target.value)}
-        />
+        />*/}
       </div>
 
       <div>
