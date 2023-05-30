@@ -470,16 +470,17 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
   const [rowAnimateRef] = useAutoAnimate();
 
   const routerRowRef = useRef<HTMLTableCellElement | null>(null);
+  const focusedCron = data?.find((j) => j.cron === routerExp)?.id;
 
   // focus on the row that is in the url
   useEffect(() => {
-    // TODO: delete, this does not work.
-    if (routerExp && data?.find((j) => j.cron === routerExp)) {
+    if (routerExp && focusedCron) {
       void new Promise((resolve) => setTimeout(resolve, 1000)).then(() => {
-        if (routerRowRef.current) routerRowRef.current.focus();
+        if (routerRowRef.current)
+          routerRowRef.current.scrollIntoView({ behavior: "smooth" });
       });
     }
-  }, [data, routerExp]);
+  }, [focusedCron, routerExp]);
 
   if (!session || !data || !data.length) return <></>;
   return (
