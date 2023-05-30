@@ -496,170 +496,169 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
         </thead>
         <tbody ref={rowAnimateRef}>
           {/* row 1 */}
-          {data.map((job) => (
-            <tr key={job.id}>
-              <td>
-                <div className="flex items-center space-x-3">
-                  <div className="avatar">
-                    <div className="mask mask-squircle h-12 w-12">
-                      <div className="avatar-group -space-x-6">
-                        {job.listeners.map((c) => (
-                          <div key={c.listener.id} className="avatar">
-                            <div className="w-12">
-                              {c.listener.image && (
-                                <Image
-                                  src={c.listener.image}
-                                  alt="User avatar"
-                                  width={128}
-                                  height={128}
-                                />
-                              )}
+          {data.map((job) => {
+            const meAsListener = job.listeners.find(
+              (c) => c.listener.id === session.user.id
+            );
+            return (
+              <tr key={job.id}>
+                <td>
+                  <div className="flex items-center space-x-3">
+                    <div className="avatar">
+                      <div className="mask mask-squircle h-12 w-12">
+                        <div className="avatar-group -space-x-6">
+                          {job.listeners.map((c) => (
+                            <div key={c.listener.id} className="avatar">
+                              <div className="w-12">
+                                {c.listener.image && (
+                                  <Image
+                                    src={c.listener.image}
+                                    alt="User avatar"
+                                    width={128}
+                                    height={128}
+                                  />
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className=" font-normal sm:visible sm:text-base">
-                      <div>
-                        <input
-                          type="checkbox"
-                          id={job.jobId}
-                          className="modal-toggle"
-                        />
-                        <div className="modal">
-                          <div className="modal-box">
-                            <h3 className="font-bold">Subscribed Users</h3>
-                            <ul className="ml-4">
-                              {job.listeners.map((c) => (
-                                <li className="list-disc" key={c.id}>
-                                  {c.listener.name}
-                                </li>
-                              ))}
-                            </ul>
-                            <div className="modal-action">
-                              <label htmlFor={job.jobId} className="btn">
-                                Close
-                              </label>
-                            </div>
-                          </div>
+                          ))}
                         </div>
                       </div>
-                      {job.listeners.length < 4 ? (
+                    </div>
+                    <div>
+                      <div className=" font-normal sm:visible sm:text-base">
                         <div>
-                          <div className=" invisible relative top-4 text-[1px] font-normal sm:visible sm:text-base">
-                            {job.listeners
-                              .map((c) => c.listener.name)
-                              .join(", ")}
+                          <input
+                            type="checkbox"
+                            id={job.jobId}
+                            className="modal-toggle"
+                          />
+                          <div className="modal">
+                            <div className="modal-box">
+                              <h3 className="font-bold">Subscribed Users</h3>
+                              <ul className="ml-4">
+                                {job.listeners.map((c) => (
+                                  <li className="list-disc" key={c.id}>
+                                    {c.listener.name}
+                                  </li>
+                                ))}
+                              </ul>
+                              <div className="modal-action">
+                                <label htmlFor={job.jobId} className="btn">
+                                  Close
+                                </label>
+                              </div>
+                            </div>
                           </div>
-                          <label className="visible sm:btn-disabled sm:invisible">
-                            {job.listeners[0]?.listener.name}{" "}
-                            {job.listeners.length !== 1 && "and "}
-                            {job.listeners.length - 1 !== 0 ? (
-                              <label
-                                htmlFor={job.jobId}
-                                className="btn-xs btn visible sm:btn-disabled sm:invisible"
-                              >
-                                {job.listeners.length - 1} more Users
-                              </label>
-                            ) : (
-                              <></>
-                            )}
-                          </label>
                         </div>
-                      ) : (
-                        <label>
-                          {job.listeners[0]?.listener.name} and{" "}
-                          <label htmlFor={job.jobId} className=" btn-xs btn">
-                            {job.listeners.length - 1} more Users
+                        {job.listeners.length < 4 ? (
+                          <div>
+                            <div className=" invisible relative top-4 text-[1px] font-normal sm:visible sm:text-base">
+                              {job.listeners
+                                .map((c) => c.listener.name)
+                                .join(", ")}
+                            </div>
+                            <label className="visible sm:btn-disabled sm:invisible">
+                              {job.listeners[0]?.listener.name}{" "}
+                              {job.listeners.length !== 1 && "and "}
+                              {job.listeners.length - 1 !== 0 ? (
+                                <label
+                                  htmlFor={job.jobId}
+                                  className="btn-xs btn visible sm:btn-disabled sm:invisible"
+                                >
+                                  {job.listeners.length - 1} more Users
+                                </label>
+                              ) : (
+                                <></>
+                              )}
+                            </label>
+                          </div>
+                        ) : (
+                          <label>
+                            {job.listeners[0]?.listener.name} and{" "}
+                            <label htmlFor={job.jobId} className=" btn-xs btn">
+                              {job.listeners.length - 1} more Users
+                            </label>
                           </label>
-                        </label>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </td>
-              <td>
-                {job.title}
-                <br />
-                <span className="badge-ghost badge badge-sm">
-                  {job.isGlobal ? "Global" : "Özel"}
-                </span>
-              </td>
-              <td
-                ref={routerExp === job.cron ? routerRowRef : undefined}
-                className={
-                  // TODO: popup modal instead
-                  routerExp === job.cron
-                    ? "text-2xl font-bold text-primary"
-                    : ""
-                }
-              >
-                {job.cron}
-                <br />
-                <label
-                  htmlFor="next-dates"
-                  className="btn-xs btn"
-                  onClick={() => handleSubmit(job.cron)}
-                >
-                  tarihler
-                </label>
-                <br />
-                {routerExp === job.cron && (
-                  <span className="badge-ghost badge">
-                    Tıkladığınız hatırlatıcı
+                </td>
+                <td>
+                  {job.title}
+                  <br />
+                  <span className="badge-ghost badge badge-sm">
+                    {job.isGlobal ? "Global" : "Özel"}
                   </span>
-                )}
-              </td>
-              <th>
-                {!!job.listeners.filter((u) => u.listenerId === session.user.id)
-                  .length ? (
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={() => toggle.mutate(job.cron)}
-                      disabled={
-                        toggle.isLoading ||
-                        !job.listeners.find(
-                          (u) => u.listenerId === session.user.id
-                        )!.isAuthor
-                      }
-                      className={classNames("btn-warning btn-xs btn", {
-                        ["loading"]: toggle.isLoading,
-                      })}
-                    >
-                      {job.listeners.find((u) => u.isAuthor)?.isActive
-                        ? "Kapat"
-                        : "Aç"}
-                    </button>
-                    <button
-                      onClick={() => leave.mutate(job.cron)}
-                      disabled={leave.isLoading}
-                      className={classNames("btn-error btn-xs btn", {
-                        ["loading"]: leave.isLoading,
-                      })}
-                    >
-                      Ayrıl
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col">
-                    <button
-                      onClick={() =>
-                        join.mutate({ title: "31", cron: job.cron })
-                      }
-                      disabled={join.isLoading}
-                      className={classNames("btn-success btn-xs btn", {
-                        ["loading"]: join.isLoading,
-                      })}
-                    >
-                      Katıl
-                    </button>
-                  </div>
-                )}
-              </th>
-            </tr>
-          ))}
+                </td>
+                <td
+                  ref={routerExp === job.cron ? routerRowRef : undefined}
+                  className={
+                    // TODO: popup modal instead
+                    routerExp === job.cron
+                      ? "text-2xl font-bold text-primary"
+                      : ""
+                  }
+                >
+                  {job.cron}
+                  <br />
+                  <label
+                    htmlFor="next-dates"
+                    className="btn-xs btn"
+                    onClick={() => handleSubmit(job.cron)}
+                  >
+                    tarihler
+                  </label>
+                  <br />
+                  {routerExp === job.cron && (
+                    <span className="badge-ghost badge">
+                      Tıkladığınız hatırlatıcı
+                    </span>
+                  )}
+                </td>
+                <th>
+                  {!!meAsListener ? (
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={() => toggle.mutate(job.cron)}
+                        disabled={toggle.isLoading || !meAsListener.isAuthor}
+                        className={classNames("btn-warning btn-xs btn", {
+                          ["loading"]: toggle.isLoading,
+                        })}
+                      >
+                        {job.listeners.find((u) => u.isAuthor)?.isActive
+                          ? "Kapat"
+                          : "Aç"}
+                      </button>
+                      <button
+                        onClick={() => leave.mutate(job.cron)}
+                        disabled={leave.isLoading}
+                        className={classNames("btn-error btn-xs btn", {
+                          ["loading"]: leave.isLoading,
+                        })}
+                      >
+                        Ayrıl
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col">
+                      <button
+                        onClick={() =>
+                          join.mutate({ title: "31", cron: job.cron })
+                        }
+                        disabled={join.isLoading}
+                        className={classNames("btn-success btn-xs btn", {
+                          ["loading"]: join.isLoading,
+                        })}
+                      >
+                        Katıl
+                      </button>
+                    </div>
+                  )}
+                </th>
+              </tr>
+            );
+          })}
         </tbody>
         {/* foot */}
         <tfoot>
