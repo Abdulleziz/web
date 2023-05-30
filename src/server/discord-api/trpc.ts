@@ -62,10 +62,17 @@ export const getAbdullezizUsers = async () => {
 
 export const getSalaryTakers = async () => {
   const users = await getAbdullezizUsers();
-  const salaryTakers = users.filter((u) => u.perms.includes("maaş al"));
+  const salaryTakers = users.filter(
+    (u) => u.id !== undefined && u.perms.includes("maaş al")
+  );
   return salaryTakers.map((u) => {
     const [highestRole] = sortRoles(u.roles);
-    if (!highestRole) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    return { ...u, severity: abdullezizRoleSeverities[highestRole.name] };
+    if (u.id === undefined || !highestRole)
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    return {
+      ...u,
+      id: u.id,
+      severity: abdullezizRoleSeverities[highestRole.name],
+    };
   });
 };

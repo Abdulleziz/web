@@ -114,17 +114,15 @@ export const paymentsRouter = createTRPCRouter({
         const salaryTakers = await getSalaryTakers();
 
         await ctx.prisma.payment.createMany({
-          data: salaryTakers
-            .filter((u) => u.id !== undefined)
-            .map((u) => {
-              return {
-                type: "salary",
-                toId: u.id!,
-                amount:
-                  // highest_role.severity x multiplier (90 * 10 = 900)
-                  u.severity * multiplier,
-              };
-            }),
+          data: salaryTakers.map((u) => {
+            return {
+              type: "salary",
+              toId: u.id,
+              amount:
+                // highest_role.severity x multiplier (90 * 10 = 900)
+                u.severity * multiplier,
+            };
+          }),
         });
       }
     }),
