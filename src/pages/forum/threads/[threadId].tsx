@@ -19,6 +19,8 @@ import {
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Mention, MentionsInput } from "react-mentions";
 import { getAvatarUrl } from "~/server/discord-api/utils";
+import { UploadDropzone } from "@uploadthing/react";
+import { type UploadRouter } from "~/server/uploadthing";
 
 const ForumThread: NextPage = () => {
   const router = useRouter();
@@ -44,6 +46,7 @@ const ForumThread: NextPage = () => {
 };
 
 type ThreadProps = { threadId: ThreadId };
+type Attachment = { fileKey: string; fileUrl: string };
 
 const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
   const thread = useGetForumThread(threadId);
@@ -51,6 +54,7 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
   const abdullezizUsers = useGetAbdullezizUsers();
   const [mentions, setMentions] = useState(new Set<string>());
   const [content, setContent] = useState("");
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [threadRef] = useAutoAnimate();
 
   const users = (abdullezizUsers.data ?? []).filter(
@@ -84,6 +88,16 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
 
               <div className="form-control mt-3">
                 <div className="flex items-center justify-center">
+                  <UploadDropzone<UploadRouter>
+                    key={attachments.length}
+                    endpoint="threadPostAttachmentUploader"
+                    onClientUploadComplete={(res) => {
+                      setAttachments((a) => [...a, ...(res ? res : [])]);
+                    }}
+                    onUploadError={(error: Error) => {
+                      alert(`File upload error! ${error.message}`);
+                    }}
+                  />
                   <MentionsInput
                     allowSuggestionsAboveCursor
                     allowSpaceInQuery
@@ -141,13 +155,19 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
                       createPost.mutate(
                         {
                           threadId,
-                          message: content,
+                          message:
+                            content +
+                            (attachments.length > 0
+                              ? "\n" +
+                                attachments.map((a) => a.fileUrl).join(" ")
+                              : ""),
                           mentions: [...mentions],
                         },
                         {
                           onSuccess: () => {
                             setContent("");
                             setMentions(new Set());
+                            setAttachments([]);
                           },
                         }
                       )
@@ -156,6 +176,34 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
                     Gönder!
                   </button>
                 </div>
+                {attachments.length > 0 && (
+                  <div className="mt-2 flex flex-row gap-2">
+                    {attachments.map((attachment) => (
+                      <div key={attachment.fileKey}>
+                        <button
+                          className="btn-ghost btn-sm btn"
+                          onClick={
+                            () =>
+                              setAttachments((a) =>
+                                a.filter(
+                                  (a) => a.fileKey !== attachment.fileKey
+                                )
+                              )
+                            // TODO: delete attachment from server
+                          }
+                        >
+                          X
+                        </button>
+                        <Image
+                          src={attachment.fileUrl}
+                          alt="attachment"
+                          width={128}
+                          height={128}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

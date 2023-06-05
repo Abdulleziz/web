@@ -8,7 +8,7 @@
 const config = {
   reactStrictMode: true,
   images: {
-    domains: ["cdn.discordapp.com"],
+    domains: ["cdn.discordapp.com", "uploadthing.com"],
   },
   /**
    * If you have the "experimental: { appDir: true }" setting enabled, then you
@@ -21,5 +21,8 @@ const config = {
     defaultLocale: "en",
   },
   transpilePackages: ["@pusher/push-notifications-web"],
+  experimental: {
+    esmExternals: false,
+  },
 };
 export default config;
