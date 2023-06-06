@@ -9,8 +9,6 @@ export const uploadRouter = {
   })
     .middleware(async (req, res) => {
       const ctx = await createTRPCContext({ req, res });
-      console.log("ctx", ctx.session);
-      console.log("ctx!", !ctx.session);
 
       if (!ctx.session) throw new Error("Unauthorized");
 
