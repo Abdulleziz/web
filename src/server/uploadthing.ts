@@ -9,6 +9,7 @@ export const uploadRouter = {
   })
     .middleware(async (req, res) => {
       const ctx = await createTRPCContext({ req, res });
+      console.log("cookies for post upload attachment", req.cookies);
 
       if (!ctx.session) throw new Error("Unauthorized");
 
