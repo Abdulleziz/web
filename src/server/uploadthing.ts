@@ -1,5 +1,5 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next-legacy";
-import { createTRPCContext } from "./api/trpc";
+import { getServerAuthSession } from "./auth";
 const f = createUploadthing();
 
 export const uploadRouter = {
@@ -8,11 +8,11 @@ export const uploadRouter = {
     video: { maxFileSize: "32MB" },
   })
     .middleware(async (req, res) => {
-      const ctx = await createTRPCContext({ req, res });
+      const session = await getServerAuthSession({ req, res });
 
-      if (!ctx.session) throw new Error("Unauthorized");
+      if (!session) throw new Error("Unauthorized, no session");
 
-      return { userId: ctx.session.user.id };
+      return { userId: session.user.id };
     })
     .onUploadComplete(({ metadata, file }) => {
       console.log("Upload complete for userId:", metadata.userId);
