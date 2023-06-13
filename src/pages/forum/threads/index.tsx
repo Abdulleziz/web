@@ -14,6 +14,7 @@ import {
   useDeleteForumPin,
   useDeleteForumThread,
   useGetForumThreads,
+  useGetUserNotification,
   usePrefetchThreads,
   useSetForumUserNotification,
 } from "~/utils/useForum";
@@ -158,15 +159,44 @@ const PinThread = ({ thread }: { thread: Thread }) => {
 };
 
 const MuteThread = ({ thread }: { thread: Thread }) => {
-  const svgMap = {
-    all: <UnmutedSVG />,
-    mentions: <PartialMutedSVG />,
-    none: <MutedSVG />,
+  const options = {
+    all: {
+      order: 2,
+      name: "Bildirimler Açık",
+      svg: <UnmutedSVG />,
+    },
+    mentions: {
+      order: 1,
+      name: "Sadece Bahsetmeler",
+      svg: <PartialMutedSVG />,
+    },
+    none: {
+      order: 0,
+      name: "Bildirimler Kapalı",
+      svg: <MutedSVG />,
+    },
   };
-  const state = thread.notifications[0]?.preference;
-  const setNotif = useSetForumUserNotification();
-  const svg = svgMap[state || thread.defaultNotify];
 
+  const setNotif = useSetForumUserNotification();
+  const userNotify = useGetUserNotification().data?.defaultThreadNotify;
+  const state = thread.notifications[0]?.preference;
+  const getBestFallback = () => {
+    // ugly but works
+    // TODO: refactor for backend use
+    const [threadN, userN] = [
+      { type: "thread", pref: thread.defaultNotify },
+      { type: "user", pref: userNotify },
+    ] as const;
+
+    if (userN.pref) {
+      return options[threadN.pref].order < options[userN.pref].order
+        ? threadN
+        : { ...userN, pref: userN.pref };
+    }
+    return threadN;
+  };
+  const fallback = getBestFallback();
+  const svg = options[state || fallback.pref].svg;
   const { Modal, ModalTrigger } = createModal(
     `mute-thread-${thread.id}-modal`,
     svg
@@ -228,6 +258,12 @@ const MuteThread = ({ thread }: { thread: Thread }) => {
             >
               Sil
             </button>
+            {!state && (
+              <p className="mt-2 text-xs text-primary">
+                Otomatik {fallback.type === "user" ? "Kullanıcı" : "Thread"}{" "}
+                Ayarı: {options[fallback.pref].name}
+              </p>
+            )}
           </div>
         </div>
       </Modal>
