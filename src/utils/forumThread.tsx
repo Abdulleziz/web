@@ -69,7 +69,7 @@ const extractUrl = (token: Token & { type: "url" }, key: number) => {
   else if (url.includes("https://tenor.com/view"))
     // TODO: custom tenor api endpoint
     return (
-      <a className="link-error link" href={url}>
+      <a key={key} className="link-error link" href={url}>
         *tenor gif not supported yet*
       </a>
     );
@@ -91,7 +91,7 @@ export const tokenizePostContent = (content: string) => {
       else tokens.push(token.content);
     } else if (token.type === "url") {
       if (rawTokens.at(i - 1)?.type === "newline")
-        tokens.push(<div className="w-full" key={i} />);
+        tokens.push(<div className="w-full" key={`${i}-pre`} />);
       tokens.push(extractUrl(token, i));
     } else if (token.type === "mention") {
       tokens.push(
