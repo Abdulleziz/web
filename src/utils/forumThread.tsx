@@ -2,8 +2,9 @@ import Link from "next/link";
 
 const urlRegex = /https:\/\/[^\s]+/g;
 const mentionsRegex = /@\[([^\]]+)\]\(([^)]+)\)/;
+const newLineOrSpaceRegex = /(\s|\n)/g;
 const tokenRegex = new RegExp(
-  `(${urlRegex.source})|(${mentionsRegex.source})|([^\\s]+)`,
+  `(${urlRegex.source})|(${mentionsRegex.source})|(${newLineOrSpaceRegex.source})|([^${newLineOrSpaceRegex.source}]+)`,
   "g"
 );
 
@@ -76,13 +77,24 @@ const extractUrl = (token: Token & { type: "url" }, key: number) => {
 };
 
 export const tokenizePostContent = (content: string) => {
-  const tokens = tokenize(content);
-  return tokens.map((token, i) => {
-    if (token.type === "url") return extractUrl(token, i);
-    if (token.type === "newline") return <div className="w-full" key={i} />;
-    if (token.type === "space") return <span key={i}>&nbsp;</span>;
-    if (token.type === "mention") {
-      return (
+  const rawTokens = tokenize(content);
+  const tokens: (string | JSX.Element)[] = [];
+  const getLast = () => tokens.at(-1);
+  const setLast = (content: string) => (tokens[tokens.length - 1] = content);
+
+  rawTokens.forEach((token, i) => {
+    const last = getLast();
+    const lastIsText = typeof last === "string";
+
+    if (["space", "text", "newline"].includes(token.type)) {
+      if (lastIsText) setLast(last + token.content);
+      else tokens.push(token.content);
+    } else if (token.type === "url") {
+      if (rawTokens.at(i - 1)?.type === "newline")
+        tokens.push(<div className="w-full" key={i} />);
+      tokens.push(extractUrl(token, i));
+    } else if (token.type === "mention") {
+      tokens.push(
         <Link
           className="link-secondary link"
           href={`/profiles/${token.userId}`}
@@ -91,7 +103,7 @@ export const tokenizePostContent = (content: string) => {
           @{token.content}
         </Link>
       );
-    }
-    return token.content;
+    } else tokens.push(token.content);
   });
+  return tokens;
 };
