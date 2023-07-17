@@ -27,13 +27,20 @@ const calculateDiff = (cron: cronParser.CronExpression) => {
 // not implemented yet...
 // cron input hem custom hem alttaki seçeneklerden biri olacak
 const predefinedCrons = {
-  "Her x dakikada bir": (min = 1) => `*/${min} * * * *`,
-  "Her x saatte bir": (hour = 1) => `0 */${hour} * * *`,
-  "Her Gün": (hour = 0, min = 0) => `${min} ${hour} * * *`,
-  "Her Haftasonu": (hour = 0, min = 0) => `${min} ${hour} * * 0,6`, // cumartesi-pazar
-  "Her Haftaiçi": (hour = 0, min = 0) => `${min} ${hour} * * 1-5`, // pazartesi-cuma
-  "Haftanın Belirli Günleri": (days: number[], hour = 0, min = 0) =>
-    `${min} ${hour} * * ${days.join(",")}`,
+  "Her x dakikada bir": ({ min = 1 }) => `*/${min} * * * *`,
+  "Her x saatte bir": ({ hour = 1 }) => `0 */${hour} * * *`,
+  "Her Gün": ({ hour = 0, min = 0 }) => `${min} ${hour} * * *`,
+  "Her Haftasonu": ({ hour = 0, min = 0 }) => `${min} ${hour} * * 0,6`, // cumartesi-pazar
+  "Her Haftaiçi": ({ hour = 0, min = 0 }) => `${min} ${hour} * * 1-5`, // pazartesi-cuma
+  "Haftanın Belirli Günleri": ({
+    hour = 0,
+    min = 0,
+    days,
+  }: {
+    hour?: number;
+    min?: number;
+    days: number[];
+  }) => `${min} ${hour} * * ${days.join(",")}`,
 } as const;
 
 const CronPage: NextPage = () => {
@@ -193,30 +200,14 @@ const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
   const { WeekDaySelection, weekDays } = useWeeksDaySelect();
 
   const handleSubmit = () => {
-    // çöpşiş typescript ağlamasın diye iğrençlikler
-    let cron: string;
     const req = requires[page];
-    const callback = predefinedCrons[page];
-    if (req.hours && req.minutes && req.weekDays) {
-      const c = callback as (
-        weekDays: number[],
-        hours: number,
-        minutes: number
-      ) => string;
-      cron = c([...weekDays], hours, minutes);
-    } else if (req.hours && req.minutes) {
-      const c = callback as (hours: number, minutes: number) => string;
-      cron = c(hours, minutes);
-    } else if (req.hours) {
-      const c = callback as (hours: number) => string;
-      cron = c(hours);
-    } else if (req.minutes) {
-      const c = callback as (minutes: number) => string;
-      cron = c(minutes);
-    } else {
-      const c = callback as () => string;
-      cron = c();
-    }
+    const params = {
+      days: req.weekDays ? ([...weekDays] as number[]) : [],
+      hours: req.hours ? hours : undefined,
+      mins: req.minutes ? minutes : undefined,
+    };
+
+    const cron = predefinedCrons[page](params);
     submitCron(cron);
   };
 
