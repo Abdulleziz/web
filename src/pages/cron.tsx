@@ -203,9 +203,9 @@ const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
     const req = requires[page];
     const params = {
       days: req.weekDays ? ([...weekDays] as number[]) : [],
-      hours: req.hours ? hours : undefined,
-      mins: req.minutes ? minutes : undefined,
-    };
+      hour: req.hours ? hours : undefined,
+      min: req.minutes ? minutes : undefined,
+    } satisfies Parameters<(typeof predefinedCrons)[Page]>[0];
 
     const cron = predefinedCrons[page](params);
     submitCron(cron);
