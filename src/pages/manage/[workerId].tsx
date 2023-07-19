@@ -20,7 +20,7 @@ const ManageWorker: React.FC = () => {
   const parseProfileId = UserId.safeParse(router.query.workerId);
   //? eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   //! deli amk kendi kendine kızıyo. eğer data yok ise nasıl çalıştırıcam bilmiyorum ama çalışıyo şuan. :D
-  const worker = useGetProfile(parseProfileId.data).data;
+  //TODO: const worker = useGetProfile(parseProfileId.data).data;
   if (!parseProfileId.success) {
     return (
       <Layout>
@@ -43,9 +43,7 @@ const ManageWorker: React.FC = () => {
       <div className="flex-grow">
         <main className="space-y-6 p-6 sm:p-10">
           <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            <div className="flex items-center rounded-lg bg-base-100 p-8 shadow">
-              {worker?.name}
-            </div>
+            <div className="flex items-center rounded-lg bg-base-100 p-8 shadow"></div>
           </section>
         </main>
       </div>
