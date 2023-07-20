@@ -462,6 +462,9 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
 
   const routerRowRef = useRef<HTMLTableCellElement | null>(null);
   const focusedCron = data?.find((j) => j.cron === routerExp)?.id;
+  const formatName = (
+    l: NonNullable<typeof data>[number]["listeners"][number]
+  ) => (l.isAuthor ? `${l.listener.name ?? "Unknown"} 👑` : l.listener.name);
 
   // focus on the row that is in the url
   useEffect(() => {
@@ -480,20 +483,24 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
         {/* head */}
         <thead>
           <tr>
-            <th>Katılımcılar</th>
-            <th>Başlık</th>
-            <th>Cron (UTC)</th>
-            <th>Hepsi: {data.length}</th>
+            <td>Katılımcılar</td>
+            <td>Başlık</td>
+            <td>Cron (UTC)</td>
+            <td>Hepsi: {data.length}</td>
           </tr>
         </thead>
         <tbody ref={rowAnimateRef}>
           {/* row 1 */}
           {data.map((job) => {
+            const author = job.listeners.find((c) => c.isAuthor)?.listener;
             const meAsListener = job.listeners.find(
               (c) => c.listener.id === session.user.id
             );
             return (
-              <tr key={job.id}>
+              <tr
+                key={job.id}
+                className="outline outline-dotted outline-1 outline-secondary"
+              >
                 <td>
                   <div className="flex items-center space-x-3">
                     <div className="avatar">
@@ -530,7 +537,7 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                               <ul className="ml-4">
                                 {job.listeners.map((c) => (
                                   <li className="list-disc" key={c.id}>
-                                    {c.listener.name}
+                                    {formatName(c)}
                                   </li>
                                 ))}
                               </ul>
@@ -545,12 +552,10 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                         {job.listeners.length < 4 ? (
                           <div>
                             <div className=" invisible relative top-4 text-[1px] font-normal sm:visible sm:text-base">
-                              {job.listeners
-                                .map((c) => c.listener.name)
-                                .join(", ")}
+                              {job.listeners.map(formatName).join(", ")}
                             </div>
                             <label className="visible sm:btn-disabled sm:invisible">
-                              {job.listeners[0]?.listener.name}{" "}
+                              {job.listeners[0] && formatName(job.listeners[0])}{" "}
                               {job.listeners.length !== 1 && "and "}
                               {job.listeners.length - 1 !== 0 ? (
                                 <label
@@ -574,6 +579,19 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                         )}
                       </div>
                     </div>
+                    {!author && !!meAsListener && (
+                      <div className="tooltip" data-tip="Sahipliği devral">
+                        <button
+                          disabled={!!author}
+                          className={classNames(
+                            "btn-square btn-xs btn place-self-center",
+                            { ["loading"]: false }
+                          )}
+                        >
+                          👑
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td>
@@ -608,7 +626,7 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                     </span>
                   )}
                 </td>
-                <th>
+                <td>
                   {!!meAsListener ? (
                     <div className="flex flex-col gap-2">
                       <button
@@ -647,7 +665,7 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                       </button>
                     </div>
                   )}
-                </th>
+                </td>
               </tr>
             );
           })}
@@ -655,10 +673,10 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
         {/* foot */}
         <tfoot>
           <tr>
-            <th>Katılımcılar</th>
-            <th>Başlık</th>
-            <th>Cron (UTC)</th>
-            <th>Hepsi: {data.length}</th>
+            <td>Katılımcılar</td>
+            <td>Başlık</td>
+            <td>Cron (UTC)</td>
+            <td>Hepsi: {data.length}</td>
           </tr>
         </tfoot>
       </table>
