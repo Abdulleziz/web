@@ -145,7 +145,9 @@ export const rolesRouter = createTRPCRouter({
    * @internal
    */
   _discordRoleChangeProtection: internalProcedure
-    .input(Vote.extend({ role: z.string(), beforeHighest: DiscordId }))
+    .input(
+      Vote.extend({ role: z.string(), beforeHighest: DiscordId.nullable() })
+    )
     .query(async ({ ctx, input }) => {
       const discordId = ctx.session
         ? ctx.session.user.discordId // user has registered
@@ -162,6 +164,11 @@ export const rolesRouter = createTRPCRouter({
 
       // TODO: alert message deletion -> dm admins(3)
 
-      return await checkVote(discordId, input.user, parsed.data);
+      return await checkVote(
+        discordId,
+        input.user,
+        parsed.data,
+        input.beforeHighest
+      );
     }),
 });
