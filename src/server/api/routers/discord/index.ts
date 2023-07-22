@@ -1,11 +1,11 @@
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
-import { roleRouter } from "./role";
 import {
   getAbdullezizUser,
   getAbdullezizUsers,
   getGuildMemberWithRoles,
   getGuildMembersWithRoles,
 } from "~/server/discord-api/trpc";
+import { rolesRouter } from "./roles";
 
 // api router
 export const discordRouter = createTRPCRouter({
@@ -21,5 +21,5 @@ export const discordRouter = createTRPCRouter({
   getAbdullezizUsers: protectedProcedure.query(async () => {
     return await getAbdullezizUsers();
   }),
-  role: roleRouter,
+  role: rolesRouter,
 });

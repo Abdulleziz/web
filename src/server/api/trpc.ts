@@ -122,7 +122,10 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
     !ctx.session.user ||
     !ctx.session.user.inAbdullezizServer
   ) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Henüz Abdülleziz'e kayıtlı değilsin! Lütfen kayıt ol!",
+    });
   }
   return next({
     ctx: {
@@ -140,39 +143,29 @@ const UserIdWithToken = z.object({
 
 const enforceIsInternal = t.middleware(async ({ ctx, next }) => {
   const parsed = UserIdWithToken.safeParse(ctx.req.headers);
-  if (parsed.success) {
-    const user = await prisma.user.findFirst({
-      where: {
-        accounts: {
-          some: { providerAccountId: parsed.data["x-abdulleziz-user-id"] },
-        },
-      },
-    });
-    if (!user)
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "Henüz Abdülleziz'e kayıtlı değilsin! Lütfen kayıt ol!",
-      });
+  if (!parsed.success)
+    return next({ ctx: { ...ctx, internalDiscordId: null } });
 
-    return next({
-      ctx: {
+  const discordId = parsed.data["x-abdulleziz-user-id"];
+
+  const user = await prisma.user.findFirst({
+    where: { accounts: { some: { providerAccountId: discordId } } },
+  });
+
+  const context = user
+    ? {
         ...ctx,
         session: {
-          user: {
-            ...user,
-            discordId: parsed.data["x-abdulleziz-user-id"],
-            inAbdullezizServer: true,
-          },
+          user: { ...user, discordId, inAbdullezizServer: true },
           expires: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
         } satisfies Session,
-      },
-    });
-  }
+      }
+    : { ...ctx, session: null, internalDiscordId: discordId };
 
-  return next({ ctx });
+  return next({ ctx: context });
 });
 
-const internalProcedure = t.procedure.use(enforceIsInternal);
+export const internalProcedure = t.procedure.use(enforceIsInternal);
 
 /**
  * Protected (authenticated) procedure

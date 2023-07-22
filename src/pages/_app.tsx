@@ -6,6 +6,7 @@ import { Toaster } from "react-hot-toast";
 
 import { api } from "~/utils/api";
 
+import "@uploadthing/react/styles.css";
 import "~/styles/globals.css";
 import { useRegisterSW } from "~/lib/pusher/notifications";
 

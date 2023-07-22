@@ -117,7 +117,7 @@ export const AdminPanel = createPanel(
 
     return (
       <Panel>
-        <Modal>
+        {/* <Modal>
           <h3 className="text-lg font-bold">
             Çalışanları Yönet{" "}
             <span className="badge-secondary badge badge-lg">Beta</span>{" "}
@@ -163,17 +163,13 @@ export const AdminPanel = createPanel(
               </li>
             </ul>
           </div>
-        </Modal>
+        </Modal> */}
         <div className="menu flex items-center gap-4">
           <div className="menu-title">Yönetici İşlemleri</div>
           <div className="menu-item">
-            <ModalTrigger
-              className={classNames("btn-sm btn", {
-                // ["disabled"]: !manageUsers,
-                // şimdilik herkes görebilsin
-                // yardım lazım UI için 🤣
-              })}
-            />
+            <Link href="/manage">
+              <button className="btn-sm btn">Çalışanları Yönet!</button>
+            </Link>
           </div>
           <div className="menu-item">
             <Link href="/forum">
