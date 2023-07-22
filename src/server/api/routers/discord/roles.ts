@@ -3,7 +3,7 @@ import {
   createTRPCRouter,
   internalProcedure,
   protectedProcedure,
-} from "../trpc";
+} from "../../trpc";
 import { TRPCError } from "@trpc/server";
 import {
   type AbdullezizRole,
@@ -92,6 +92,7 @@ export const rolesRouter = createTRPCRouter({
   getSeverities: internalProcedure.query(() => {
     return { roles: abdullezizRoles, severities: abdullezizRoleSeverities };
   }),
+
   vote: protectedProcedure
     .input(Vote)
     .mutation(async ({ ctx, input: { user, role } }) => {

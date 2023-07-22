@@ -8,3 +8,5 @@ export const useGetAbdullezizUsers = () =>
 
 export const useGetDiscordMembers = () =>
   api.discord.getDiscordMembers.useQuery();
+
+export const useVote = () => api.discord.role.vote.useMutation();
