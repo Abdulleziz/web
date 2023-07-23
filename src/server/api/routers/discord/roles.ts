@@ -66,8 +66,8 @@ async function checkVote(
 
   if (targetRole === "CEO" || userRole?.name === "CEO")
     throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Geçersiz rol değişikliği!",
+      code: "FORBIDDEN",
+      message: "CEO rolü ile oynayamazsın!",
     });
 
   if (quit || targetSeverity < userSeverity) {
