@@ -48,8 +48,8 @@ async function checkVote(
   beforeHighest?: DiscordId | null
 ) {
   const users = await getAbdullezizUsers();
-  const voter = users.find((u) => u.id === voterId);
-  const user = users.find((u) => u.id === userId);
+  const voter = users.find((u) => u.user.id === voterId);
+  const user = users.find((u) => u.user.id === userId);
 
   if (!voter || !user)
     throw new TRPCError({ code: "NOT_FOUND", message: "Kullanıcı bulunamadı" });
