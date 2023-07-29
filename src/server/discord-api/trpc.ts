@@ -1,26 +1,34 @@
 import { TRPCError } from "@trpc/server";
-import { getGuildMember, getGuildMembers } from "./guild";
 import {
-  connectMembersWithIds,
-  fetchMembersWithRoles,
-  getAbdullezizRoles,
-  sortRoles,
-} from "./utils";
+  type Member,
+  getGuildMember,
+  getGuildMembers,
+  getGuildRoles,
+} from "./guild";
+import { connectMembersWithIds, getAbdullezizRoles } from "./utils";
 import { type AtLeastOne, abdullezizRoleSeverities } from "~/utils/zod-utils";
 import { permissionDecider } from "~/utils/abdulleziz";
 import { prisma } from "../db";
 
-// discord member + member.roles
+export async function fetchMembersWithRoles<M extends Member>(
+  members: AtLeastOne<M>
+) {
+  const roles = getAbdullezizRoles(await getGuildRoles());
+
+  const r = members.map((member) => ({
+    ...member,
+    roles: roles.filter((role) => member.roles.includes(role.id)),
+  }));
+  return r as AtLeastOne<(typeof r)[number]>;
+}
+
 export const getGuildMemberWithRoles = async (discordId: string) => {
   const member = await getGuildMember(discordId);
   if (!member) throw new TRPCError({ code: "NOT_FOUND" });
-  const [r] = await fetchMembersWithRoles([member] as AtLeastOne<
-    typeof member
-  >);
+  const [r] = await fetchMembersWithRoles([member]);
   return r;
 };
 
-// discord members + their roles (member[].roles[])
 export const getGuildMembersWithRoles = async () => {
   const members = await getGuildMembers();
   if (!members) throw new TRPCError({ code: "NOT_FOUND" });
@@ -66,7 +74,7 @@ export const getSalaryTakers = async () => {
     (u) => u.id !== undefined && u.perms.includes("maaş al")
   );
   return salaryTakers.map((u) => {
-    const [highestRole] = sortRoles(u.roles);
+    const [highestRole] = u.roles;
     if (u.id === undefined || !highestRole)
       throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
     return {

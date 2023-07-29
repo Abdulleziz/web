@@ -147,6 +147,31 @@ model ConsumeTea {
     @@index([consumerId])
 }
 
+model Vote {
+    id        String   @id @default(cuid())
+    voter     String /// discord.id
+    createdAt DateTime @default(now())
+
+    event   VoteEvent @relation(fields: [eventId], references: [id])
+    eventId String
+
+    @@unique([eventId, voter])
+    @@index([eventId])
+    @@index([voter])
+}
+
+model VoteEvent {
+    id        String    @id @default(cuid())
+    role      String
+    target    String /// discord.id
+    votes     Vote[]
+    createdAt DateTime  @default(now())
+    endedAt   DateTime?
+    jobId     String?   @unique
+
+    @@index([role])
+}
+
 model Account {
     id                String  @id @default(cuid())
     userId            String

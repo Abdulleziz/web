@@ -14,6 +14,7 @@ import { CreateSalary } from "~/server/api/routers/payments";
 import { getSalaryTakers } from "~/server/discord-api/trpc";
 import { getDomainUrl } from "~/utils/api";
 import { Client } from "@upstash/qstash/nodejs";
+import { Vote } from "~/server/api/routers/discord/roles";
 
 // const CronHeader = z.object({
 //   "upstash-message-id": z.string(),
@@ -29,7 +30,11 @@ export const CronBody = z.discriminatedUnion("type", [
     type: z.literal("salary"),
     fromId: z.string().cuid().optional(),
   }),
+  Vote.extend({
+    type: z.literal("vote"),
+  }),
 ]);
+export type CronBody = z.infer<typeof CronBody>;
 
 type DMBody = RESTPostAPICurrentUserCreateDMChannelJSONBody;
 type DMResult = RESTPostAPICurrentUserCreateDMChannelResult;
@@ -44,6 +49,24 @@ type MessageBody = RESTPostAPIChannelMessageJSONBody;
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const parsed = CronBody.parse(req.body);
+
+    if (parsed.type === "vote") {
+      const { role, user } = parsed;
+      const event = await prisma.voteEvent.findFirst({
+        where: { role, target: user },
+        orderBy: { createdAt: "desc" },
+      });
+      if (!event) {
+        res.status(404).send("Vote event not found");
+      } else {
+        await prisma.voteEvent.update({
+          where: { id: event.id },
+          data: { endedAt: new Date() },
+        });
+        res.status(200).send("OK - vote");
+      }
+      return;
+    }
 
     if (parsed.type === "salary") {
       // connect to trpc

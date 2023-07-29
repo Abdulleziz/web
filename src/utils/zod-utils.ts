@@ -9,8 +9,10 @@ export type PostId = z.infer<typeof PostId>;
 export const UserId = z.string().cuid();
 export type UserId = z.infer<typeof UserId>;
 
-export const nonEmptyString = z
-  .string().trim().min(1)
+export const DiscordId = z.string().min(1);
+export type DiscordId = z.infer<typeof DiscordId>;
+
+export const nonEmptyString = z.string().trim().min(1);
 
 export const abdullezizRoles = {
   CEO: "937780766446858273",
@@ -29,6 +31,9 @@ export const abdullezizRoles = {
 export type AbdullezizRole = keyof typeof abdullezizRoles;
 export type Severity = IntRange<2, 101>;
 // export type Severity = IntRange<1, 101>;
+
+export const PROMOTE = 1.5;
+export const DEMOTE = 2.0;
 
 export const abdullezizRoleSeverities = {
   CEO: 100,

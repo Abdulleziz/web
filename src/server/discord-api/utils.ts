@@ -1,45 +1,22 @@
 import type { PrismaClient } from "@prisma/client";
 import {
   abdullezizRoles,
+  abdullezizRoleSeverities,
   type AbdullezizRole,
-  type AtLeastOne,
 } from "~/utils/zod-utils";
-import {
-  ABDULLEZIZ_SERVER_ID,
-  getGuildRoles,
-  type Member,
-  type Roles,
-} from "./guild";
-
-export const sortRoles = <Role extends Roles[number]>(
-  roles: Role[] | undefined
-) =>
-  (roles ?? [])
-    .sort((a, b) => b.position - a.position)
-    .map((role) => ({
-      ...role,
-      allah: (roles ?? []).length === role.position + 1,
-    }));
+import { ABDULLEZIZ_SERVER_ID, type Member } from "./guild";
 
 // discord permlerinden abdülleziz-verified rolleri alıyoz
 // CEO, CTO... gibi
-export const getAbdullezizRoles = (roles: Roles) => {
-  const r = abdullezizRoles;
-  return roles
-    .filter((role) => r[role.name as AbdullezizRole] === role.id)
-    .map((role) => ({ ...role, name: role.name as AbdullezizRole }));
-};
-
-export const fetchMembersWithRoles = async <M extends Member>(
-  members: AtLeastOne<M>
+export const getAbdullezizRoles = <Role extends { id: string; name: string }>(
+  roles: Role[] | undefined
 ) => {
-  const roles = sortRoles(await getGuildRoles());
-
-  const r = members.map((member) => ({
-    ...member,
-    roles: roles.filter((role) => member.roles.includes(role.id)),
-  }));
-  return r as AtLeastOne<(typeof r)[number]>;
+  const r = abdullezizRoles;
+  const s = abdullezizRoleSeverities;
+  return (roles ?? [])
+    .filter((role) => r[role.name as AbdullezizRole] === role.id)
+    .map((role) => ({ ...role, name: role.name as AbdullezizRole }))
+    .sort((a, b) => s[b.name] - s[a.name]);
 };
 
 export const getAvatarUrl = (
