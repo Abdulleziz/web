@@ -128,7 +128,21 @@ export const rolesRouter = createTRPCRouter({
 
       // to create event, check if user is the starter of any "ongoing" event
       const ongoingAll = await ctx.prisma.voteEvent.findMany({
-        where: { endedAt: null, votes: { some: { voter: voter.user.id } } },
+        where: {
+          AND: [
+            { votes: { some: { voter: voter.user.id } } },
+            {
+              OR: [
+                { endedAt: null },
+                {
+                  endedAt: {
+                    gt: new Date(new Date().getTime() - 1000 * 60 * 60 * 5),
+                  },
+                },
+              ],
+            },
+          ],
+        },
         select: { votes: { take: 1, orderBy: { createdAt: "asc" } } },
         orderBy: { createdAt: "desc" },
       });
@@ -174,7 +188,10 @@ export const rolesRouter = createTRPCRouter({
       if (finished) {
         const type = quit ? "DELETE" : "PUT";
         const roleId = abdullezizRoles[role];
-        await modifyGuildMemberRole(target.user.id, roleId, type);
+        console.log(
+          "modify",
+          await modifyGuildMemberRole(target.user.id, roleId, type)
+        );
       }
 
       if (!ongoing) {

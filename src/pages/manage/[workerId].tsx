@@ -194,7 +194,12 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
                     )}
                   >
                     <h1 className="text-2xl">
-                      Rol Etkinliği {index + 1}: istenen rol: {voteEvent.role}(
+                      Rol Etkinliği {index + 1}: istenen rol: {voteEvent.role}
+                      Oy verenler:{" "}
+                      {voteEvent.votes
+                        .map((v) => v.voter.user.username)
+                        .join(", ")}
+                      (
                       {quit
                         ? userSelf
                           ? "Ayrılmak için oy ver"
@@ -202,10 +207,11 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
                         : promote
                         ? "Yükseltmek için oy ver"
                         : "Düşürmek için oy ver"}
-                      )
+                      ){!!voteEvent.endedAt && " - Bitti"}
                     </h1>
                     <button
                       className="btn-primary btn"
+                      disabled={!!voteEvent.endedAt}
                       onClick={() =>
                         vote.mutate({
                           role: voteEvent.role,

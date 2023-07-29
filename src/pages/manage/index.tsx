@@ -113,7 +113,7 @@ export const Members: React.FC = () => {
               {events.data?.map((event) => (
                 <li key={event.id}>
                   Rol: {event.role} Oylar:{" "}
-                  {event.votes.map((v) => v.voter.nick).join(", ")}
+                  {event.votes.map((v) => v.voter.user.username).join(", ")}
                   Kullanıcı: {event.target.nick}
                 </li>
               ))}
