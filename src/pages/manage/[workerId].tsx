@@ -21,23 +21,38 @@ import { getAvatarUrl } from "~/server/discord-api/utils";
 import { api } from "~/utils/api";
 
 const Worker: NextPage = () => {
+  const router = useRouter();
+  const parseProfileId = DiscordId.safeParse(router.query.workerId);
+  if (!parseProfileId.success)
+    return (
+      <Layout>
+        <div className="flex h-screen flex-col items-center justify-center gap-4">
+          <p>Gerçek bir Discord id gibi durmuyor!</p>
+          <div
+            className="btn-primary btn"
+            onClick={() => void router.push("/manage")}
+          >
+            Geri Dön
+          </div>
+        </div>
+      </Layout>
+    );
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center pb-32">
       <div className="flex w-full flex-1 flex-col">
-        <ManageWorker />
+        <ManageWorker profileId={parseProfileId.data} />
       </div>
     </div>
   );
 };
 
-const ManageWorker: React.FC = () => {
-  const router = useRouter();
-  const parseProfileId = DiscordId.parse(router.query.workerId);
+const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
   const self = useGetAbdullezizUser();
   const vote = useVote();
   const { data: worker, isLoading } = api.discord.getAbdullezizUsers.useQuery(
     undefined,
-    { select: (users) => users.find((u) => u.user.id === parseProfileId) }
+    { select: (users) => users.find((u) => u.user.id === profileId) }
   );
   const members = useGetAbdullezizUsers().data ?? [];
 
