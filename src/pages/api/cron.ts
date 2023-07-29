@@ -13,6 +13,7 @@ import { REST } from "@discordjs/rest";
 import { CreateSalary } from "~/server/api/routers/payments";
 import { getSalaryTakers } from "~/server/discord-api/trpc";
 import { getDomainUrl } from "~/utils/api";
+import { Client } from "@upstash/qstash/nodejs";
 
 // const CronHeader = z.object({
 //   "upstash-message-id": z.string(),
@@ -78,7 +79,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     console.log({ job });
 
     if (!job) {
-      res.status(404).send("Job not found");
+      const c = new Client({ token: env.QSTASH_TOKEN });
+      const schedules = await c.schedules.list();
+      const id = schedules.find((s) => s.cron === cron)?.scheduleId;
+      if (id) {
+        await c.schedules.delete({ id });
+        res.status(410).send("Job not found - cron.deleted");
+      } else {
+        res.status(404).send("Job not found");
+      }
       return;
     }
 
