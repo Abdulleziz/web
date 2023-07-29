@@ -94,6 +94,7 @@ function checkVote<Voter extends MiniUser, User extends MiniUser>(
 
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 const THREE_DAYS = 1000 * 60 * 60 * 24 * 3;
+const FIVE_MINUTES = 1000 * 60 * 5;
 
 export const rolesRouter = createTRPCRouter({
   getSeverities: internalProcedure.query(() => {
@@ -119,7 +120,7 @@ export const rolesRouter = createTRPCRouter({
           message: "Kullanıcı bulunamadı",
         });
 
-      const quit = voter.roles[0]?.name === role;
+      const quit = target.roles[0]?.name === role;
       if (voter.user.id === user && !quit)
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -134,11 +135,7 @@ export const rolesRouter = createTRPCRouter({
             {
               OR: [
                 { endedAt: null },
-                {
-                  endedAt: {
-                    gt: new Date(new Date().getTime() - 1000 * 60 * 60 * 5),
-                  },
-                },
+                { endedAt: { gt: new Date(Date.now() - FIVE_MINUTES) } },
               ],
             },
           ],
@@ -186,12 +183,11 @@ export const rolesRouter = createTRPCRouter({
       const finished = collected >= totalRequired;
 
       if (finished) {
-        const type = quit ? "DELETE" : "PUT";
+        const before = target.roles[0]?.id;
+        if (before)
+          await modifyGuildMemberRole(target.user.id, before, "DELETE");
         const roleId = abdullezizRoles[role];
-        console.log(
-          "modify",
-          await modifyGuildMemberRole(target.user.id, roleId, type)
-        );
+        if (!quit) await modifyGuildMemberRole(target.user.id, roleId, "PUT");
       }
 
       if (!ongoing) {

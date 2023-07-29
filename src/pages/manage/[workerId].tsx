@@ -125,10 +125,12 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
                   // prettier-ignore
                   const selfSeverity = selfRole ? abdullezizRoleSeverities[selfRole]: 1;
                   const promote = severity >= userSeverity && !quit;
+                  const required = promote
+                    ? PROMOTE * severity
+                    : DEMOTE * userSeverity;
+
                   const instant =
-                    (userSelf && quit) || promote
-                      ? PROMOTE * severity <= selfSeverity
-                      : DEMOTE * userSeverity <= selfSeverity;
+                    (userSelf && quit) || required <= selfSeverity;
                   return (
                     <div
                       className="flex items-center justify-center gap-4"
@@ -153,14 +155,14 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
                             ? "Ayrıl"
                             : instant
                             ? "Kov"
-                            : "Kovma oylaması başlat"
+                            : `Kovma oylaması başlat n: ${required}`
                           : promote
                           ? instant
                             ? "Yükselt"
-                            : "Yükseltme oylaması başlat"
+                            : `Yükseltme oylaması başlat n: ${required}`
                           : instant
                           ? "Düşür"
-                          : "Düşürme oylaması başlat"}
+                          : `Düşürme oylaması başlat n: ${required}`}
                       </button>
                     </div>
                   );
@@ -200,14 +202,16 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
                         .map((v) => v.voter.user.username)
                         .join(", ")}
                       (
-                      {quit
+                      {!!voteEvent.endedAt
+                        ? "Oylama Bitti"
+                        : quit
                         ? userSelf
                           ? "Ayrılmak için oy ver"
                           : "Kovmak için oy ver"
                         : promote
                         ? "Yükseltmek için oy ver"
                         : "Düşürmek için oy ver"}
-                      ){!!voteEvent.endedAt && " - Bitti"}
+                      )
                     </h1>
                     <button
                       className="btn-primary btn"

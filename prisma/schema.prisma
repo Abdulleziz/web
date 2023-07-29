@@ -152,7 +152,7 @@ model Vote {
     voter     String /// discord.id
     createdAt DateTime @default(now())
 
-    event   VoteEvent @relation(fields: [eventId], references: [id])
+    event   VoteEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
     eventId String
 
     @@unique([eventId, voter])
