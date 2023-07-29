@@ -167,9 +167,30 @@ model VoteEvent {
     votes     Vote[]
     createdAt DateTime  @default(now())
     endedAt   DateTime?
-    jobId     String?   @unique
 
     @@index([role])
+}
+
+model VoteCEO {
+    id        String   @id @default(cuid())
+    voter     String /// discord.id
+    target    String /// discord.id
+    createdAt DateTime @default(now())
+
+    event   VoteEventCEO @relation(fields: [eventId], references: [id], onDelete: Cascade)
+    eventId String
+
+    @@unique([eventId, voter])
+    @@index([eventId])
+    @@index([voter])
+}
+
+model VoteEventCEO {
+    id        String    @id @default(cuid())
+    votes     VoteCEO[]
+    createdAt DateTime  @default(now())
+    endedAt   DateTime?
+    jobId     String?   @unique
 }
 
 model Account {

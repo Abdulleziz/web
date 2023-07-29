@@ -236,8 +236,7 @@ export const rolesRouter = createTRPCRouter({
           message: "Kullanıcı bulunamadı",
         });
 
-      const latest = await ctx.prisma.voteEvent.findFirst({
-        where: { role: "CEO" },
+      const latest = await ctx.prisma.voteEventCEO.findFirst({
         include: { votes: { orderBy: { createdAt: "asc" } } },
         orderBy: { createdAt: "desc" },
       });
@@ -297,20 +296,20 @@ export const rolesRouter = createTRPCRouter({
         } else {
           jobId = Math.random().toString(36).substring(2);
         }
-        await ctx.prisma.voteEvent.create({
+        await ctx.prisma.voteEventCEO.create({
           data: {
             jobId,
-            role: "CEO",
-            target: user,
-            votes: { create: { voter: voter.user.id } },
+            votes: { create: { voter: voter.user.id, target: user } },
           },
         });
       } else if (latest) {
-        await ctx.prisma.voteEvent.update({
+        await ctx.prisma.voteEventCEO.update({
           where: { id: latest.id },
           data: {
             endedAt: finished ? new Date() : undefined,
-            votes: isVoted ? undefined : { create: { voter: voter.user.id } },
+            votes: isVoted
+              ? undefined
+              : { create: { voter: voter.user.id, target: user } },
           },
         });
         if (finished) {

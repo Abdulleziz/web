@@ -52,17 +52,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     if (parsed.type === "vote") {
       const { role, user } = parsed;
-      const event = await prisma.voteEvent.findFirst({
-        where: { role, target: user },
-        orderBy: { createdAt: "desc" },
-      });
+      const event = await (role === "CEO"
+        ? prisma.voteEventCEO.findFirst({
+            orderBy: { createdAt: "desc" },
+          })
+        : prisma.voteEvent.findFirst({
+            where: { role, target: user },
+            orderBy: { createdAt: "desc" },
+          }));
       if (!event) {
         res.status(404).send("Vote event not found");
       } else {
-        await prisma.voteEvent.update({
-          where: { id: event.id },
-          data: { endedAt: new Date() },
-        });
+        const data = { where: { id: event.id }, data: { endedAt: new Date() } };
+        role === "CEO"
+          ? await prisma.voteEventCEO.update(data)
+          : await prisma.voteEvent.update(data);
         res.status(200).send("OK - vote");
       }
       return;
