@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import classNames from "classnames";
 import {
   useCreateOrJoinCron,
+  useCronTakeOwnership,
   useGetAllCrons,
   useLeaveCron,
   useToggleCron,
@@ -458,6 +459,7 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
   const join = useCreateOrJoinCron();
   const leave = useLeaveCron();
   const toggle = useToggleCron();
+  const takeOwnership = useCronTakeOwnership();
   const [rowAnimateRef] = useAutoAnimate();
 
   const routerRowRef = useRef<HTMLTableCellElement | null>(null);
@@ -582,10 +584,11 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                     {!author && !!meAsListener && (
                       <div className="tooltip" data-tip="Sahipliği devral">
                         <button
-                          disabled={!!author}
+                          disabled={!!author || !meAsListener}
+                          onClick={() => takeOwnership.mutate(job.cron)}
                           className={classNames(
                             "btn-square btn-xs btn place-self-center",
-                            { ["loading"]: false }
+                            { ["loading"]: takeOwnership.isLoading }
                           )}
                         >
                           👑

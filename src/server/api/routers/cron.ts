@@ -124,6 +124,41 @@ export const cronRouter = createTRPCRouter({
         await announce(channelId);
       }
     }),
+  getOwnership: protectedProcedure
+    .input(CronInput)
+    .mutation(async ({ ctx, input: cron }) => {
+      const dbCron = await ctx.prisma.cronJob.findUnique({
+        where: { cron },
+        select: {
+          id: true,
+          listeners: { select: { listenerId: true, isAuthor: true } },
+        },
+      });
+
+      if (!dbCron) throw new TRPCError({ code: "NOT_FOUND" });
+
+      if (!dbCron.listeners.find((l) => l.listenerId === ctx.session.user.id))
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Bu hatırlatıcıyı dinlemiyorsun",
+        });
+
+      if (dbCron.listeners.find((l) => l.isAuthor))
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Bu hatırlatıcının zaten bir sahibi var",
+        });
+
+      await ctx.prisma.cronListener.update({
+        where: {
+          listenerId_cronJobId: {
+            cronJobId: dbCron.id,
+            listenerId: ctx.session.user.id,
+          },
+        },
+        data: { isAuthor: true },
+      });
+    }),
   leave: protectedProcedure
     .input(CronInput)
     .mutation(async ({ ctx, input: cron }) => {

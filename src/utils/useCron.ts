@@ -19,6 +19,23 @@ export const useCreateOrJoinCron = () => {
   });
 };
 
+export const useCronTakeOwnership = () => {
+  const utils = api.useContext();
+  return api.cron.getOwnership.useMutation({
+    onSuccess: () => {
+      toast.success("Cron artık senindir dost!", { id: "cron.getOwnership" });
+      void utils.cron.getAll.invalidate();
+    },
+    onMutate: () =>
+      toast.loading("Cron sahipleniliyor... 😁", { id: "cron.getOwnership" }),
+    onError: (error) => {
+      toast.error(error.data?.zodError || error.message, {
+        id: "cron.getOwnership",
+      });
+    },
+  });
+};
+
 export const useToggleCron = () => {
   const utils = api.useContext();
   return api.cron.toggleEnabled.useMutation({
