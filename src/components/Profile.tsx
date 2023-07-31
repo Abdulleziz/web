@@ -183,6 +183,21 @@ export const Profile = ({ profileId }: ProfileProps) => {
             </div>
           </div>
         </div>
+        <div className="p-2">
+          <div className="collapse bg-base-200">
+            <input type="checkbox" />
+            <div className="collapse-title text-xl font-medium">
+              Yetkileri göster
+            </div>
+            <div className="collapse-content">
+              <ul className="list-inside list-disc">
+                {user.member.perms.map((perm) => (
+                  <li key={perm}>{perm}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
