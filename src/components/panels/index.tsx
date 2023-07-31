@@ -17,6 +17,7 @@ import { type CSSProperties, useEffect, useState, useCallback } from "react";
 import {
   useGetAbdullezizUser,
   useGetAbdullezizUsers,
+  useGetCEOVoteEvent,
   useGetDiscordMembers,
 } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
@@ -24,7 +25,6 @@ import classNames from "classnames";
 import { toast } from "react-hot-toast";
 import { useBuyEntities, useNextSalaryDate } from "~/utils/usePayments";
 import { createPanel } from "./utils";
-import { createModal } from "~/utils/modal";
 import { useConsumeTea, useGetRemainingTea } from "~/utils/useConsumable";
 
 ChartJS.register(
@@ -93,101 +93,40 @@ export const MemberPanel = createPanel(undefined, () => {
   );
 });
 
-export const AdminPanel = createPanel(
-  ["çalışanları yönet", "forumu yönet", "forum thread pinle"],
-  () => {
-    const { data, isLoading } = useGetAbdullezizUser();
+export const AdminPanel = createPanel(undefined, () => {
+  const { data, isLoading } = useGetAbdullezizUser();
 
-    if (isLoading) return <button className="loading btn">Yükleniyor</button>;
-    if (!data) return <button className="btn">Error</button>;
-    // if (!AdminPanel.visibleBy.every((perm) => data.perms.includes(perm)))
-    //   return null;
+  if (isLoading) return <button className="loading btn">Yükleniyor</button>;
+  if (!data) return <button className="btn">Error</button>;
 
-    const manageUsers = data.perms.includes("çalışanları yönet");
-    const manageForum = data.perms.includes("forumu yönet");
-    const manageForumPins = data.perms.includes("forum thread pinle");
+  const manageForum = data.perms.includes("forumu yönet");
+  const manageForumPins = data.perms.includes("forum thread pinle");
 
-    const { Modal, ModalTrigger } = createModal(
-      "manage-members",
-      "Çalışanları yönet"
-    );
-
-    const o7 =
-      "https://github.com/Abdulleziz/web/tree/main/src/components/panels/index.tsx#119";
-
-    return (
-      <Panel>
-        {/* <Modal>
-          <h3 className="text-lg font-bold">
-            Çalışanları Yönet{" "}
-            <span className="badge-secondary badge badge-lg">Beta</span>{" "}
-            <span className="badge badge-lg">Work In Progress</span>
-          </h3>
-          <div className="py-4">
-            <div className="font-bold text-primary">
-              Bu paneli tamamlamak için yardım lazım. <br />
-              Fikirleriniz çok önemli. <br />
-              <a href={o7} className="link text-secondary">
-                Github: src/components/panels/index.tsx
-              </a>
-            </div>
-            <ul className="gap-2 p-4">
-              <p className="p-2 text-xl font-bold">Yapılacaklar...</p>
-              <li className="list-disc">
-                Kullanıcıları yönet (Rolleri vb...) <br />
-                <span className={manageUsers ? "text-success" : "text-error"}>
-                  (you are {!manageUsers && "not "}
-                  eligible)
-                </span>
-                <br />
-                #1: Kovmak için birden fazla kurul üyesi oy vermeli <br />
-                #2: Intern{"'"}lere Pozisyon vermek <br />
-                #3: Rol düşürmek/yükseltmek <br />
-                #4: Hayko Cepkin{"'"}e laf etmek ban sebebi <br />
-              </li>
-              <li className="list-disc">
-                Manuel/Ekstra Maaş dağıt (kullanım alanları: özel günlerde){" "}
-                <br />
-                <span className={manageUsers ? "text-success" : "text-error"}>
-                  (you are {!manageUsers && "not "}
-                  eligible)
-                </span>
-              </li>
-              <li className="list-disc">
-                Daha aklıma gelmedi, fikirleriniz varsa{" "}
-                <a href={o7} className="link-primary link">
-                  buraya
-                </a>{" "}
-                ekleyin <br />
-                <span className="text-success">(you are eligible 🤣)</span>
-              </li>
-            </ul>
-          </div>
-        </Modal> */}
-        <div className="menu flex items-center gap-4">
-          <div className="menu-title">Yönetici İşlemleri</div>
-          <div className="menu-item">
-            <Link href="/manage">
-              <button className="btn-sm btn">Çalışanları Yönet!</button>
-            </Link>
-          </div>
-          <div className="menu-item">
-            <Link href="/forum">
-              <button
-                className="btn-sm btn"
-                disabled={!manageForum && !manageForumPins}
-              >
-                {manageForumPins && !manageForum
-                  ? "Thread Pinle"
-                  : "Forumu yönet"}
-              </button>
-            </Link>
-          </div>
+  return (
+    <Panel>
+      <div className="menu flex items-center gap-4">
+        <div className="menu-title">Yönetici İşlemleri</div>
+        <div className="menu-item">
+          <Link href="/manage">
+            <button className="btn-sm btn">Çalışanları Yönet!</button>
+          </Link>
         </div>
-      </Panel>
-    );
-  }
-);
+        <div className="menu-item">
+          <Link href="/forum">
+            <button
+              className="btn-sm btn"
+              disabled={!manageForum && !manageForumPins}
+            >
+              {manageForumPins && !manageForum
+                ? "Thread Pinle"
+                : "Forumu yönet"}
+            </button>
+          </Link>
+        </div>
+      </div>
+    </Panel>
+  );
+});
 
 export const DriveablePabel = createPanel(undefined, () => {
   const { data, isLoading } = useGetAbdullezizUser();
@@ -364,24 +303,25 @@ export const SalaryCounter = () => {
 
 export const VoteChart = createPanel(undefined, () => {
   const getDcMembers = useGetDiscordMembers();
+  const vote = useGetCEOVoteEvent();
 
   const members = (getDcMembers.data ?? []).filter((m) => !m.user.bot); // filter out bots
 
   const ChartOptions: ChartOptions<"radar"> = {
     scales: {
-      r: {
-        ticks: {
-          display: false,
-        },
-      },
+      r: { ticks: { display: false, count: 6 }, grid: { color: "white" } },
     },
   };
+
   const chartData: ChartData<"radar"> = {
     labels: members.map((m) => m.nick || m.user.username),
     datasets: [
       {
         label: "Oy sayısı",
-        data: members.map(() => Math.floor(Math.random() * 10)),
+        data: members.map(
+          (m) =>
+            vote.data?.votes.filter((v) => v.target === m.user.id).length ?? 0
+        ),
         backgroundColor: "rgba(255, 99, 132, 0.2)",
         borderColor: "rgba(255, 99, 132, 1)",
         borderWidth: 2,
@@ -390,7 +330,7 @@ export const VoteChart = createPanel(undefined, () => {
   };
 
   return (
-    <div className="flex items-center justify-center rounded-md border-2 border-dashed border-gray-200 bg-base-300 px-4 py-16 text-3xl font-semibold text-gray-400">
+    <div className="flex items-center justify-center rounded-md border-2 border-dashed border-gray-200 bg-base-300 px-4 py-4 text-3xl font-semibold text-gray-400">
       <Radar data={chartData} options={ChartOptions} />
     </div>
   );

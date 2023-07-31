@@ -12,6 +12,7 @@ import {
 import { useGetAbdullezizUser, useGetDiscordMembers } from "~/utils/useDiscord";
 import { useSession } from "next-auth/react";
 import { LoadingDashboard } from "./LoadingDashboard";
+import { type AbdullezizPerm } from "~/utils/abdulleziz";
 
 export const Dashboard: React.FC = () => {
   const { data: session } = useSession();
@@ -31,9 +32,13 @@ export const Dashboard: React.FC = () => {
         ].filter(
           // if any of the visibleBy permissions are not in the user's perms,
           // don't show the panel
-          (p) =>
-            p.visibleBy?.some((perm) => data.perms.includes(perm)) ||
-            p.visibleBy === undefined
+          (p) => {
+            const visibleBy = p.visibleBy as AbdullezizPerm[] | undefined;
+            return (
+              visibleBy === undefined ||
+              visibleBy.some((perm) => data.perms.includes(perm))
+            );
+          }
         )
       : [GlobalPanel];
 

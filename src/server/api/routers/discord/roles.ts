@@ -107,6 +107,12 @@ export const rolesRouter = createTRPCRouter({
       orderBy: { createdAt: "desc" },
     });
   }),
+  getCEOVotes: protectedProcedure.query(async ({ ctx }) => {
+    return await ctx.prisma.voteEventCEO.findFirst({
+      include: { votes: { orderBy: { createdAt: "asc" } } },
+      orderBy: { createdAt: "desc" },
+    });
+  }),
   vote: protectedProcedure
     .input(Vote)
     .mutation(async ({ ctx, input: { user, role } }) => {

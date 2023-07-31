@@ -12,6 +12,8 @@ export const useGetDiscordMembers = () =>
 
 export const useGetVoteEvents = () => api.discord.role.getVotes.useQuery();
 
+export const useGetCEOVoteEvent = () => api.discord.role.getCEOVotes.useQuery();
+
 export const useVote = () => {
   const id = "discord.role.vote";
   const utils = api.useContext();
