@@ -1,3 +1,4 @@
+import { toast } from "react-hot-toast";
 import { api } from "./api";
 
 // kaç paran var
@@ -6,6 +7,22 @@ export const useGetWallet = () =>
     staleTime: 1000 * 60 * 60, // 1 dk
   });
 // { balance: number }
+
+export const useSendMoney = () => {
+  const id = "payments.sendMoney";
+  const utils = api.useContext();
+  return api.payments.sendMoney.useMutation({
+    // refresh wallet
+    onMutate: () => toast.loading("Para gönderiliyor...", { id }),
+    onSuccess: () => {
+      toast.success("Para gönderildi!", { id });
+      void utils.payments.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.data?.zodError || error.message, { id });
+    },
+  });
+};
 
 // tüm geçmiş! (herkesin)
 export const usePaymentsHistory = () => api.payments.getAll.useQuery();

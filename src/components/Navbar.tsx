@@ -1,7 +1,7 @@
 import { signOut, signIn, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useGetWallet } from "~/utils/usePayments";
+import { useGetWallet, useSendMoney } from "~/utils/usePayments";
 import { type Theme, useThemeStore, Themes } from "./Layout";
 import { createModal } from "~/utils/modal";
 import { useHydrated } from "~/pages/_app";
@@ -11,21 +11,42 @@ import {
   useGetUserNotification,
   useSetUserNotification,
 } from "~/utils/useForum";
+import { useGetAbdullezizUsers } from "~/utils/useDiscord";
+import classNames from "classnames";
 
 export const Navbar: React.FC = () => {
   const { data: session } = useSession();
   const wallet = useGetWallet();
+  const sendMoney = useSendMoney();
   const hydrated = useHydrated();
   const forumNotif = useGetUserNotification();
   const setForumNotif = useSetUserNotification();
+  const users = useGetAbdullezizUsers();
   const balance = wallet.data?.balance ?? 0;
   const { theme, setTheme } = useThemeStore();
-  const [modalOpen, setModalOpen] = useState(false); // disable (outside-click +or+ on re-render) closing
 
   const [ref] = useAutoAnimate();
 
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false); // disable (outside-click +or+ on re-render) closing
   const { Modal: SettingsModal, ModalTrigger: SettingsModalTrigger } =
-    createModal("user-settings", "settings", modalOpen, setModalOpen);
+    createModal(
+      "user-settings",
+      "Ayarlar",
+      settingsModalOpen,
+      setSettingsModalOpen
+    );
+
+  // TODO: since our modal is flashing every render (so annoying), we should use `headlessui`
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [moneyAmount, setMoneyAmount] = useState(0);
+  const [paymentTarget, setPaymentTarget] = useState<string | null>(null);
+  const { Modal: PaymentModal, ModalTrigger: PaymentModalTrigger } =
+    createModal(
+      "send-money",
+      "Para gönder",
+      paymentModalOpen,
+      setPaymentModalOpen
+    );
 
   return (
     <div className="navbar sticky top-0 z-50 bg-base-300" ref={ref}>
@@ -81,14 +102,21 @@ export const Navbar: React.FC = () => {
                   className="justify-between"
                   href={`/profiles/${session.user.id}`}
                 >
-                  Profile
+                  Profil
                 </Link>
               </li>
               <li>
-                <SettingsModalTrigger onClick={() => setModalOpen(true)} />
+                <PaymentModalTrigger
+                  onClick={() => setPaymentModalOpen(true)}
+                />
               </li>
               <li>
-                <button onClick={() => void signOut()}>Logout</button>
+                <SettingsModalTrigger
+                  onClick={() => setSettingsModalOpen(true)}
+                />
+              </li>
+              <li>
+                <button onClick={() => void signOut()}>Çıkış yap</button>
               </li>
             </ul>
           </div>
@@ -101,6 +129,70 @@ export const Navbar: React.FC = () => {
           </button>
         )}
       </div>
+      <PaymentModal>
+        <p className="text-bold text-xl text-primary">Para gönder</p>
+        <div className="modal-body p-4">
+          <p className="text-accent">Miktar</p>
+          <div className="form-control flex-row items-center justify-center">
+            <input
+              className="input w-full max-w-xs"
+              type="number"
+              placeholder="0"
+              inputMode="numeric"
+              value={moneyAmount}
+              onChange={(e) => setMoneyAmount(e.target.valueAsNumber)}
+            />
+            <button
+              className="btn-secondary btn-xs btn"
+              onClick={() => setMoneyAmount(balance)}
+            >
+              Hepsi
+            </button>
+          </div>
+          <p className="text-accent">Alıcı</p>
+          <select
+            className="select max-w-xs"
+            onChange={(e) =>
+              setPaymentTarget(
+                users.data?.find((u) => u.user.username === e.target.value)
+                  ?.id || null
+              )
+            }
+          >
+            <option className="hidden">
+              {users.data?.find((u) => u.id === paymentTarget)?.user.username ||
+                "--Kullanıcı seçin--"}
+            </option>
+            {users.data
+              ?.filter((u) => u.id)
+              .map((u) => (
+                <option
+                  className="disabled:text-primary"
+                  key={u.id}
+                  defaultValue={u.id}
+                  disabled={!u.id}
+                >
+                  {u.user.username}
+                </option>
+              ))}
+          </select>
+          <button
+            className={classNames("btn-primary btn mt-4 w-full", {
+              ["loading"]: sendMoney.isLoading,
+            })}
+            disabled={!paymentTarget || moneyAmount <= 0}
+            onClick={() => {
+              if (paymentTarget)
+                sendMoney.mutate({
+                  amount: moneyAmount,
+                  toId: paymentTarget,
+                });
+            }}
+          >
+            Gönder
+          </button>
+        </div>
+      </PaymentModal>
       {hydrated && (
         <SettingsModal>
           <p className="text-bold text-xl text-primary">Ayarlar</p>

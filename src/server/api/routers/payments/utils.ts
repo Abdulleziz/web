@@ -82,7 +82,7 @@ export const calculateWallet = async (
   for (const payment of payments) {
     switch (payment.type) {
       case "salary":
-        wallet.balance += payment.amount;
+        if (payment.toId === userId) wallet.balance += payment.amount;
         break;
 
       case "invoice":

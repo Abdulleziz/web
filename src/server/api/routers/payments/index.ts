@@ -17,6 +17,7 @@ import {
   poolPayments,
 } from "./utils";
 import { getDomainUrl } from "~/utils/api";
+import { UserId } from "~/utils/zod-utils";
 
 // validators
 export const CreateEntities = z
@@ -63,6 +64,33 @@ export const paymentsRouter = createTRPCRouter({
 
     return poolPayments(payments);
   }),
+  sendMoney: protectedProcedure
+    .input(z.object({ toId: UserId, amount: z.number().positive().int() }))
+    .mutation(async ({ ctx, input: { toId, amount } }) => {
+      const target = await ctx.prisma.user.findUnique({ where: { id: toId } });
+      if (!target)
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Kullanıcı bulunamadı",
+        });
+
+      return await ctx.prisma.$transaction(async (prisma) => {
+        const { balance } = await calculateWallet(ctx.session.user.id);
+        if (balance < amount)
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: "Yetersiz bakiye",
+          });
+        return await prisma.payment.create({
+          data: {
+            type: "transfer",
+            fromId: ctx.session.user.id,
+            toId,
+            amount,
+          },
+        });
+      });
+    }),
   buyEntities: protectedProcedure
     .input(CreateEntities)
     .mutation(async ({ ctx, input }) => {
