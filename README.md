@@ -9,14 +9,16 @@
 - *i*n-t*i.h?a_r ½et=
 - çay satın
 - çaycıya kız
-- zam iste
+- bonus iste
 - araba sür
 - stajları yönet
 - forum thread
 - arabaları yönet
 - çalışanları yönet
 - forumu yönet
+
 <!-- ***[yetki değerleri](/src/utils/zod-utils.ts)*** -->
+
 ### [yetki değerleri](/src/utils/zod-utils.ts)
 
 ## Roller

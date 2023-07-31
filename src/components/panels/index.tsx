@@ -65,7 +65,7 @@ export const MemberPanel = createPanel(undefined, () => {
   if (data.roles.length === 0) return null;
 
   const canVote = data.perms.includes("oylamaya katıl");
-  const canRequestRaise = data.perms.includes("zam iste");
+  const canRequestBonus = data.perms.includes("bonus iste");
   const canTakeSalary = data.perms.includes("maaş al");
 
   return (
@@ -78,8 +78,9 @@ export const MemberPanel = createPanel(undefined, () => {
           </button>
         </div>
         <div className="menu-item">
-          <button className="btn-sm btn" disabled={!canRequestRaise}>
-            Zam iste
+          <button className="btn-sm btn" disabled={!canRequestBonus}>
+            Bonus iste
+            {/* CEO uyarıp fazladan maaş iste */}
           </button>
         </div>
         {canTakeSalary && (

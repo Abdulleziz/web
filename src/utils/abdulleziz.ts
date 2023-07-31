@@ -30,7 +30,7 @@ export const requiredSeverity = [
   { perm: "*i*n-t*i.h?a_r ½e(t=", roles: ["Servant"] },
   { perm: "çay satın al", min: 20 }, // kendi maaşından alsın (80 >= şirketten ödeyebilr)
   { perm: "çaycıya kız", min: 21 }, // günde 5 kişi kızarsa kovulur
-  { perm: "zam iste", min: 31, max: 100, exclude: ["CEO"] }, // CEO ZAM olmalı mı?
+  { perm: "bonus iste", min: 31, max: 100, exclude: ["CEO"] }, // CEO'dan fazladan maaş iste
   { perm: "araba sür", roles: ["Driver"] }, // minigame?
   { perm: "stajları yönet", min: 80, include: ["HR"] },
   { perm: "forum thread pinle", min: 80, include: ["Advertisement Lead"] },
