@@ -202,7 +202,7 @@ export const cronRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input: { cron, title, isGlobal } }) => {
-      const LIMIT = 10;
+      const LIMIT = 20;
       const count = await ctx.prisma.cronListener.count({
         where: { listenerId: ctx.session.user.id },
       });

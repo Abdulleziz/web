@@ -125,8 +125,10 @@ function checkVoteCEO(
     voteCount.set(v.target, count + 1);
   });
 
+  const percentage = env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.66 : 0.22;
+
   const finisherId = [...voteCount.entries()].find(
-    ([, count]) => count / usersLength >= 0.66
+    ([, count]) => count / usersLength >= percentage
   )?.[0];
 
   return { finisherId, isThreeDaysPast, isVoted };
