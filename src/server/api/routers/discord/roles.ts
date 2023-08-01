@@ -25,6 +25,7 @@ import { Client } from "@upstash/qstash/nodejs";
 import { env } from "~/env.mjs";
 import { getDomainUrl } from "~/utils/api";
 import { type CronBody } from "~/pages/api/cron";
+import { type Prisma } from "@prisma/client";
 
 const AbdullezizRole = z
   .string()
@@ -92,9 +93,56 @@ function checkVote<Voter extends MiniUser, User extends MiniUser>(
   };
 }
 
+function checkVoteCEO(
+  event: Prisma.VoteEventCEOGetPayload<{ include: { votes: true } }>,
+  voter: DiscordId | null,
+  target: DiscordId | null,
+  usersLength: number
+) {
+  const isThreeDaysPast =
+    new Date().getTime() - event.createdAt.getTime() >
+    THREE_DAYS_OR_THREE_HOURS;
+
+  if (isThreeDaysPast && !event.endedAt)
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message:
+        "Bir hata oluştu, lütfen website adminlerine bildir (CEOVOTE-SCHEDULE-CORRECTION)",
+    });
+
+  const isVoted = event?.votes.some((v) => v.voter === voter);
+
+  const voters = (event?.votes ?? []).map((v) => ({
+    voter: v.voter,
+    target: v.target,
+  }));
+
+  if (!isVoted && voter && target) voters.push({ voter, target });
+
+  const voteCount = new Map<DiscordId, number>();
+  voters.forEach((v) => {
+    const count = voteCount.get(v.target) ?? 0;
+    voteCount.set(v.target, count + 1);
+  });
+
+  const finisherId = [...voteCount.entries()].find(
+    ([, count]) => count / usersLength >= 0.66
+  )?.[0];
+
+  return { finisherId, isThreeDaysPast, isVoted };
+}
+
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 const THREE_DAYS = 1000 * 60 * 60 * 24 * 3;
+const ONE_DAY = 1000 * 60 * 60 * 24;
+const THREE_HOURS = 1000 * 60 * 60 * 3;
 const FIVE_MINUTES = 1000 * 60 * 5;
+
+const THREE_DAYS_OR_THREE_HOURS =
+  env.NEXT_PUBLIC_VERCEL_ENV === "production" ? THREE_DAYS : THREE_HOURS;
+
+const ONE_WEEK_OR_ONE_DAY =
+  env.NEXT_PUBLIC_VERCEL_ENV === "production" ? ONE_WEEK : ONE_DAY;
 
 export const rolesRouter = createTRPCRouter({
   getSeverities: internalProcedure.query(() => {
@@ -112,7 +160,7 @@ export const rolesRouter = createTRPCRouter({
       where: {
         OR: [
           { endedAt: null },
-          { endedAt: { gt: new Date(Date.now() - ONE_WEEK) } },
+          { endedAt: { gt: new Date(Date.now() - ONE_WEEK_OR_ONE_DAY) } },
         ],
       },
       include: { votes: { orderBy: { createdAt: "asc" } } },
@@ -226,12 +274,6 @@ export const rolesRouter = createTRPCRouter({
   voteCEO: protectedProcedure
     .input(DiscordId)
     .mutation(async ({ ctx, input: user }) => {
-      if (env.NEXT_PUBLIC_VERCEL_ENV !== "production")
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "CEO oylaması sadece production'da çalışır",
-        });
-
       if (ctx.session.user.discordId === user)
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -239,6 +281,7 @@ export const rolesRouter = createTRPCRouter({
         });
 
       const users = await getGuildMembersWithRoles();
+      const required = users.filter((u) => !u.user.bot).length;
       const voter = users.find((u) => u.user.id === ctx.session.user.discordId);
       const target = users.find((u) => u.user.id === user);
 
@@ -252,67 +295,37 @@ export const rolesRouter = createTRPCRouter({
         where: {
           OR: [
             { endedAt: null },
-            { endedAt: { gt: new Date(Date.now() - ONE_WEEK) } },
+            { endedAt: { gt: new Date(Date.now() - ONE_WEEK_OR_ONE_DAY) } },
           ],
         },
         include: { votes: { orderBy: { createdAt: "asc" } } },
         orderBy: { createdAt: "desc" },
       });
 
-      const isThreeDaysPast = latest
-        ? new Date().getTime() - latest.createdAt.getTime() > THREE_DAYS
-        : false;
-
-      if (latest && isThreeDaysPast && !latest.endedAt)
-      // GET finisher in order to achieve success && reject cus had success event before
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message:
-            "Bir hata oluştu, lütfen website adminlerine bildir (CEOVOTE-SCHEDULE-CORRECTION)",
-        });
-
-      if (isThreeDaysPast)
-        throw new TRPCError({
-          code: "TOO_MANY_REQUESTS",
-          message:
-            "CEO koltukta en az bir hafta geçirmeden yeni bir CEO seçemezsin",
-        });
-
-      const isVoted = latest?.votes.some((v) => v.voter === voter.user.id);
-
-      const voters = (latest?.votes ?? []).map((v) => {
-        const user = users.find((u) => u.user.id === v.voter);
-        if (!user)
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Geçmişte oy veren bir kullanıcı bulunamadı",
-          });
-        return { user, target: v.target };
-      });
-
-      if (!isVoted) voters.push({ user: voter, target: user });
-
-      const voteCount = new Map<DiscordId, number>();
-      voters.forEach((v) => {
-        const count = voteCount.get(v.target) ?? 0;
-        voteCount.set(v.target, count + 1);
-      });
-
-      const required = users.filter((u) => !u.user.bot).length;
-      const finisherId = [...voteCount.entries()].find(
-        ([, count]) => count / required >= 0.66
-      )?.[0];
-      const finisher = users.find((u) => u.user.id === finisherId);
-
       const c = new Client({ token: env.QSTASH_TOKEN });
 
-      if (!latest) {
+      let latestFailed = false;
+      let latestSuccess = false;
+
+      if (latest) {
+        const { finisherId, isThreeDaysPast } = checkVoteCEO(
+          latest,
+          null,
+          null,
+          required
+        );
+        latestFailed = isThreeDaysPast && !finisherId;
+        latestSuccess = isThreeDaysPast && !!finisherId;
+      }
+
+      if (!latest || latestFailed) {
+        // no latest event or latest event failed and past 3 days, revote allowed
         let jobId: string | null = null;
-        if (env.NEXT_PUBLIC_VERCEL_ENV === "production") {
+        if (env.NEXT_PUBLIC_VERCEL_ENV !== "development") {
           const url = getDomainUrl() + "/api/cron";
           const res = await c.publishJSON({
             url,
-            delay: THREE_DAYS,
+            delay: THREE_DAYS_OR_THREE_HOURS,
             body: { type: "vote", user, role: "CEO" } satisfies CronBody,
           });
           jobId = res.messageId;
@@ -323,7 +336,23 @@ export const rolesRouter = createTRPCRouter({
             votes: { create: { voter: voter.user.id, target: user } },
           },
         });
-      } else if (latest) {
+      } else if (latest || latestSuccess) {
+        if (latestSuccess)
+          // latest event successfully finished and past 3 days,
+          // CEO should stay until we no longer query latest event
+          throw new TRPCError({
+            code: "TOO_MANY_REQUESTS",
+            message:
+              "CEO koltukta en az bir hafta geçirmeden yeni bir CEO seçemezsin",
+          });
+
+        // latest event ongoing...
+        const { finisherId: finisher, isVoted } = checkVoteCEO(
+          latest,
+          voter.user.id,
+          user,
+          required
+        );
         await ctx.prisma.voteEventCEO.update({
           where: { id: latest.id },
           data: {
@@ -342,8 +371,9 @@ export const rolesRouter = createTRPCRouter({
             )
           );
 
-          await modifyGuildMemberRole(finisher.user.id, CEO, "PUT");
+          await modifyGuildMemberRole(finisher, CEO, "PUT");
           if (latest.jobId) await c.messages.delete({ id: latest.jobId });
+          return true;
         }
       } else
         throw new TRPCError({
@@ -351,6 +381,7 @@ export const rolesRouter = createTRPCRouter({
           message: "latest assertion failed",
         });
 
+      return false;
       // if event is ongoing,
       // TODO: can change vote only each 10 minutes
     }),
