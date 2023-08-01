@@ -182,18 +182,32 @@ export const CEOVotePanel = createPanel(
         <div className="menu-item flex">
           <div className="menu-item flex flex-col items-center p-2">
             <span className="font-mono text-primary">Oy sayısı</span>
-            <span className="p-2 font-mono font-bold">
-              {data.votes.length} oy (6 olan kazanır)
+            <span className="px-2 font-mono font-bold">
+              {data.votes.length} oy ({data.required} olan kazanır)
             </span>
           </div>
-          <div className="menu-item flex flex-col items-center p-2">
-            <span className="font-mono text-primary">Tahmini bitiş</span>
-            <span className="p-2 font-mono font-bold">
-              {new Date(
-                data.createdAt.getTime() + 1000 * 60 * 60 * 24 * 3
-              ).toLocaleString("tr-TR")}
-            </span>
-          </div>
+          {data.estimated && (
+            <div className="menu-item flex flex-col items-center p-2">
+              <span className="font-mono text-primary">Tahmini bitiş</span>
+              <span className="px-2 font-mono font-bold">
+                {data.estimated.toLocaleString("tr-TR")}
+              </span>
+            </div>
+          )}
+          {data.endedAt && (
+            <div className="menu-item flex flex-col items-center p-2">
+              <span className="font-mono text-primary">Bitti</span>
+              <span className="px-2 font-mono font-bold">
+                Oylama {data.endedAt.toLocaleString("tr-TR")} tarihinde bitti.
+              </span>
+              {data.sitUntil && (
+                <span className="px-2 font-mono font-bold">
+                  CEO {data.sitUntil.toLocaleString("tr-TR")}
+                  {"'e"} kadar koltuktan kaldırılamaz.
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <div className="menu-item flex flex-col items-center whitespace-nowrap">
           <span className="font-mono text-primary">Oy verenler</span>

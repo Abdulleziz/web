@@ -131,7 +131,7 @@ function checkVoteCEO(
     ([, count]) => count / usersLength >= percentage
   )?.[0];
 
-  return { finisherId, isThreeDaysPast, isVoted };
+  return { finisherId, isVoted };
 }
 
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
@@ -158,7 +158,8 @@ export const rolesRouter = createTRPCRouter({
     });
   }),
   getCEOVotes: protectedProcedure.query(async ({ ctx }) => {
-    return await ctx.prisma.voteEventCEO.findFirst({
+    const required = env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 6 : 2;
+    const event = await ctx.prisma.voteEventCEO.findFirst({
       where: {
         OR: [
           { endedAt: null },
@@ -168,6 +169,20 @@ export const rolesRouter = createTRPCRouter({
       include: { votes: { orderBy: { createdAt: "asc" } } },
       orderBy: { createdAt: "desc" },
     });
+    if (!event) return event;
+    const { finisherId } = checkVoteCEO(event, null, null, required);
+    return {
+      ...event,
+      required,
+      finisherId,
+      sitUntil:
+        event.endedAt && finisherId
+          ? new Date(event.endedAt.getTime() + ONE_WEEK_OR_ONE_DAY)
+          : null,
+      estimated: event?.endedAt
+        ? null
+        : new Date(event.createdAt.getTime() + THREE_DAYS_OR_THREE_HOURS),
+    };
   }),
   vote: protectedProcedure
     .input(Vote)
@@ -310,14 +325,9 @@ export const rolesRouter = createTRPCRouter({
       let latestSuccess = false;
 
       if (latest) {
-        const { finisherId, isThreeDaysPast } = checkVoteCEO(
-          latest,
-          null,
-          null,
-          required
-        );
-        latestFailed = isThreeDaysPast && !finisherId;
-        latestSuccess = isThreeDaysPast && !!finisherId;
+        const { finisherId } = checkVoteCEO(latest, null, null, required);
+        latestFailed = !!latest.endedAt && !finisherId;
+        latestSuccess = !!latest.endedAt && !!finisherId;
       }
 
       if (!latest || latestFailed) {
