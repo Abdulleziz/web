@@ -8,8 +8,12 @@ import {
   VoteChart,
   MembersPanel,
   HistoryPanel,
+  CEOVotePanel,
 } from "./panels";
-import { useGetAbdullezizUser, useGetDiscordMembers } from "~/utils/useDiscord";
+import {
+  useGetAbdullezizUser,
+  useGetAbdullezizUsersSorted,
+} from "~/utils/useDiscord";
 import { useSession } from "next-auth/react";
 import { LoadingDashboard } from "./LoadingDashboard";
 import { type AbdullezizPerm } from "~/utils/abdulleziz";
@@ -17,9 +21,7 @@ import { type AbdullezizPerm } from "~/utils/abdulleziz";
 export const Dashboard: React.FC = () => {
   const { data: session } = useSession();
   const { isLoading, data } = useGetAbdullezizUser();
-  const members = (useGetDiscordMembers().data ?? []).filter(
-    (m) => !m.user.bot
-  );
+  const members = useGetAbdullezizUsersSorted().data ?? [];
 
   const panels =
     !isLoading && !!data
@@ -29,6 +31,7 @@ export const Dashboard: React.FC = () => {
           DriveablePabel,
           MemberPanel,
           GlobalPanel,
+          CEOVotePanel,
         ].filter(
           // if any of the visibleBy permissions are not in the user's perms,
           // don't show the panel
@@ -83,14 +86,17 @@ export const Dashboard: React.FC = () => {
                   </span>
                 </div>
               </div>
-              {panels.map((Panel, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-center rounded-lg bg-base-100 p-4"
-                >
-                  <Panel />
-                </div>
-              ))}
+              {panels.map((Panel, i) => {
+                if (Panel.notAChild) return <Panel key={i} />;
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center justify-center rounded-lg bg-base-100 p-4"
+                  >
+                    <Panel />
+                  </div>
+                );
+              })}
             </section>
             <section className="grid gap-6 md:grid-cols-2 xl:grid-flow-col xl:grid-cols-4 xl:grid-rows-3">
               <MembersPanel />

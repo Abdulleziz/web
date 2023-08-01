@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { getAvatarUrl } from "~/server/discord-api/utils";
+import { formatName } from "~/utils/abdulleziz";
 import { useGetProfile } from "~/utils/useProfile";
 import { type UserId } from "~/utils/zod-utils";
 
@@ -57,7 +58,7 @@ export const Profile = ({ profileId }: ProfileProps) => {
         <div className="flex items-center ">
           <div className="mr-20">
             <h3 className="text-4xl font-extrabold">{user.name}</h3>
-            <h4 className="text-xl font-bold">{user.member.nick}</h4>
+            <h4 className="text-xl font-bold">{formatName(user.member)}</h4>
           </div>
           {memberImage && (
             <Image

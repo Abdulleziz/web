@@ -6,6 +6,11 @@ import {
   type AbdullezizRole,
 } from "./zod-utils";
 
+export const formatName = (user: {
+  nick?: string | null;
+  user: { username: string };
+}) => user.nick || user.user.username;
+
 type Range = Exclude<Severity, 1>; // Exclude everyone
 type Role = Exclude<AbdullezizRole, "@everyone">; // Exclude everyone
 type Roles = ReadOnlyAtLeastOne<Role>;

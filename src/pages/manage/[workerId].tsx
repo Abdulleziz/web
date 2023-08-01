@@ -15,10 +15,10 @@ import classNames from "classnames";
 import {
   useVote,
   useGetAbdullezizUser,
-  useGetAbdullezizUsers,
+  useGetVoteEventsWithMembers,
 } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
-import { api } from "~/utils/api";
+import { formatName } from "~/utils/abdulleziz";
 
 const Worker: NextPage = () => {
   const router = useRouter();
@@ -50,40 +50,20 @@ const Worker: NextPage = () => {
 const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
   const self = useGetAbdullezizUser();
   const vote = useVote();
-  const { data: worker, isLoading } = api.discord.getAbdullezizUsers.useQuery(
-    undefined,
-    { select: (users) => users.find((u) => u.user.id === profileId) }
-  );
-  const members = useGetAbdullezizUsers().data ?? [];
+  const { data: worker, isLoading } = useGetAbdullezizUser(profileId);
+  const { data: voteEvents } = useGetVoteEventsWithMembers();
 
-  const memberFromId = (id: string) => {
-    const member = members.find((m) => m.user.id === id);
-    if (!member) throw new Error(`No member with id ${id}`);
-    return member;
-  };
-
-  const { data: voteEvents } = api.discord.role.getVotes.useQuery(undefined, {
-    select(data) {
-      return data.map((event) => ({
-        ...event,
-        target: memberFromId(event.target),
-        votes: event.votes.map((v) => ({
-          ...v,
-          voter: memberFromId(v.voter),
-        })),
-      }));
-    },
-  });
-
-  const roles = Object.keys(
-    abdullezizRoles
-  ) as (keyof typeof abdullezizRoles)[];
+  const roles = Object.keys(abdullezizRoles) as AbdullezizRole[];
   const workerImage = worker && getAvatarUrl(worker.user, worker?.avatar);
 
   return isLoading || !voteEvents ? (
     <LoadingDashboard />
   ) : (
-    <Layout title={`Manage ${worker?.nick || "Worker"} - Abdulleziz Corp.`}>
+    <Layout
+      title={`Manage ${
+        worker ? formatName(worker) : "Worker"
+      } - Abdulleziz Corp.`}
+    >
       <div className="flex-grow">
         <main className="space-y-6 p-6 sm:p-10">
           <div className="flex flex-row items-center ">
@@ -97,7 +77,9 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
               />
             )}
             <div className="flex flex-col">
-              <h1 className="ml-8 text-3xl">{worker?.nick}</h1>
+              <h1 className="ml-8 text-3xl">
+                {worker ? formatName(worker) : "Worker"}
+              </h1>
               {worker?.roles.map((role) => (
                 <h1
                   className="ml-8"

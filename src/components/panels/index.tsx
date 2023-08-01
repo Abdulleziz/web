@@ -16,16 +16,18 @@ import { type CSSProperties, useEffect, useState, useCallback } from "react";
 
 import {
   useGetAbdullezizUser,
-  useGetAbdullezizUsers,
+  useGetAbdullezizUsersSorted,
   useGetCEOVoteEvent,
+  useGetCEOVoteEventWithMembers,
   useGetDiscordMembers,
 } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import classNames from "classnames";
 import { toast } from "react-hot-toast";
 import { useBuyEntities, useNextSalaryDate } from "~/utils/usePayments";
-import { createPanel } from "./utils";
 import { useConsumeTea, useGetRemainingTea } from "~/utils/useConsumable";
+import { createPanel } from "./utils";
+import { formatName } from "~/utils/abdulleziz";
 
 ChartJS.register(
   RadialLinearScale,
@@ -155,6 +157,51 @@ export const DriveablePabel = createPanel(undefined, () => {
     </Panel>
   );
 });
+
+export const CEOVotePanel = createPanel(
+  undefined,
+  () => {
+    const { data, isLoading } = useGetCEOVoteEventWithMembers();
+
+    if (isLoading)
+      return (
+        <button className="loading btn">CEO oylamasına bakılıyor...</button>
+      );
+    if (!data) return null;
+
+    return (
+      // should be black theme
+      <div className="menu flex items-center overflow-x-auto overflow-y-auto rounded-lg bg-black p-4 text-zinc-400 lg:w-max">
+        <div className="menu-title">CEO Oylaması</div>
+        <div className="menu-item flex">
+          <div className="menu-item flex flex-col items-center p-2">
+            <span className="font-mono text-primary">Oy sayısı</span>
+            <span className="p-2 font-mono font-bold">
+              {data.votes.length} oy (6 olan kazanır)
+            </span>
+          </div>
+          <div className="menu-item flex flex-col items-center p-2">
+            <span className="font-mono text-primary">Tahmini bitiş</span>
+            <span className="p-2 font-mono font-bold">
+              {new Date(
+                data.createdAt.getTime() + 1000 * 60 * 60 * 24 * 3
+              ).toLocaleString("tr-TR")}
+            </span>
+          </div>
+        </div>
+        <div className="menu-item flex flex-col items-center whitespace-nowrap">
+          <span className="font-mono text-primary">Oy verenler</span>
+          {data.votes.map((v) => (
+            <span key={v.id} className="px-2 font-mono font-bold">
+              {`${formatName(v.voter)} -> ${formatName(v.target)}`}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  },
+  { notAChild: true }
+);
 
 export const ServantPanel = createPanel(undefined, () => {
   const { data, isLoading } = useGetAbdullezizUser();
@@ -315,7 +362,7 @@ export const VoteChart = createPanel(undefined, () => {
   };
 
   const chartData: ChartData<"radar"> = {
-    labels: members.map((m) => m.nick || m.user.username),
+    labels: members.map(formatName),
     datasets: [
       {
         label: "Oy sayısı",
@@ -338,20 +385,8 @@ export const VoteChart = createPanel(undefined, () => {
 });
 
 export const MembersPanel = createPanel(undefined, () => {
-  const getDcMembers = useGetAbdullezizUsers();
-
-  const members = (getDcMembers.data ?? [])
-    .map((m) => ({
-      ...m,
-      roles: m.roles.sort((r1, r2) => r2.position - r1.position), // sort roles
-    }))
-    .filter((m) => !m.user.bot) // filter out bots
-    .sort((m1, m2) => {
-      // sort members by highest role
-      const s1 = m1.roles[0];
-      const s2 = m2.roles[0];
-      return (s2?.position ?? 0) - (s1?.position ?? 0);
-    });
+  const getMembers = useGetAbdullezizUsersSorted();
+  const members = getMembers.data ?? [];
 
   return (
     <div className="row-span-3 rounded-lg bg-base-100 shadow">
@@ -361,11 +396,10 @@ export const MembersPanel = createPanel(undefined, () => {
       <div className="overflow-y-auto">
         <ul className="space-y-6 p-6">
           {members.map((member) => {
+            const highestRole = member.roles[0];
             const avatar = getAvatarUrl(member.user, member.avatar);
-            const style = member.roles[0]
-              ? {
-                  color: `#${member.roles[0].color.toString(16)}`,
-                }
+            const style = highestRole
+              ? { color: `#${highestRole.color.toString(16)}` }
               : { color: "white" };
 
             return (
@@ -384,13 +418,11 @@ export const MembersPanel = createPanel(undefined, () => {
                     />
                   )}
                 </div>
-                {<p style={style}>{member.nick}</p>}
-                <p className="text-gray-400">
-                  {member.user.username}#{member.user.discriminator}
-                </p>
+                <p style={style}>{member.nick}</p>
+                <p className="text-gray-400">{member.user.username}</p>
 
-                {member.roles[0] ? (
-                  <p style={style}>({member.roles[0].name})</p>
+                {highestRole ? (
+                  <p style={style}>({highestRole.name})</p>
                 ) : (
                   "(Unemployeed 🤣)"
                 )}

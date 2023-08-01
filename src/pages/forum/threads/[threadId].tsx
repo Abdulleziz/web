@@ -21,6 +21,7 @@ import { Mention, MentionsInput } from "react-mentions";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import { UploadDropzone } from "@uploadthing/react";
 import { type UploadRouter } from "~/server/uploadthing";
+import { formatName } from "~/utils/abdulleziz";
 
 const ForumThread: NextPage = () => {
   const router = useRouter();
@@ -120,9 +121,7 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
                       displayTransform={(_id, display) => "@" + display}
                       data={users.map((member) => ({
                         id: member.id ?? "",
-                        display: member.nick
-                          ? member.nick
-                          : member.user.username,
+                        display: formatName(member),
                       }))}
                       renderSuggestion={(suggest, _search, display) => {
                         const u = users.find((u) => suggest.id === u.id);

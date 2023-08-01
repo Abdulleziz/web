@@ -15,6 +15,7 @@ import { useHydrated } from "~/pages/_app";
 import { Mention, MentionsInput } from "react-mentions";
 import { useGetAbdullezizUsers } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
+import { formatName } from "~/utils/abdulleziz";
 
 type CreateThreadOptionsStore = {
   notify: boolean;
@@ -113,7 +114,7 @@ const CreateThread: NextPage = () => {
             displayTransform={(_id, display) => "@" + display}
             data={users.map((member) => ({
               id: member.id ?? "",
-              display: member.nick ? member.nick : member.user.username,
+              display: formatName(member),
             }))}
             renderSuggestion={(suggest, _search, display) => {
               const u = users.find((u) => suggest.id === u.id);

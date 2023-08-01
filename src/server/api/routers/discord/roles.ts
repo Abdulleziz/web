@@ -108,10 +108,68 @@ export const rolesRouter = createTRPCRouter({
     });
   }),
   getCEOVotes: protectedProcedure.query(async ({ ctx }) => {
-    return await ctx.prisma.voteEventCEO.findFirst({
+    const r = await ctx.prisma.voteEventCEO.findFirst({
       include: { votes: { orderBy: { createdAt: "asc" } } },
       orderBy: { createdAt: "desc" },
     });
+    const v: typeof r = {
+      createdAt: new Date(),
+      endedAt: null,
+      id: "clfjhbmnr0000pynwo484zadl",
+      jobId: null,
+      votes: [
+        {
+          createdAt: new Date(),
+          id: "clfjhbmnr0001pynw0q4zadl",
+          eventId: "clfjhbmnr0000pynwo484zadl",
+          target: "223071656510357504",
+          voter: "222663527784120320",
+        },
+        {
+          createdAt: new Date(),
+          id: "clfjhbmnr0001pynw0q4zadl",
+          eventId: "clfjhbmnr0000pynwo484zadl",
+          target: "223071656510357504",
+          voter: "222663527784120320",
+        },
+        {
+          createdAt: new Date(),
+          id: "clfjhbmnr0001pynw0q4zadl",
+          eventId: "clfjhbmnr0000pynwo484zadl",
+          target: "223071656510357504",
+          voter: "222663527784120320",
+        },
+        {
+          createdAt: new Date(),
+          id: "clfjhbmnr0001pynw0q4zadl",
+          eventId: "clfjhbmnr0000pynwo484zadl",
+          target: "223071656510357504",
+          voter: "222663527784120320",
+        },
+        {
+          createdAt: new Date(),
+          id: "clfjhbmnr0001pynw0q4zadl",
+          eventId: "clfjhbmnr0000pynwo484zadl",
+          target: "223071656510357504",
+          voter: "222663527784120320",
+        },
+        {
+          createdAt: new Date(),
+          id: "clfjhbmnr0001pynw0q4zadl",
+          eventId: "clfjhbmnr0000pynwo484zadl",
+          target: "223071656510357504",
+          voter: "222663527784120320",
+        },
+        {
+          createdAt: new Date(),
+          id: "clfjhbmnr0001pynw0q4zadl",
+          eventId: "clfjhbmnr0000pynwo484zadl",
+          target: "223071656510357504",
+          voter: "222663527784120320",
+        },
+      ],
+    };
+    return v;
   }),
   vote: protectedProcedure
     .input(Vote)

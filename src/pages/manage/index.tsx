@@ -2,10 +2,14 @@ import type { NextPage } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { Layout } from "~/components/Layout";
-import { useGetAbdullezizUsers } from "~/utils/useDiscord";
+import {
+  useGetAbdullezizUsers,
+  useGetAbdullezizUsersSorted,
+  useGetVoteEventsWithMembers,
+} from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import { LoadingDashboard } from "~/components/LoadingDashboard";
-import { api } from "~/utils/api";
+import { formatName } from "~/utils/abdulleziz";
 
 const Manage: NextPage = () => {
   const { isLoading } = useGetAbdullezizUsers();
@@ -24,35 +28,9 @@ const Manage: NextPage = () => {
 };
 
 export const Members: React.FC = () => {
-  const { data, isLoading } = useGetAbdullezizUsers();
-
-  const members = (data ?? [])
-    .filter((m) => !m.user.bot) // filter out bots
-    .sort((m1, m2) => {
-      // sort members by highest role
-      const s1 = m1.roles[0];
-      const s2 = m2.roles[0];
-      return (s2?.position ?? 0) - (s1?.position ?? 0);
-    });
-
-  const memberFromId = (id: string) => {
-    const member = members.find((m) => m.user.id === id);
-    if (!member) throw new Error(`No member with id ${id}`);
-    return member;
-  };
-
-  const events = api.discord.role.getVotes.useQuery(undefined, {
-    select(data) {
-      return data.map((event) => ({
-        ...event,
-        target: memberFromId(event.target),
-        votes: event.votes.map((v) => ({
-          ...v,
-          voter: memberFromId(v.voter),
-        })),
-      }));
-    },
-  });
+  const { data, isLoading } = useGetAbdullezizUsersSorted();
+  const members = data ?? [];
+  const events = useGetVoteEventsWithMembers();
 
   return isLoading || events.isLoading ? (
     <LoadingDashboard />
@@ -91,7 +69,7 @@ export const Members: React.FC = () => {
                           />
                         )}
                       </div>
-                      {<p style={style}>{member.nick}</p>}
+                      <p style={style}>{member.nick}</p>
                       <p className="text-gray-400">{member.user.username}</p>
 
                       {member.roles[0] ? (
@@ -113,8 +91,8 @@ export const Members: React.FC = () => {
               {events.data?.map((event) => (
                 <li key={event.id}>
                   Rol: {event.role} Oylar:{" "}
-                  {event.votes.map((v) => v.voter.user.username).join(", ")}
-                  Kullanıcı: {event.target.nick}
+                  {event.votes.map((v) => formatName(v.voter)).join(", ")}
+                  Kullanıcı: {formatName(event.target)}
                 </li>
               ))}
             </ul>
