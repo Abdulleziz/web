@@ -67,6 +67,7 @@ export const useGetCEOVoteEventWithMembers = (noEnded = false) => {
   const memberFromId = memberFinder(members.data ?? []);
   return api.discord.role.getCEOVotes.useQuery(undefined, {
     select: (event) => {
+      if (!event) return event;
       if (noEnded && event.endedAt) return;
       return {
         ...event,
@@ -85,11 +86,27 @@ export const useVote = () => {
   const utils = api.useContext();
   return api.discord.role.vote.useMutation({
     onSuccess: () => {
-      toast.success("Oy verildi!", { id });
+      toast.success("Oylara tekrar bakıldı!", { id });
       void utils.discord.invalidate();
       void utils.profile.invalidate();
     },
     onMutate: () => toast.loading("Oy veriliyor...", { id }),
+    onError: (error) => {
+      toast.error(error.data?.zodError || error.message, { id });
+    },
+  });
+};
+
+export const useVoteCEO = () => {
+  const id = "discord.role.voteCEO";
+  const utils = api.useContext();
+  return api.discord.role.voteCEO.useMutation({
+    onSuccess: () => {
+      toast.success("CEO Oylarına tekrar bakıldı!", { id });
+      void utils.discord.invalidate();
+      void utils.profile.invalidate();
+    },
+    onMutate: () => toast.loading("CEO Oyu veriliyor...", { id }),
     onError: (error) => {
       toast.error(error.data?.zodError || error.message, { id });
     },

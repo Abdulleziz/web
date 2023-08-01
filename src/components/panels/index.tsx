@@ -61,6 +61,7 @@ export const GlobalPanel = createPanel(undefined, () => {
 });
 
 export const MemberPanel = createPanel(undefined, () => {
+  const voteCEO = useGetCEOVoteEvent();
   const { data, isLoading } = useGetAbdullezizUser();
   if (isLoading) return <button className="loading btn">Yükleniyor</button>;
   if (!data) return <button className="btn">Error</button>;
@@ -75,8 +76,13 @@ export const MemberPanel = createPanel(undefined, () => {
       <div className="menu flex items-center gap-4">
         <div className="menu-title">Çalışan İşlemleri</div>
         <div className="menu-item">
-          <button className="btn-sm btn" disabled={!canVote}>
-            Oylamaya katıl
+          <button
+            className={classNames("btn-sm btn", {
+              ["loading"]: voteCEO.isLoading,
+            })}
+            disabled={voteCEO.isLoading || (!voteCEO.data && !canVote)}
+          >
+            {voteCEO.data ? "Oylamaya katıl" : "Oylama başlat"}
           </button>
         </div>
         <div className="menu-item">

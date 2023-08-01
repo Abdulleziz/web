@@ -108,68 +108,16 @@ export const rolesRouter = createTRPCRouter({
     });
   }),
   getCEOVotes: protectedProcedure.query(async ({ ctx }) => {
-    const r = await ctx.prisma.voteEventCEO.findFirst({
+    return await ctx.prisma.voteEventCEO.findFirst({
+      where: {
+        OR: [
+          { endedAt: null },
+          { endedAt: { gt: new Date(Date.now() - ONE_WEEK) } },
+        ],
+      },
       include: { votes: { orderBy: { createdAt: "asc" } } },
       orderBy: { createdAt: "desc" },
     });
-    const v: typeof r = {
-      createdAt: new Date(),
-      endedAt: null,
-      id: "clfjhbmnr0000pynwo484zadl",
-      jobId: null,
-      votes: [
-        {
-          createdAt: new Date(),
-          id: "clfjhbmnr0001pynw0q4zadl",
-          eventId: "clfjhbmnr0000pynwo484zadl",
-          target: "223071656510357504",
-          voter: "222663527784120320",
-        },
-        {
-          createdAt: new Date(),
-          id: "clfjhbmnr0001pynw0q4zadl",
-          eventId: "clfjhbmnr0000pynwo484zadl",
-          target: "223071656510357504",
-          voter: "222663527784120320",
-        },
-        {
-          createdAt: new Date(),
-          id: "clfjhbmnr0001pynw0q4zadl",
-          eventId: "clfjhbmnr0000pynwo484zadl",
-          target: "223071656510357504",
-          voter: "222663527784120320",
-        },
-        {
-          createdAt: new Date(),
-          id: "clfjhbmnr0001pynw0q4zadl",
-          eventId: "clfjhbmnr0000pynwo484zadl",
-          target: "223071656510357504",
-          voter: "222663527784120320",
-        },
-        {
-          createdAt: new Date(),
-          id: "clfjhbmnr0001pynw0q4zadl",
-          eventId: "clfjhbmnr0000pynwo484zadl",
-          target: "223071656510357504",
-          voter: "222663527784120320",
-        },
-        {
-          createdAt: new Date(),
-          id: "clfjhbmnr0001pynw0q4zadl",
-          eventId: "clfjhbmnr0000pynwo484zadl",
-          target: "223071656510357504",
-          voter: "222663527784120320",
-        },
-        {
-          createdAt: new Date(),
-          id: "clfjhbmnr0001pynw0q4zadl",
-          eventId: "clfjhbmnr0000pynwo484zadl",
-          target: "223071656510357504",
-          voter: "222663527784120320",
-        },
-      ],
-    };
-    return v;
   }),
   vote: protectedProcedure
     .input(Vote)
@@ -301,31 +249,33 @@ export const rolesRouter = createTRPCRouter({
         });
 
       const latest = await ctx.prisma.voteEventCEO.findFirst({
+        where: {
+          OR: [
+            { endedAt: null },
+            { endedAt: { gt: new Date(Date.now() - ONE_WEEK) } },
+          ],
+        },
         include: { votes: { orderBy: { createdAt: "asc" } } },
         orderBy: { createdAt: "desc" },
       });
 
       const isThreeDaysPast = latest
         ? new Date().getTime() - latest.createdAt.getTime() > THREE_DAYS
-        : true;
+        : false;
 
-      if (isThreeDaysPast && !latest?.endedAt)
+      if (latest && isThreeDaysPast && !latest.endedAt)
+      // GET finisher in order to achieve success && reject cus had success event before
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message:
             "Bir hata oluştu, lütfen website adminlerine bildir (CEOVOTE-SCHEDULE-CORRECTION)",
         });
 
-      const isWeekPast =
-        latest && latest.endedAt
-          ? new Date().getTime() - latest.endedAt.getTime() > ONE_WEEK
-          : true;
-
-      if (!isThreeDaysPast || !isWeekPast)
+      if (isThreeDaysPast)
         throw new TRPCError({
           code: "TOO_MANY_REQUESTS",
           message:
-            "CEO koltukta en az bir hafta geçirmeden veya oylama bitmeden yeni bir CEO seçemezsin",
+            "CEO koltukta en az bir hafta geçirmeden yeni bir CEO seçemezsin",
         });
 
       const isVoted = latest?.votes.some((v) => v.voter === voter.user.id);
@@ -337,18 +287,27 @@ export const rolesRouter = createTRPCRouter({
             code: "NOT_FOUND",
             message: "Geçmişte oy veren bir kullanıcı bulunamadı",
           });
-        return user;
+        return { user, target: v.target };
       });
 
-      if (!isVoted) voters.push(voter);
+      if (!isVoted) voters.push({ user: voter, target: user });
 
-      const percent = voters.length / users.filter((u) => !u.user.bot).length;
-      const finished = percent >= 0.66;
+      const voteCount = new Map<DiscordId, number>();
+      voters.forEach((v) => {
+        const count = voteCount.get(v.target) ?? 0;
+        voteCount.set(v.target, count + 1);
+      });
+
+      const required = users.filter((u) => !u.user.bot).length;
+      const finisherId = [...voteCount.entries()].find(
+        ([, count]) => count / required >= 0.66
+      )?.[0];
+      const finisher = users.find((u) => u.user.id === finisherId);
 
       const c = new Client({ token: env.QSTASH_TOKEN });
 
-      if (isWeekPast) {
-        let jobId: string;
+      if (!latest) {
+        let jobId: string | null = null;
         if (env.NEXT_PUBLIC_VERCEL_ENV === "production") {
           const url = getDomainUrl() + "/api/cron";
           const res = await c.publishJSON({
@@ -357,8 +316,6 @@ export const rolesRouter = createTRPCRouter({
             body: { type: "vote", user, role: "CEO" } satisfies CronBody,
           });
           jobId = res.messageId;
-        } else {
-          jobId = Math.random().toString(36).substring(2);
         }
         await ctx.prisma.voteEventCEO.create({
           data: {
@@ -370,18 +327,22 @@ export const rolesRouter = createTRPCRouter({
         await ctx.prisma.voteEventCEO.update({
           where: { id: latest.id },
           data: {
-            endedAt: finished ? new Date() : undefined,
+            endedAt: finisher ? new Date() : undefined,
             votes: isVoted
               ? undefined
               : { create: { voter: voter.user.id, target: user } },
           },
         });
-        if (finished) {
-          const beforeCEO = users.find((u) => u.roles[0]?.name === "CEO");
+        if (finisher) {
+          const beforeCEO = users.filter((u) => u.roles[0]?.name === "CEO");
           const CEO = abdullezizRoles["CEO"];
-          if (beforeCEO)
-            await modifyGuildMemberRole(beforeCEO.user.id, CEO, "DELETE");
-          await modifyGuildMemberRole(target.user.id, CEO, "PUT");
+          await Promise.all(
+            beforeCEO.map((u) =>
+              modifyGuildMemberRole(u.user.id, CEO, "DELETE")
+            )
+          );
+
+          await modifyGuildMemberRole(finisher.user.id, CEO, "PUT");
           if (latest.jobId) await c.messages.delete({ id: latest.jobId });
         }
       } else

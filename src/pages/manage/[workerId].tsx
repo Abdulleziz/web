@@ -16,6 +16,8 @@ import {
   useVote,
   useGetAbdullezizUser,
   useGetVoteEventsWithMembers,
+  useGetCEOVoteEvent,
+  useVoteCEO,
 } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import { formatName } from "~/utils/abdulleziz";
@@ -50,6 +52,8 @@ const Worker: NextPage = () => {
 const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
   const self = useGetAbdullezizUser();
   const vote = useVote();
+  const voteCEO = useVoteCEO();
+  const voteEventCEO = useGetCEOVoteEvent();
   const { data: worker, isLoading } = useGetAbdullezizUser(profileId);
   const { data: voteEvents } = useGetVoteEventsWithMembers();
 
@@ -93,10 +97,32 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
           </div>
           <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             <div className="flex items-center gap-4 rounded-lg bg-base-100 p-8 shadow"></div>
-            <div className="flex flex-col items-start gap-4 rounded-lg bg-base-100 p-8 shadow">
-              {roles
-                .filter((role) => role !== "CEO")
-                .map((role) => {
+            {worker?.roles[0]?.name !== "CEO" ? (
+              <div className="flex flex-col items-start gap-4 rounded-lg bg-base-100 p-8 shadow">
+                {roles.map((role) => {
+                  if (role === "CEO") {
+                    return (
+                      <div
+                        className="flex items-center justify-center gap-4"
+                        key={role}
+                      >
+                        <h1 className="text-2xl">{role}</h1>
+                        <button
+                          disabled={!!voteEventCEO.data?.endedAt}
+                          onClick={() => voteCEO.mutate(worker?.user.id ?? "")}
+                          className={classNames(
+                            "btn-xs btn bg-black text-zinc-300",
+                            { ["loading"]: voteCEO.isLoading }
+                          )}
+                        >
+                          {voteEventCEO.data
+                            ? "CEO oyu ver"
+                            : "CEO oylaması başlat"}
+                        </button>
+                      </div>
+                    );
+                  }
+
                   const userSelf = worker?.user.id === self.data?.user.id;
                   const userRole = worker?.roles[0]?.name;
                   const selfRole = self.data?.roles[0]?.name;
@@ -149,7 +175,12 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
                     </div>
                   );
                 })}
-            </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-start gap-4 rounded-lg bg-base-100 p-8 shadow">
+                <p className="text-2xl">{"CEO'yu"} yönetemezsin</p>
+              </div>
+            )}
           </section>
           <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             {voteEvents
