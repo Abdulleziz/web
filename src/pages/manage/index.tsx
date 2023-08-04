@@ -6,10 +6,13 @@ import {
   useGetAbdullezizUsers,
   useGetAbdullezizUsersSorted,
   useGetVoteEventsWithMembers,
+  useVote,
 } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import { LoadingDashboard } from "~/components/LoadingDashboard";
 import { formatName } from "~/utils/abdulleziz";
+import { createModal } from "~/utils/modal";
+import { useState } from "react";
 
 const Manage: NextPage = () => {
   const { isLoading } = useGetAbdullezizUsers();
@@ -18,10 +21,8 @@ const Manage: NextPage = () => {
     <LoadingDashboard />
   ) : (
     <Layout>
-      <div className="flex min-h-screen flex-col items-center justify-center pb-32">
-        <div className="">
-          <Members />
-        </div>
+      <div className="flex min-h-screen flex-row items-center justify-center pb-32">
+        <Members />
       </div>
     </Layout>
   );
@@ -30,13 +31,14 @@ const Manage: NextPage = () => {
 export const Members: React.FC = () => {
   const { data, isLoading } = useGetAbdullezizUsersSorted();
   const members = data ?? [];
+  const vote = useVote();
   const events = useGetVoteEventsWithMembers();
 
   return isLoading || events.isLoading ? (
     <LoadingDashboard />
   ) : (
-    <div>
-      <div className="row-span-3 rounded-lg bg-base-200 shadow ">
+    <div className="flex flex-col gap-6 sm:flex-row">
+      <div className="rounded-lg bg-base-200 shadow">
         <div className="flex items-center justify-between border-b border-base-200 px-6 py-5 font-semibold">
           <span>Abdulleziz Çalışanları</span>
           <span>Yönetmek İstediğiniz Çalışanı Seçin</span>
@@ -84,21 +86,44 @@ export const Members: React.FC = () => {
             })}
           </ul>
         </div>
-        <div className="flex items-center justify-center">
-          <div className="flex items-center justify-between border-b border-base-200 px-6 py-5 font-semibold">
-            <span>Oylama Etkinlikleri</span>
-            <ul>
-              {events.data?.map((event) => (
-                <li key={event.id}>
-                  Rol: {event.role} Oylar:{" "}
-                  {event.votes.map((v) => formatName(v.voter)).join(", ")}
-                  Kullanıcı: {formatName(event.target)}
-                </li>
-              ))}
-            </ul>
+      </div>
+      {events && (
+        <div className="rounded bg-base-200 sm:col-span-1">
+          <div className="flex flex-col items-center  border-b border-base-200 px-6 py-5 font-semibold">
+            <h1 className="mb-3">Oylama Etkinliği Mevcut!</h1>
+            <div className="grid gap-6 md:grid-cols-1 xl:grid-cols-1 ">
+              {events.data?.map((event) => {
+                const boxStyle = event.target.roles[0]
+                  ? `[#${event.target.roles[0].color.toString(16)}]`
+                  : "base-100";
+                return (
+                  <div
+                    key={event.id}
+                    className={`flex flex-col rounded bg-${boxStyle}`}
+                  >
+                    <ul className="flex list-disc flex-col p-2">
+                      <li>Oylanan Kullanıcı: {formatName(event.target)}</li>
+                      <li>Yeni Rol: {event.role}</li>
+                      <li>Toplam Oy: {event.votes.length}</li>
+                    </ul>
+                    <button
+                      className="btn-xs btn mx-2 mb-2"
+                      onClick={() => {
+                        vote.mutate({
+                          role: event.role,
+                          user: event.target.user.id ?? "",
+                        });
+                      }}
+                    >
+                      Oy Ver!
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
