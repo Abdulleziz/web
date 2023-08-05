@@ -89,7 +89,9 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
                 <h1
                   className="ml-8"
                   key={role.id}
-                  style={{ color: `#${role.color.toString(16)}` }}
+                  style={{
+                    color: `#${role.color.toString(16).padStart(6, "0")}`,
+                  }}
                 >
                   {role.name}
                 </h1>

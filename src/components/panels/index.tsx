@@ -421,7 +421,7 @@ export const MembersPanel = createPanel(undefined, () => {
             const highestRole = member.roles[0];
             const avatar = getAvatarUrl(member.user, member.avatar);
             const style = highestRole
-              ? { color: `#${highestRole.color.toString(16)}` }
+              ? { color: `#${highestRole.color.toString(16).padStart(6, "0")}` }
               : { color: "white" };
 
             return (

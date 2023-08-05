@@ -79,7 +79,7 @@ type VoteEventProps = {
 export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
   const self = useGetAbdullezizUser();
   const vote = useVote();
-  const style = { color: `#${event.role.color.toString(16)}` };
+  const style = { color: `#${event.role.color.toString(16).padStart(6, "0")}` };
 
   const userSelf = event.target.user.id === self.data?.user.id;
   const userRole = event.target.roles[0]?.name;
@@ -168,7 +168,11 @@ export const Members: React.FC = () => {
               const highestRole = member.roles[0];
               const avatar = getAvatarUrl(member.user, member.avatar);
               const style = highestRole
-                ? { color: `#${highestRole.color.toString(16)}` }
+                ? {
+                    color: `#${highestRole.color
+                      .toString(16)
+                      .padStart(6, "0")}`,
+                  }
                 : { color: "white" };
               return (
                 <li
@@ -207,13 +211,13 @@ export const Members: React.FC = () => {
           </ul>
         </div>
       </div>
-      {events && (
+      {events.data && (
         <div className="rounded bg-base-200 sm:col-span-1">
           <div className="flex flex-col items-center  border-b border-base-200 px-6 py-5 font-semibold">
             <h1 className="mb-3">Oylama Etkinliği Mevcut!</h1>
             <div className="grid gap-6 md:grid-cols-1 xl:grid-cols-1 ">
               {/* TODO: CEO VOTE HERE */}
-              {events.data?.map((event) => (
+              {events.data.map((event) => (
                 <VoteEvent key={event.id} event={event} />
               ))}
             </div>
