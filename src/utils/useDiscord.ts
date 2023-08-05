@@ -1,6 +1,7 @@
 import { toast } from "react-hot-toast";
 import { type RouterInputs, api } from "./api";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type In = RouterInputs["discord"];
 
 export const memberFinder = <T extends { user: { id: string } }>(
@@ -13,14 +14,11 @@ export const memberFinder = <T extends { user: { id: string } }>(
   };
 };
 
-export const useGetAbdullezizUser = (q: In["getAbdullezizUser"]) =>
-  api.discord.getAbdullezizUser.useQuery(q);
-
-export const useGetAbdullezizUsers = () =>
-  api.discord.getAbdullezizUsers.useQuery();
-
-export const useGetDiscordMembers = (q: In["getDiscordMembers"]) =>
-  api.discord.getDiscordMembers.useQuery(q);
+export const useGetAbdullezizRole = api.discord.role.getRole.useQuery;
+export const useGetAbdullezizRoles = api.discord.role.getRoles.useQuery;
+export const useGetAbdullezizUser = api.discord.getAbdullezizUser.useQuery;
+export const useGetAbdullezizUsers = api.discord.getAbdullezizUsers.useQuery;
+export const useGetDiscordMembers = api.discord.getDiscordMembers.useQuery;
 
 /**
  * sorted by highest role
@@ -41,36 +39,48 @@ export const useGetAbdullezizUsersSorted = () => {
   });
 };
 
-export const useGetVoteEvents = () => api.discord.role.getVotes.useQuery();
-
-export const useGetCEOVoteEvent = () => api.discord.role.getCEOVotes.useQuery();
+export const useGetVoteEvents = api.discord.role.getVotes.useQuery;
+export const useGetCEOVoteEvent = api.discord.role.getCEOVotes.useQuery;
 
 export const useGetVoteEventsWithMembers = () => {
+  const roles = useGetAbdullezizRoles();
   const members = useGetAbdullezizUsersSorted();
   const memberFromId = memberFinder(members.data ?? []);
   return api.discord.role.getVotes.useQuery(undefined, {
+    enabled: !!roles.data,
+    // query with dependent query wtf
     select(data) {
-      return data.map((event) => ({
-        ...event,
-        target: memberFromId(event.target),
-        votes: event.votes.map((v) => ({
-          ...v,
-          voter: memberFromId(v.voter),
-        })),
-      }));
+      return data.map((event) => {
+        const role = roles.data?.find((r) => r.name === event.role);
+        if (!role) throw new Error(`No role with name ${event.target}`);
+        return {
+          ...event,
+          role,
+          target: memberFromId(event.target),
+          votes: event.votes.map((v) => ({
+            ...v,
+            voter: memberFromId(v.voter),
+          })),
+        };
+      });
     },
   });
 };
 
 export const useGetCEOVoteEventWithMembers = (noEnded = false) => {
+  const roles = useGetAbdullezizRoles();
   const members = useGetAbdullezizUsersSorted();
   const memberFromId = memberFinder(members.data ?? []);
   return api.discord.role.getCEOVotes.useQuery(undefined, {
+    enabled: !!roles.data,
     select: (event) => {
       if (!event) return event;
       if (noEnded && event.endedAt) return;
+      const role = roles.data?.find((r) => r.name === "CEO");
+      if (!role) throw new Error(`No role with name CEO`);
       return {
         ...event,
+        role: { ...role, name: "CEO" as const },
         votes: event.votes.map((v) => ({
           ...v,
           voter: memberFromId(v.voter),

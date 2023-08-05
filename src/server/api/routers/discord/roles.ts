@@ -15,6 +15,8 @@ import {
 } from "~/utils/zod-utils";
 import {
   getGuildMember,
+  getGuildRole,
+  getGuildRoles,
   modifyGuildMemberRole,
 } from "~/server/discord-api/guild";
 import {
@@ -26,6 +28,7 @@ import { env } from "~/env.mjs";
 import { getDomainUrl } from "~/utils/api";
 import { type CronBody } from "~/pages/api/cron";
 import { type Prisma } from "@prisma/client";
+import { getAbdullezizRoles } from "~/server/discord-api/utils";
 
 const AbdullezizRole = z
   .string()
@@ -149,6 +152,19 @@ const ONE_WEEK_OR_ONE_DAY =
 export const rolesRouter = createTRPCRouter({
   getSeverities: internalProcedure.query(() => {
     return { roles: abdullezizRoles, severities: abdullezizRoleSeverities };
+  }),
+  getRoles: protectedProcedure.query(async () => {
+    const roles = await getGuildRoles();
+    return getAbdullezizRoles(roles);
+  }),
+  getRole: protectedProcedure.input(DiscordId).query(async ({ input }) => {
+    const role = await getGuildRole(input);
+    if (!role)
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Rol bulunamadı",
+      });
+    return role;
   }),
   getVotes: protectedProcedure.query(async ({ ctx }) => {
     return await ctx.prisma.voteEvent.findMany({

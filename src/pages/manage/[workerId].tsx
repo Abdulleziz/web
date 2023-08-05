@@ -21,6 +21,7 @@ import {
 } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import { formatName } from "~/utils/abdulleziz";
+import { VoteEvent } from ".";
 
 const Worker: NextPage = () => {
   const router = useRouter();
@@ -185,62 +186,14 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
           <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             {voteEvents
               .filter((e) => e.target.user.id === worker?.user.id)
-              .map((voteEvent, index) => {
-                const userSelf = worker?.user.id === self.data?.user.id;
-                const userRole = worker?.roles[0]?.name;
-                const severity =
-                  abdullezizRoleSeverities[voteEvent.role as AbdullezizRole];
-                const quit = userRole === voteEvent.role;
-                // prettier-ignore
-                const userSeverity = userRole ? abdullezizRoleSeverities[userRole]: 1;
-                // prettier-ignore
-                const promote = severity >= userSeverity && !quit;
-
-                return (
-                  <div
-                    key={voteEvent.id}
-                    className={classNames(
-                      "flex flex-col items-center gap-4 rounded-lg bg-base-100 p-8 shadow",
-                      {
-                        "bg-primary-500": voteEvent.votes
-                          .map((v) => v.voter.user.id)
-                          .includes(worker?.user.id ?? ""),
-                      }
-                    )}
-                  >
-                    <h1 className="text-2xl">
-                      Rol Etkinliği {index + 1}: istenen rol: {voteEvent.role}
-                      Oy verenler:{" "}
-                      {voteEvent.votes
-                        .map((v) => v.voter.user.username)
-                        .join(", ")}
-                      (
-                      {!!voteEvent.endedAt
-                        ? "Oylama Bitti"
-                        : quit
-                        ? userSelf
-                          ? "Ayrılmak için oy ver"
-                          : "Kovmak için oy ver"
-                        : promote
-                        ? "Yükseltmek için oy ver"
-                        : "Düşürmek için oy ver"}
-                      )
-                    </h1>
-                    <button
-                      className="btn-primary btn"
-                      disabled={!!voteEvent.endedAt}
-                      onClick={() =>
-                        vote.mutate({
-                          role: voteEvent.role,
-                          user: worker?.user.id ?? "",
-                        })
-                      }
-                    >
-                      Oy ver
-                    </button>
-                  </div>
-                );
-              })}
+              .map((event) => (
+                <div
+                  key={event.id}
+                  className="flex flex-col items-center rounded-lg bg-base-100 p-8 shadow"
+                >
+                  <VoteEvent event={event} />
+                </div>
+              ))}
           </section>
         </main>
       </div>
