@@ -22,6 +22,7 @@ import { getAvatarUrl } from "~/server/discord-api/utils";
 import { UploadDropzone } from "@uploadthing/react";
 import { type UploadRouter } from "~/server/uploadthing";
 import { formatName } from "~/utils/abdulleziz";
+import { useSession } from "next-auth/react";
 
 const ForumThread: NextPage = () => {
   const router = useRouter();
@@ -279,6 +280,7 @@ const InfoSVG: React.FC = () => {
 };
 
 const Posts: React.FC<ThreadProps> = ({ threadId }) => {
+  const { data: session } = useSession();
   const {
     data,
     hasNextPage,
@@ -304,30 +306,43 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
   }
 
   return (
-    <div className="flex flex-col rounded bg-base-100 pt-3" ref={postsRef}>
-      {(data.pages[page]?.posts ?? []).map((post) => (
-        <div key={post.id} className="flex flex-row p-4">
-          <div className="flex flex-col items-center justify-center rounded bg-base-200 pr-4">
-            {post.creator.image && (
-              <Image
-                className="ml-auto mr-auto w-12 rounded-full p-1 sm:w-20"
-                src={post.creator.image}
-                alt="Profile Image"
-                width={128}
-                height={128}
-              />
+    <div className="p-2">
+      <div className="flex flex-col gap-2 p-4 rounded bg-base-100 pt-3" ref={postsRef}>
+        {(data.pages[page]?.posts ?? []).map((post) => (
+          <div
+            key={post.id}
+            className={classNames(
+              "chat chat-start",
+              session?.user.id !== post.creatorId ? "chat-start" : "chat-end"
             )}
-            <p className="p-3 text-center text-sm font-bold text-white sm:text-xl">
+          >
+            <div className="chat-image avatar">
+              <div className="w-10 rounded-full">
+                {post.creator.image && (
+                  <Image
+                    className="ml-auto mr-auto w-12 rounded-full p-1 sm:w-20"
+                    src={post.creator.image}
+                    alt="Profile Image"
+                    width={128}
+                    height={128}
+                  />
+                )}
+              </div>
+            </div>
+            <div className="chat-header">
               {post.creator.name}
-            </p>
-          </div>
-          <div className="flex w-full min-w-0 flex-1 rounded bg-base-200 ">
-            <h3 className="flex flex-wrap overflow-auto whitespace-pre-wrap p-8">
+              <time className="text-xs opacity-50">
+                {post.createdAt.toLocaleString("tr-TR")}
+              </time>
+            </div>
+            <div className="chat-bubble">
               {tokenizePostContent(post.message)}
-            </h3>
+            </div>
+            <div className="chat-footer opacity-50">Delivered</div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
+
       <div className="flex flex-wrap justify-center space-y-0 space-x-2 pr-4 pb-4 md:justify-end md:space-y-0 md:space-x-4">
         {Array.from({ length: data.pages.length }).map((_, i) => (
           <button
