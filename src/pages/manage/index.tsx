@@ -135,14 +135,14 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
             ? "Ayrıl"
             : instant
             ? "Kovmak için son oyu ver!"
-            : `Kovma oyu ver (+${required})YD`
+            : `Kovma oyu ver (+${selfSeverity})YD`
           : promote
           ? instant
             ? "Yükseltmek için son oyu ver!"
-            : `Yükseltme oyu ver (+${required})YD`
+            : `Yükseltme oyu ver (+${selfSeverity})YD`
           : instant
           ? "Düşürmek için son oyu ver!"
-          : `Düşürme oyu ver (+${required})YD`}
+          : `Düşürme oyu ver (+${selfSeverity})YD`}
       </button>
     </div>
   );
