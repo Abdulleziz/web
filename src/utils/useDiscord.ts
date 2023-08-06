@@ -77,9 +77,11 @@ export const useGetCEOVoteEventWithMembers = (noEnded = false) => {
       if (!event) return event;
       if (noEnded && event.endedAt) return;
       const role = roles.data?.find((r) => r.name === "CEO");
+      const winner = members.data?.find((r) => r.user.id === event.finisherId);
       if (!role) throw new Error(`No role with name CEO`);
       return {
         ...event,
+        winner,
         role: { ...role, name: "CEO" as const },
         votes: event.votes.map((v) => ({
           ...v,

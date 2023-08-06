@@ -167,6 +167,7 @@ model VoteEvent {
     votes     Vote[]
     createdAt DateTime  @default(now())
     endedAt   DateTime?
+    jobId     String?   @unique
 
     @@index([role])
 }

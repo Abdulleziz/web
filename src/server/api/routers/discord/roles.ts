@@ -205,6 +205,12 @@ export const rolesRouter = createTRPCRouter({
   vote: protectedProcedure
     .input(Vote)
     .mutation(async ({ ctx, input: { user, role } }) => {
+      if (["development"].includes(env.NEXT_PUBLIC_VERCEL_ENV))
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Development ortamında oy veremezsin",
+        });
+
       const users = await getGuildMembersWithRoles();
       const voter = users.find((u) => u.user.id === ctx.session.user.discordId);
       const target = users.find((u) => u.user.id === user);
@@ -247,7 +253,11 @@ export const rolesRouter = createTRPCRouter({
 
       const ongoing = await ctx.prisma.voteEvent.findFirst({
         where: { endedAt: null, role, target: user },
-        select: { id: true, votes: { orderBy: { createdAt: "asc" } } },
+        select: {
+          id: true,
+          jobId: true,
+          votes: { orderBy: { createdAt: "asc" } },
+        },
         orderBy: { createdAt: "desc" },
       });
 
@@ -276,6 +286,7 @@ export const rolesRouter = createTRPCRouter({
       });
 
       const finished = collected >= totalRequired;
+      const c = new Client({ token: env.QSTASH_TOKEN });
 
       if (finished) {
         const before = target.roles[0]?.id;
@@ -283,11 +294,23 @@ export const rolesRouter = createTRPCRouter({
           await modifyGuildMemberRole(target.user.id, before, "DELETE");
         const roleId = abdullezizRoles[role];
         if (!quit) await modifyGuildMemberRole(target.user.id, roleId, "PUT");
+        if (ongoing?.jobId) await c.messages.delete({ id: ongoing.jobId });
       }
 
       if (!ongoing) {
+        let jobId: string | null = null;
+        if (!finished && env.NEXT_PUBLIC_VERCEL_ENV !== "development") {
+          const url = getDomainUrl() + "/api/cron";
+          const res = await c.publishJSON({
+            url,
+            delay: THREE_DAYS_OR_THREE_HOURS,
+            body: { type: "vote", user, role } satisfies CronBody,
+          });
+          jobId = res.messageId;
+        }
         await ctx.prisma.voteEvent.create({
           data: {
+            jobId,
             role,
             target: user,
             votes: { create: { voter: voter.user.id } },
@@ -309,6 +332,12 @@ export const rolesRouter = createTRPCRouter({
   voteCEO: protectedProcedure
     .input(DiscordId)
     .mutation(async ({ ctx, input: user }) => {
+      if (["development"].includes(env.NEXT_PUBLIC_VERCEL_ENV))
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Development ortamında oy veremezsin",
+        });
+
       if (ctx.session.user.discordId === user)
         throw new TRPCError({
           code: "BAD_REQUEST",

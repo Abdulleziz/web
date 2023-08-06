@@ -199,13 +199,22 @@ export const CEOVotePanel = createPanel(
           {data.endedAt && (
             <div className="menu-item flex flex-col items-center p-2">
               <span className="font-mono text-primary">Bitti</span>
-              <span className="px-2 font-mono font-bold">
+              <span className="px-2 font-mono text-sm font-bold">
                 Oylama {data.endedAt.toLocaleString("tr-TR")} tarihinde bitti.
               </span>
               {data.sitUntil && (
-                <span className="px-2 font-mono font-bold">
+                <span className="px-2 font-mono text-sm font-bold">
                   CEO {data.sitUntil.toLocaleString("tr-TR")}
                   {"'e"} kadar koltuktan kaldırılamaz.
+                </span>
+              )}
+              {data.winner ? (
+                <span className="px-2 font-mono font-bold text-primary">
+                  Kazanan: {formatName(data.winner)}
+                </span>
+              ) : (
+                <span className="px-2 font-mono text-sm font-bold text-primary">
+                  Kazanan çıkmadığı için oylama tekrar başlatılabilir.
                 </span>
               )}
             </div>

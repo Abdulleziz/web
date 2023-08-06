@@ -111,14 +111,14 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
                       >
                         <h1 className="text-2xl">{role}</h1>
                         <button
-                          disabled={!!voteEventCEO.data?.endedAt}
+                          disabled={!!voteEventCEO.data?.sitUntil}
                           onClick={() => voteCEO.mutate(worker?.user.id ?? "")}
                           className={classNames(
                             "btn-xs btn bg-black text-zinc-300",
                             { ["loading"]: voteCEO.isLoading }
                           )}
                         >
-                          {voteEventCEO.data
+                          {!!voteEventCEO.data?.sitUntil
                             ? "CEO oyu ver"
                             : "CEO oylaması başlat"}
                         </button>

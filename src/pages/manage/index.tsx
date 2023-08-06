@@ -20,6 +20,10 @@ import {
   abdullezizRoleSeverities,
 } from "~/utils/zod-utils";
 
+export type VoteEventWithMember = NonNullable<
+  ReturnType<typeof useGetVoteEventsWithMembers>["data"]
+>[number];
+
 const Manage: NextPage = () => {
   const { isLoading } = useGetAbdullezizUsers();
 
@@ -35,12 +39,12 @@ const Manage: NextPage = () => {
 };
 
 // WTF
-const UsersModal = <Member extends { user: { id: string; username: string } }>({
+const UsersModal = ({
   id,
-  users,
+  votes,
 }: {
   id: string;
-  users: Member[];
+  votes: VoteEventWithMember["votes"];
 }) => {
   return (
     <div>
@@ -49,9 +53,9 @@ const UsersModal = <Member extends { user: { id: string; username: string } }>({
         <div className="modal-box">
           <h3 className="font-bold">Oylayanlar</h3>
           <ul className="ml-4">
-            {users.map((c) => (
-              <li className="list-disc" key={c.user.id}>
-                {formatName(c)}
+            {votes.map((v) => (
+              <li className="list-disc" key={v.id}>
+                {formatName(v.voter)} ({v.createdAt.toLocaleString("tr-TR")})
               </li>
             ))}
           </ul>
@@ -68,10 +72,6 @@ const UsersModal = <Member extends { user: { id: string; username: string } }>({
 
 export const getSeverity = (role?: AbdullezizRole) =>
   role ? abdullezizRoleSeverities[role] : 1;
-
-export type VoteEventWithMember = NonNullable<
-  ReturnType<typeof useGetVoteEventsWithMembers>["data"]
->[number];
 
 type VoteEventProps = {
   event: VoteEventWithMember;
@@ -105,10 +105,7 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
         <li>
           <div className="flex gap-2">
             Toplam Oy: {event.votes.length}
-            <UsersModal
-              id={event.id}
-              users={event.votes.map((v) => v.voter)}
-            />{" "}
+            <UsersModal id={event.id} votes={event.votes} />{" "}
             <label htmlFor={event.id} className=" btn-xs btn">
               (oylar)
             </label>
@@ -118,6 +115,7 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
         <li>Toplanan Yetki Değeri: {collected}</li>
       </ul>
       <button
+        disabled={!!event.endedAt}
         className={classNames(
           "btn-xs btn mx-2 mb-2",
           instant && !quit && "btn-success",
@@ -130,7 +128,9 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
           });
         }}
       >
-        {quit
+        {!!event.endedAt
+          ? `Oylama ${event.endedAt.toLocaleString("tr-TR")}  tarihinde bitti`
+          : quit
           ? userSelf
             ? "Ayrıl"
             : instant
