@@ -54,10 +54,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const { role, user } = parsed;
       const event = await (role === "CEO"
         ? prisma.voteEventCEO.findFirst({
+            where: { endedAt: null },
             orderBy: { createdAt: "desc" },
           })
         : prisma.voteEvent.findFirst({
-            where: { role, target: user },
+            where: { role, target: user, endedAt: null },
             orderBy: { createdAt: "desc" },
           }));
       if (!event) {

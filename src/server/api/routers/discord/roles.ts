@@ -174,7 +174,9 @@ export const rolesRouter = createTRPCRouter({
     });
   }),
   getCEOVotes: protectedProcedure.query(async ({ ctx }) => {
+    const users = await getGuildMembersWithRoles();
     const required = env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 6 : 2;
+    const total = users.filter((u) => !u.user.bot).length;
     const event = await ctx.prisma.voteEventCEO.findFirst({
       where: {
         OR: [
@@ -186,7 +188,7 @@ export const rolesRouter = createTRPCRouter({
       orderBy: { createdAt: "desc" },
     });
     if (!event) return event;
-    const { finisherId } = checkVoteCEO(event, null, null, required);
+    const { finisherId } = checkVoteCEO(event, null, null, total);
     return {
       ...event,
       required,
