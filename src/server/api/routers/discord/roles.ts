@@ -303,7 +303,7 @@ export const rolesRouter = createTRPCRouter({
           const url = getDomainUrl() + "/api/cron";
           const res = await c.publishJSON({
             url,
-            delay: THREE_DAYS_OR_THREE_HOURS,
+            delay: THREE_DAYS_OR_THREE_HOURS / 1000,
             body: { type: "vote", user, role } satisfies CronBody,
           });
           jobId = res.messageId;
@@ -384,7 +384,7 @@ export const rolesRouter = createTRPCRouter({
           const url = getDomainUrl() + "/api/cron";
           const res = await c.publishJSON({
             url,
-            delay: THREE_DAYS_OR_THREE_HOURS,
+            delay: THREE_DAYS_OR_THREE_HOURS / 1000,
             body: { type: "vote", user, role: "CEO" } satisfies CronBody,
           });
           jobId = res.messageId;

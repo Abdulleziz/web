@@ -4,10 +4,11 @@
  *
  * We also create a few inference helpers for input and output types.
  */
-import { httpBatchLink, loggerLink } from "@trpc/client";
+import { type TRPCClientError, httpBatchLink, loggerLink } from "@trpc/client";
 import { createTRPCNext } from "@trpc/next";
 import { type TRPCClientErrorLike } from "@trpc/react-query";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
+import { toast } from "react-hot-toast";
 import superjson from "superjson";
 import { env } from "~/env.mjs";
 
@@ -30,6 +31,8 @@ export const getBaseUrl = () => {
   return `http://localhost:${process.env.PORT ?? 3000}`; // dev SSR should use localhost
 };
 
+type TRPCError = TRPCClientError<AppRouter>;
+
 /** A set of type-safe react-query hooks for your tRPC API. */
 export const api = createTRPCNext<AppRouter>({
   config() {
@@ -45,6 +48,12 @@ export const api = createTRPCNext<AppRouter>({
         defaultOptions: {
           queries: {
             retry: false,
+            onError(err) {
+              console.error(err);
+              const e = err as TRPCError;
+              if (e.data?.code === "INTERNAL_SERVER_ERROR")
+                toast.error(e.message, { id: e.data.path });
+            },
           },
           mutations: {
             retry: false,
