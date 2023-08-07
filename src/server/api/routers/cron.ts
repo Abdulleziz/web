@@ -55,21 +55,19 @@ export const cronRouter = createTRPCRouter({
         },
       });
       if (!job) throw new TRPCError({ code: "NOT_FOUND" });
-      const listenedCron = job.listeners[0]; // only one author
-      if (!listenedCron || listenedCron.listenerId !== ctx.session.user.id)
+      const authorListener = job.listeners[0];
+      if (authorListener?.listenerId !== ctx.session.user.id)
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Bu cronu dinlemiyorsun veya yetkin yok",
-          // Veya author yok
-          // TODO: auto author seç!
         });
-      const enabled = listenedCron.isActive;
+      const enabled = authorListener.isActive;
 
       await ctx.prisma.cronListener.update({
         where: {
           listenerId_cronJobId: {
             cronJobId: job.id,
-            listenerId: listenedCron.listenerId,
+            listenerId: authorListener.listenerId,
           },
         },
         data: { isActive: !enabled },

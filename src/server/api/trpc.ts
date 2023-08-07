@@ -75,6 +75,7 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z, ZodError } from "zod";
+import { DiscordId } from "~/utils/zod-utils";
 
 const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,
@@ -136,8 +137,7 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
 });
 
 const UserIdWithToken = z.object({
-  "x-abdulleziz-user-id": z.string().min(1),
-  // TODO: refine/validate
+  "x-abdulleziz-user-id": DiscordId,
   authorization: z.literal(env.DISCORD_TOKEN),
 });
 

@@ -12,11 +12,13 @@ const Notif = z.enum(["all", "mentions"], vError);
 const AllNotif = Notif.or(z.literal("none", vError));
 
 export const forumNotificationsRouter = createTRPCRouter({
-  getUserNotification: protectedProcedure.query(({ ctx }) => {
-    return ctx.prisma.user.findUniqueOrThrow({
-      where: { id: ctx.session.user.id },
-      select: { defaultThreadNotify: true },
-    });
+  getUserNotification: protectedProcedure.query(async ({ ctx }) => {
+    return (
+      await ctx.prisma.user.findUniqueOrThrow({
+        where: { id: ctx.session.user.id },
+        select: { defaultThreadNotify: true },
+      })
+    ).defaultThreadNotify;
   }),
   setUserNotification: protectedProcedure
     .input(Notif)

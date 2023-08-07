@@ -178,10 +178,9 @@ const MuteThread = ({ thread }: { thread: Thread }) => {
   };
 
   const setNotif = useSetForumUserNotification();
-  const userNotify = useGetUserNotification().data?.defaultThreadNotify;
+  const userNotify = useGetUserNotification().data;
   const state = thread.notifications[0]?.preference;
   const getBestFallback = () => {
-    // ugly but works
     // TODO: refactor for backend use
     const [threadN, userN] = [
       { type: "thread", pref: thread.defaultNotify },

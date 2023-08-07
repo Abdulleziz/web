@@ -118,9 +118,9 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
                             { ["loading"]: voteCEO.isLoading }
                           )}
                         >
-                          {!!voteEventCEO.data?.sitUntil
-                            ? "CEO oyu ver"
-                            : "CEO oylaması başlat"}
+                          {!voteEventCEO.data || !!voteEventCEO.data.endedAt
+                            ? "CEO oylaması başlat"
+                            : "CEO oyu ver"}
                         </button>
                       </div>
                     );

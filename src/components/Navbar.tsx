@@ -217,34 +217,30 @@ export const Navbar: React.FC = () => {
             {!!forumNotif.data && (
               <>
                 <p className="text-accent">Forum Bildirimleri</p>
-                <select
-                  className="select max-w-xs"
-                  disabled={
-                    forumNotif.isLoading ||
-                    !forumNotif.data ||
-                    setForumNotif.isLoading
-                  }
-                  onChange={(e) =>
-                    setForumNotif.mutate(e.target.value as "all" | "mentions")
-                  }
-                >
-                  {/* TODO: toggle */}
-                  {/* hızlıca yaptım düzenlicem... */}
-                  <option className="hidden">
-                    {forumNotif.data.defaultThreadNotify}
-                  </option>
-                  <option
-                    defaultValue={
-                      forumNotif.data.defaultThreadNotify === "all"
-                        ? "mentions"
-                        : "all"
-                    }
-                  >
-                    {forumNotif.data.defaultThreadNotify === "all"
-                      ? "mentions"
-                      : "all"}
-                  </option>
-                </select>
+                <div className="form-control">
+                  <label className="label cursor-pointer">
+                    <span className="label-text">
+                      {forumNotif.data === "all"
+                        ? "Bildirimler Açık"
+                        : "Sadece Bahsetmeler"}
+                    </span>
+                    <input
+                      type="checkbox"
+                      className="toggle"
+                      disabled={
+                        forumNotif.isLoading ||
+                        !forumNotif.data ||
+                        setForumNotif.isLoading
+                      }
+                      onChange={() =>
+                        setForumNotif.mutate(
+                          forumNotif.data === "all" ? "mentions" : "all"
+                        )
+                      }
+                      checked={forumNotif.data === "all"}
+                    />
+                  </label>
+                </div>
               </>
             )}
           </div>

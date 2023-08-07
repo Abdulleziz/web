@@ -13,6 +13,8 @@ import { forumPostsRouter } from "./posts";
 import { forumNotificationsRouter } from "./notifications";
 import { getForumNotificationListeners } from "./trpc";
 
+const _28DAYS = 1000 * 60 * 60 * 24 * 28;
+
 const ThreadTitle = z
   .string({ required_error: "Thread başlığı boş olamaz" })
   .trim()
@@ -149,7 +151,7 @@ export const forumRouter = createTRPCRouter({
             skip: 1,
             where: {
               createdAt: {
-                gt: new Date(new Date().getTime() - 1000 * 60 * 60 * 24 * 28),
+                gt: new Date(new Date().getTime() - _28DAYS),
               },
             },
           },
@@ -165,10 +167,7 @@ export const forumRouter = createTRPCRouter({
 
       if (notifyUsers.length > 0) {
         // less than 28 days, clear notifications
-        if (
-          new Date().getTime() - thread.createdAt.getTime() <
-          1000 * 60 * 60 * 24 * 28
-        ) {
+        if (new Date().getTime() - thread.createdAt.getTime() < _28DAYS) {
           await ctx.pushNotification.publishToUsers(
             notifyUsers.map((u) => u.id),
             {
@@ -181,19 +180,24 @@ export const forumRouter = createTRPCRouter({
           );
         }
 
-        const publish = thread.posts.map((post) =>
-          // TODO: post.createdAt less than 28 days
-          ctx.pushNotification.publishToUsers(
-            notifyUsers.map((u) => u.id),
-            {
-              web: {
-                data: { tag: `new-thread-post-${post.id}`, delete: true },
-                time_to_live:
-                  env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
-              },
-            }
+        const publish = thread.posts
+          .filter(
+            (post) => new Date().getTime() - post.createdAt.getTime() < _28DAYS
           )
-        );
+          .map((post) =>
+            ctx.pushNotification.publishToUsers(
+              notifyUsers.map((u) => u.id),
+              {
+                web: {
+                  data: { tag: `new-thread-post-${post.id}`, delete: true },
+                  time_to_live:
+                    env.NEXT_PUBLIC_VERCEL_ENV !== "production"
+                      ? 300
+                      : undefined,
+                },
+              }
+            )
+          );
         await Promise.all(publish);
       }
 
