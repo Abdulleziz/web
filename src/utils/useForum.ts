@@ -118,6 +118,21 @@ export const useCreateForumThread = () => {
   });
 };
 
+export const usePostDeleteAttachments = () => {
+  const id = "forum.post.deleteAttachments";
+  return api.forum.posts.deleteAttachments.useMutation({
+    onSuccess: () => {
+      toast.success("Thread Post'u dosya eki silindi!", { id });
+    },
+    onMutate: () => {
+      toast.loading("Thread Post'u dosya eki siliniyor...", { id });
+    },
+    onError(error) {
+      toast.error(error.data?.zodError || error.message, { id });
+    },
+  });
+};
+
 export const useDeleteForumThread = () => {
   const utils = api.useContext();
   return api.forum.deleteThreadById.useMutation({

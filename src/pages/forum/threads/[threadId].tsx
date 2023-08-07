@@ -9,6 +9,7 @@ import {
   useDeleteForumThread,
   useGetForumPosts,
   useGetForumThread,
+  usePostDeleteAttachments,
 } from "~/utils/useForum";
 import Image from "next/image";
 import { tokenizePostContent } from "~/utils/forumThread";
@@ -53,6 +54,7 @@ type Attachment = { fileKey: string; fileUrl: string };
 const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
   const thread = useGetForumThread(threadId);
   const createPost = useCreateForumPost();
+  const deleteAttachment = usePostDeleteAttachments();
   const abdullezizUsers = useGetAbdullezizUsers();
   const [mentions, setMentions] = useState(new Set<string>());
   const [content, setContent] = useState("");
@@ -62,6 +64,11 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
   const users = (abdullezizUsers.data ?? []).filter(
     (m) => !m.user.bot && m.id !== undefined
   );
+
+  const onClickDeleteAttachment = async (attachment: Attachment) => {
+    await deleteAttachment.mutateAsync({ fileKeys: [attachment.fileKey] });
+    setAttachments((a) => a.filter((a) => a.fileKey !== attachment.fileKey));
+  };
 
   return (
     <Layout>
@@ -181,15 +188,13 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
                     {attachments.map((attachment) => (
                       <div key={attachment.fileKey}>
                         <button
-                          className="btn-ghost btn-sm btn"
-                          onClick={
-                            () =>
-                              setAttachments((a) =>
-                                a.filter(
-                                  (a) => a.fileKey !== attachment.fileKey
-                                )
-                              )
-                            // TODO: delete attachment from server
+                          className={classNames(
+                            "btn-ghost btn-sm btn",
+                            deleteAttachment.isLoading && "loading"
+                          )}
+                          disabled={deleteAttachment.isLoading}
+                          onClick={() =>
+                            void onClickDeleteAttachment(attachment)
                           }
                         >
                           X
@@ -307,7 +312,10 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
 
   return (
     <div className="p-2">
-      <div className="flex flex-col gap-2 p-4 rounded bg-base-100 pt-3" ref={postsRef}>
+      <div
+        className="flex flex-col gap-2 rounded bg-base-100 p-4 pt-3"
+        ref={postsRef}
+      >
         {(data.pages[page]?.posts ?? []).map((post) => (
           <div
             key={post.id}

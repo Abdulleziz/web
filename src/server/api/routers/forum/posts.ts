@@ -5,6 +5,7 @@ import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { getDomainUrl } from "~/utils/api";
 import { env } from "~/env.mjs";
 import { getForumNotificationListeners } from "./trpc";
+import { utapi } from "uploadthing/server";
 
 export const forumPostsRouter = createTRPCRouter({
   getMany: protectedProcedure
@@ -76,6 +77,16 @@ export const forumPostsRouter = createTRPCRouter({
           }
         );
       return post;
+    }),
+  deleteAttachments: protectedProcedure
+    .input(z.object({ fileKeys: z.array(z.string()) }))
+    .mutation(async ({ input: { fileKeys: attachments } }) => {
+      const { success } = await utapi.deleteFiles(attachments);
+      if (!success)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Thread Post dosya ekleri silinemedi!",
+        });
     }),
   deleteById: protectedProcedure
     .input(PostId)
