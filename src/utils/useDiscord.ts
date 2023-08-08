@@ -67,18 +67,16 @@ export const useGetVoteEventsWithMembers = () => {
   });
 };
 
-export const useGetCEOVoteEventWithMembers = (noEnded = false) => {
+export const useGetCEOVoteEventWithMembers = () => {
   const roles = useGetAbdullezizRoles();
   const members = useGetAbdullezizUsersSorted();
   const memberFromId = memberFinder(members.data ?? []);
   return api.discord.role.getCEOVotes.useQuery(undefined, {
     enabled: !!roles.data,
     select: (event) => {
-      if (!event) return event;
-      if (noEnded && event.endedAt) return;
+      if (!event || !roles) return null;
       const role = roles.data?.find((r) => r.name === "CEO");
       const winner = members.data?.find((r) => r.user.id === event.finisherId);
-      if (!role) throw new Error(`No role with name CEO`);
       return {
         ...event,
         winner,

@@ -128,10 +128,8 @@ function checkVoteCEO(
     voteCount.set(v.target, count + 1);
   });
 
-  const percentage = env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.66 : 0.22;
-
   const finisherId = [...voteCount.entries()].find(
-    ([, count]) => count / usersLength >= percentage
+    ([, count]) => count / usersLength >= CEO_VOTE_PERCENTAGE
   )?.[0];
 
   return { finisherId, isVoted };
@@ -148,6 +146,11 @@ const THREE_DAYS_OR_THREE_HOURS =
 
 const ONE_WEEK_OR_ONE_DAY =
   env.NEXT_PUBLIC_VERCEL_ENV === "production" ? ONE_WEEK : ONE_DAY;
+
+const [CEO_VOTE_REQUIRED, CEO_VOTE_PERCENTAGE] =
+  env.NEXT_PUBLIC_VERCEL_ENV === "production"
+    ? ([6, 0.66] as const)
+    : ([6, 0.66] as const); // change here for testing in dev [2, 0.66]
 
 export const rolesRouter = createTRPCRouter({
   getSeverities: internalProcedure.query(() => {
@@ -175,7 +178,6 @@ export const rolesRouter = createTRPCRouter({
   }),
   getCEOVotes: protectedProcedure.query(async ({ ctx }) => {
     const users = await getGuildMembersWithRoles();
-    const required = env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 6 : 2;
     const total = users.filter((u) => !u.user.bot).length;
     const event = await ctx.prisma.voteEventCEO.findFirst({
       where: {
@@ -191,7 +193,7 @@ export const rolesRouter = createTRPCRouter({
     const { finisherId } = checkVoteCEO(event, null, null, total);
     return {
       ...event,
-      required,
+      required: CEO_VOTE_REQUIRED,
       finisherId,
       sitUntil:
         event.endedAt && finisherId
