@@ -29,6 +29,11 @@ import { getDomainUrl } from "~/utils/api";
 import { type CronBody } from "~/pages/api/cron";
 import { type Prisma } from "@prisma/client";
 import { getAbdullezizRoles } from "~/server/discord-api/utils";
+import {
+  createGuildEvent,
+  getGuildEvents,
+  modifyGuildEvent,
+} from "~/server/discord-api/event";
 
 const AbdullezizRole = z
   .string()
@@ -424,6 +429,12 @@ export const rolesRouter = createTRPCRouter({
             votes: { create: { voter: voter.user.id, target: user } },
           },
         });
+        const event = await createGuildEvent(
+          "CEO oylaması",
+          "Abdulleziz büyük CEO oylaması! #oylarbana",
+          new Date(Date.now() + THREE_DAYS_OR_THREE_HOURS)
+        );
+        if (event.status !== 2) await modifyGuildEvent(event.id, "Active");
       } else if (latest || latestSuccess) {
         if (latestSuccess)
           // latest event successfully finished and past 3 days,
@@ -455,7 +466,7 @@ export const rolesRouter = createTRPCRouter({
                         voter: voter.user.id,
                       },
                     },
-                    data: { target: user },
+                    data: { target: user, createdAt: new Date() },
                   },
                 }
               : { create: { voter: voter.user.id, target: user } },
@@ -464,6 +475,10 @@ export const rolesRouter = createTRPCRouter({
         if (finisher) {
           const beforeCEO = users.filter((u) => u.roles[0]?.name === "CEO");
           const CEO = abdullezizRoles["CEO"];
+          const events = await getGuildEvents();
+          const event = events.find(
+            (e) => e.name.includes("CEO") && ![3, 4].includes(e.status)
+          );
           await Promise.all(
             beforeCEO.map((u) =>
               modifyGuildMemberRole(u.user.id, CEO, "DELETE")
@@ -472,6 +487,12 @@ export const rolesRouter = createTRPCRouter({
 
           await modifyGuildMemberRole(finisher, CEO, "PUT");
           if (latest.jobId) await c.messages.delete({ id: latest.jobId });
+          if (event)
+            await modifyGuildEvent(
+              event.id,
+              event.status == 2 ? "Completed" : "Canceled"
+            );
+
           return true;
         }
       } else
