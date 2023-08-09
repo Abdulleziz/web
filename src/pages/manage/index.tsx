@@ -90,11 +90,15 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
   const selfSeverity = getSeverity(selfRole);
   const promote = severity >= userSeverity && !quit;
   const required = promote ? PROMOTE * severity : DEMOTE * userSeverity;
+  const voted = event.votes.some(
+    (vote) => vote.voter.user.id === self.data?.user.id
+  );
   const collected = event.votes.reduce(
     (acc, vote) => acc + getSeverity(vote.voter.roles[0]?.name),
     0
   );
-  const instant = (userSelf && quit) || required <= selfSeverity + collected;
+  const instant =
+    (userSelf && quit) || required <= (!voted ? selfSeverity : 0) + collected;
 
   return (
     <div className={`flex flex-col rounded`} style={style}>
@@ -211,7 +215,7 @@ export const Members: React.FC = () => {
           </ul>
         </div>
       </div>
-      {events.data && (
+      {!!events.data && (
         <div className="rounded bg-base-200 sm:col-span-1">
           <div className="flex flex-col items-center  border-b border-base-200 px-6 py-5 font-semibold">
             <h1 className="mb-3">Oylama Etkinliği Mevcut!</h1>
