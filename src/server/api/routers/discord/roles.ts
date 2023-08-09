@@ -113,12 +113,36 @@ function checkVoteCEO(
         "Bir hata oluştu, lütfen website adminlerine bildir (CEOVOTE-SCHEDULE-CORRECTION)",
     });
 
-  const isVoted = event?.votes.some((v) => v.voter === voter);
+  if ((voter && !target) || (!voter && target))
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Voter ve target aynı anda girilmeli",
+    });
 
-  const voters = (event?.votes ?? []).map((v) => ({
+  const isVoted = event.votes.find((v) => v.voter === voter);
+  const voteChanged = !!isVoted && !!target && isVoted.target !== target;
+
+  const voters = event.votes.map((v) => ({
     voter: v.voter,
     target: v.target,
   }));
+
+  if (isVoted && !voteChanged)
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Zaten oy vermişsin",
+    });
+
+  if (voteChanged && voter && target) {
+    if (isVoted.createdAt.getTime() + FIVE_MINUTES > Date.now())
+      throw new TRPCError({
+        code: "TOO_MANY_REQUESTS",
+        message: "5 dakikada bir oy değiştirebilirsin",
+      });
+
+    const index = voters.findIndex((v) => v.voter === voter);
+    voters.splice(index, 1, { voter, target });
+  }
 
   if (!isVoted && voter && target) voters.push({ voter, target });
 
@@ -132,7 +156,7 @@ function checkVoteCEO(
     ([, count]) => count / usersLength >= CEO_VOTE_PERCENTAGE
   )?.[0];
 
-  return { finisherId, isVoted };
+  return { finisherId, voteChanged };
 }
 
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
@@ -411,18 +435,29 @@ export const rolesRouter = createTRPCRouter({
           });
 
         // latest event ongoing...
-        const { finisherId: finisher, isVoted } = checkVoteCEO(
+        const { finisherId: finisher, voteChanged } = checkVoteCEO(
           latest,
           voter.user.id,
           user,
           required
         );
+
         await ctx.prisma.voteEventCEO.update({
           where: { id: latest.id },
           data: {
             endedAt: finisher ? new Date() : undefined,
-            votes: isVoted
-              ? undefined
+            votes: voteChanged
+              ? {
+                  update: {
+                    where: {
+                      eventId_voter: {
+                        eventId: latest.id,
+                        voter: voter.user.id,
+                      },
+                    },
+                    data: { target: user },
+                  },
+                }
               : { create: { voter: voter.user.id, target: user } },
           },
         });
@@ -446,8 +481,6 @@ export const rolesRouter = createTRPCRouter({
         });
 
       return false;
-      // if event is ongoing,
-      // TODO: can change vote only each 10 minutes
     }),
 
   /**
