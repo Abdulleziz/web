@@ -247,12 +247,6 @@ export const rolesRouter = createTRPCRouter({
         orderBy: { createdAt: "desc" },
       });
 
-      if (ongoingAll.some((e) => e.votes[0]?.voter === voter.user.id))
-        throw new TRPCError({
-          code: "TOO_MANY_REQUESTS",
-          message: "Zaten bir oylama başlattın",
-        });
-
       const ongoing = await ctx.prisma.voteEvent.findFirst({
         where: { endedAt: null, role, target: user },
         select: {
@@ -262,6 +256,15 @@ export const rolesRouter = createTRPCRouter({
         },
         orderBy: { createdAt: "desc" },
       });
+
+      if (
+        ongoingAll.some((e) => e.votes[0]?.voter === voter.user.id) &&
+        !ongoing
+      )
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Zaten bir oylama başlattın, yeni bir oylama başlatamazsın.",
+        });
 
       const isVoted = ongoing?.votes.some((v) => v.voter === voter.user.id);
 
