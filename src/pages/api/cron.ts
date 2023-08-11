@@ -15,7 +15,6 @@ import { getSalaryTakers } from "~/server/discord-api/trpc";
 import { getDomainUrl } from "~/utils/api";
 import { Client } from "@upstash/qstash/nodejs";
 import { Vote } from "~/server/api/routers/discord/roles";
-import { getGuildEvents, modifyGuildEvent } from "~/server/discord-api/event";
 
 // const CronHeader = z.object({
 //   "upstash-message-id": z.string(),
@@ -66,21 +65,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         res.status(404).send("Vote event not found");
       } else {
         const data = { where: { id: event.id }, data: { endedAt: new Date() } };
-        if (role === "CEO") {
-          await prisma.voteEventCEO.update(data);
-          const scheduleds = await getGuildEvents();
-          const scheduled = scheduleds.find(
-            (e) => e.name.includes("CEO") && ![3, 4].includes(e.status)
-          );
-          if (scheduled)
-            await modifyGuildEvent(
-              scheduled.id,
-              scheduled.status == 2 ? "Completed" : "Canceled"
-            );
-        } else {
-          await prisma.voteEvent.update(data);
-        }
-
+        role === "CEO"
+          ? await prisma.voteEventCEO.update(data)
+          : await prisma.voteEvent.update(data);
         res.status(200).send("OK - vote");
       }
       return;
