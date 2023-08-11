@@ -52,10 +52,12 @@ export const useGetVoteEventsWithMembers = () => {
     select(data) {
       return data.map((event) => {
         const role = roles.data?.find((r) => r.name === event.role);
-        if (!role) throw new Error(`No role with name ${event.target}`);
+        const beforeRole = roles.data?.find((r) => r.name === event.beforeRole);
+        if (!role) throw new Error(`No role with name ${event.role}`);
         return {
           ...event,
           role,
+          beforeRole,
           target: memberFromId(event.target),
           votes: event.votes.map((v) => ({
             ...v,

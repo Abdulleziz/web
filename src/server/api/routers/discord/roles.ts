@@ -281,6 +281,7 @@ export const rolesRouter = createTRPCRouter({
         select: {
           id: true,
           jobId: true,
+          beforeRole: true,
           votes: { orderBy: { createdAt: "asc" } },
         },
         orderBy: { createdAt: "desc" },
@@ -319,6 +320,7 @@ export const rolesRouter = createTRPCRouter({
         collected += vs;
       });
 
+      const beforeRole = target.roles[0]?.name ?? null;
       const finished = collected >= totalRequired;
       const c = new Client({ token: env.QSTASH_TOKEN });
 
@@ -347,6 +349,7 @@ export const rolesRouter = createTRPCRouter({
             jobId,
             role,
             target: user,
+            beforeRole: target.roles[0]?.name,
             votes: { create: { voter: voter.user.id } },
             endedAt: finished ? new Date() : null,
           },
@@ -355,6 +358,8 @@ export const rolesRouter = createTRPCRouter({
         await ctx.prisma.voteEvent.update({
           where: { id: ongoing.id },
           data: {
+            beforeRole:
+              ongoing.beforeRole !== beforeRole ? beforeRole : undefined,
             endedAt: finished ? new Date() : undefined,
             votes: isVoted ? undefined : { create: { voter: voter.user.id } },
           },

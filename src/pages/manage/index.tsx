@@ -55,7 +55,8 @@ const UsersModal = ({
           <ul className="ml-4">
             {votes.map((v) => (
               <li className="list-disc" key={v.id}>
-                {formatName(v.voter)} ({v.createdAt.toLocaleString("tr-TR")})
+                {formatName(v.voter)} (+{getSeverity(v.voter.roles[0]?.name)}) (
+                {v.createdAt.toLocaleString("tr-TR")})
               </li>
             ))}
           </ul>
@@ -81,8 +82,9 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
   const vote = useVote();
   const style = { color: `#${event.role.color.toString(16).padStart(6, "0")}` };
 
+  const done = !!event.endedAt;
   const userSelf = event.target.user.id === self.data?.user.id;
-  const userRole = event.target.roles[0]?.name;
+  const userRole = done ? event.beforeRole?.name : event.target.roles[0]?.name;
   const selfRole = self.data?.roles[0]?.name;
   const quit = userRole === event.role.name;
   const severity = getSeverity(event.role.name);
@@ -104,8 +106,15 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
     <div className={`flex flex-col rounded`} style={style}>
       <ul className="flex list-disc flex-col p-2">
         <li>Oylanan Kullanıcı: {formatName(event.target)}</li>
-        {!quit && <li>Yeni Rol: {event.role.name}</li>}
-        {quit && <li>{event.role.name} istifa</li>}
+        <li>
+          {!quit ? (
+            <span>
+              {promote ? "Yükseltmek" : "Düşürmek"}: {event.role.name}
+            </span>
+          ) : (
+            <span>{event.role.name} istifa</span>
+          )}
+        </li>
         <li>
           <div className="flex gap-2">
             Toplam Oy: {event.votes.length}

@@ -161,13 +161,14 @@ model Vote {
 }
 
 model VoteEvent {
-    id        String    @id @default(cuid())
-    role      String
-    target    String /// discord.id
-    votes     Vote[]
-    createdAt DateTime  @default(now())
-    endedAt   DateTime?
-    jobId     String?   @unique
+    id         String    @id @default(cuid())
+    role       String
+    beforeRole String?
+    target     String /// discord.id
+    votes      Vote[]
+    createdAt  DateTime  @default(now())
+    endedAt    DateTime?
+    jobId      String?   @unique
 
     @@index([role])
 }
