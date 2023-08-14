@@ -21,7 +21,7 @@ const ForumThread: NextPage = () => {
         <div className="flex h-screen flex-col items-center justify-center gap-4">
           <p>Gerçek bir Thread id gibi durmuyor!</p>
           <div
-            className="btn-primary btn"
+            className="btn btn-primary"
             onClick={() => void router.push("/forum")}
           >
             Geri Dön
@@ -49,14 +49,18 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
         {!!thread.data && <DeleteThread threadId={threadId} />}
 
         <main className="pb-auto w-full pt-5">
-          {thread.isLoading && <p>Yükleniyor...</p>}
-          {thread.isError && <p>Hata!</p>}
-          {thread.data && <CardsChat threadId={threadId} />}
-          {thread.data === null && (
-            <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center">
+            {thread.isLoading && <p>Yükleniyor...</p>}
+            {thread.isError && (
+              <p>
+                Hata! ({thread.error.data?.zodError || thread.error.message})
+              </p>
+            )}
+            {thread.data === null && (
               <p className="text-error">Thread bulunamadı veya silinmiş!</p>
-            </div>
-          )}
+            )}
+          </div>
+          {thread.data && <CardsChat threadId={threadId} />}
         </main>
       </div>
     </LayoutNext>
