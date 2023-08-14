@@ -9,6 +9,7 @@ import { api } from "~/utils/api";
 import "@uploadthing/react/styles.css";
 import "~/styles/globals.css";
 import { useRegisterSW } from "~/lib/pusher/notifications";
+import { ThemeProvider } from "next-themes";
 
 export const useHydrated = () => {
   const [hydrated, setHydrated] = useState(false);
@@ -28,7 +29,9 @@ const MyApp: AppType<{ session: Session | null }> = ({
   return (
     <SessionProvider session={session}>
       <Notifications />
-      <Component {...pageProps} />
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <Component {...pageProps} />
+      </ThemeProvider>
       <Toaster />
     </SessionProvider>
   );

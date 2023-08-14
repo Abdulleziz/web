@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Dashboard } from "~/components/Dashboard";
 import { Layout } from "~/components/Layout";
 import { WelcomeComponent } from "~/components/WelcomeComponents";
+import { Button } from "~/components/ui/button";
 
 const Home: NextPage = () => {
   const { data: session } = useSession();
@@ -17,15 +18,14 @@ const Home: NextPage = () => {
           <WelcomeComponent />
           {!!session && (
             <div className="flex flex-col items-center justify-center">
-              <button
-                className="btn-primary btn disabled:btn-error"
+              <Button
                 disabled={!session.user.inAbdullezizServer}
                 onClick={() => setShowDashboard(true)}
               >
                 {session.user.inAbdullezizServer
                   ? "Kontrol Paneline Git"
                   : "Önce Abdulleziz Sunucusuna Katıl!"}
-              </button>
+              </Button>
             </div>
           )}
         </Layout>
