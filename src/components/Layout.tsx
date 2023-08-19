@@ -61,6 +61,8 @@ export const Layout: React.FC<Props> = ({
     notifStage === "loading"
   );
 
+  return <LayoutNext {...{ children, title, location }} />;
+
   return (
     <>
       <Head>
@@ -136,7 +138,7 @@ export const LayoutNext: React.FC<Props> = ({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
       </Head>
-      <main className="dark:bg-zinc-950 min-h-screen bg-white">
+      <main className="min-h-screen bg-white dark:bg-zinc-950">
         <NavbarNext />
         {notifStage === "denied" && <Alert />}
         <Modal>

@@ -4,7 +4,6 @@ import {
   createTRPCRouter,
   protectedProcedure,
 } from "~/server/api/trpc";
-import { z } from "zod";
 import { env } from "~/env.mjs";
 import { Client } from "@upstash/qstash/nodejs";
 import { parseExpression } from "cron-parser";
@@ -17,29 +16,12 @@ import {
   poolPayments,
 } from "./utils";
 import { getDomainUrl } from "~/utils/api";
-import { UserId } from "~/utils/zod-utils";
-
-// validators
-export const CreateEntities = z
-  .object({
-    entityId: z.number().positive().int().min(1),
-    amount: z.number().min(1).default(1),
-  })
-  .array()
-  .nonempty();
-
-export const CreateSalary = z.object({
-  multiplier: z.number().min(1).max(20).default(10),
-  delay: z
-    .number()
-    .min(0)
-    .max(60 * 60 * 24 * 7)
-    .default(0)
-    .describe("in seconds"),
-});
-
-export type CreateEntities = z.infer<typeof CreateEntities>;
-export type CreateSalary = z.infer<typeof CreateSalary>;
+import {
+  CreateEntities,
+  CreateSalary,
+  SendMoneySchema,
+} from "~/utils/usePayments";
+import type { z } from "zod";
 
 const takeSalaryProcedure = createPermissionProcedure(["maaş al"]);
 const manageEmployeesProcedure = createPermissionProcedure([
@@ -65,7 +47,7 @@ export const paymentsRouter = createTRPCRouter({
     return poolPayments(payments);
   }),
   sendMoney: protectedProcedure
-    .input(z.object({ toId: UserId, amount: z.number().positive().int() }))
+    .input(SendMoneySchema)
     .mutation(async ({ ctx, input: { toId, amount } }) => {
       const target = await ctx.prisma.user.findUnique({ where: { id: toId } });
       if (!target)
@@ -81,6 +63,7 @@ export const paymentsRouter = createTRPCRouter({
             code: "PRECONDITION_FAILED",
             message: "Yetersiz bakiye",
           });
+
         return await prisma.payment.create({
           data: {
             type: "transfer",

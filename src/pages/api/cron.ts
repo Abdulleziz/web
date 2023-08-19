@@ -10,7 +10,7 @@ import type {
 import { Routes } from "discord-api-types/v10";
 import { env } from "~/env.mjs";
 import { REST } from "@discordjs/rest";
-import { CreateSalary } from "~/server/api/routers/payments";
+import { CreateSalary } from "~/utils/usePayments";
 import { getSalaryTakers } from "~/server/discord-api/trpc";
 import { getDomainUrl } from "~/utils/api";
 import { Client } from "@upstash/qstash/nodejs";

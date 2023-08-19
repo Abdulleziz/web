@@ -95,7 +95,7 @@ const CronPage: NextPage = () => {
         <div className="flex flex-col items-center justify-center gap-4 p-4">
           <div className="flex gap-4">
             <p>Hatırlatıcı</p> -{" "}
-            <a className="link-primary link" target="_blank" href={maker}>
+            <a className="link link-primary" target="_blank" href={maker}>
               Make Cron
             </a>
           </div>
@@ -120,7 +120,7 @@ const CronPage: NextPage = () => {
               />
               <label
                 htmlFor="create-cron"
-                className={classNames("btn-success btn-sm btn", {
+                className={classNames("btn btn-success btn-sm", {
                   ["btn-disabled"]: !input || (diff ?? 0) < 12,
                 })}
               >
@@ -135,7 +135,7 @@ const CronPage: NextPage = () => {
                   <span className="text-info">Sonraki hatırlatıcı: </span>
                   <p>{nextDateString}</p>
                 </div>
-                <label htmlFor="next-dates" className="btn-xs btn">
+                <label htmlFor="next-dates" className="btn btn-xs">
                   Hepsini göster
                 </label>
               </>
@@ -230,7 +230,7 @@ const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
               </label>
             ))}
           </div>
-          <button className="btn-sm btn" onClick={() => setIsPageActive(true)}>
+          <button className="btn btn-sm" onClick={() => setIsPageActive(true)}>
             Devam
           </button>
         </div>
@@ -258,11 +258,11 @@ const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
               }
             />
           )}
-          <button className="btn-sm btn" onClick={() => setIsPageActive(false)}>
+          <button className="btn btn-sm" onClick={() => setIsPageActive(false)}>
             Geri dön
           </button>
           <button
-            className="btn-sm btn"
+            className="btn btn-sm"
             onClick={handleSubmit}
             disabled={
               (req.weekDays && weekDays.size === 0) ||
@@ -351,7 +351,7 @@ const useHourSelect = () => {
             <select
               value={hours}
               onChange={(event) => setHours(+event.target.value)}
-              className="select-accent select"
+              className="select select-accent"
             >
               <Values length={24} />
             </select>
@@ -363,14 +363,14 @@ const useHourSelect = () => {
             <select
               value={minutes}
               onChange={(event) => setMinutes(+event.target.value)}
-              className="select-accent select"
+              className="select select-accent"
             >
               <Values length={60} />
             </select>
           )}
         </div>
         <button
-          className="btn-secondary btn-xs btn m-3"
+          className="btn btn-secondary btn-xs m-3"
           onClick={() => {
             setHours(0);
             setMinutes(0);
@@ -409,7 +409,7 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="input-primary input"
+              className="input input-primary"
               type="text"
             />
             <div className="tooltip" data-tip={tip}>
@@ -425,11 +425,11 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
             <p>Cron: </p> <p>{cron} (UTC)</p>
           </div>
           <div className="modal-action">
-            <label className={"btn-warning btn"} htmlFor="create-cron">
+            <label className={"btn btn-warning"} htmlFor="create-cron">
               Kapat
             </label>
             <button
-              className={classNames("btn-primary btn", {
+              className={classNames("btn btn-primary", {
                 ["loading"]: create.isLoading,
               })}
               disabled={!cron || !title.trim() || create.isLoading}
@@ -562,7 +562,7 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                               {job.listeners.length - 1 !== 0 ? (
                                 <label
                                   htmlFor={job.jobId}
-                                  className="btn-xs btn visible sm:btn-disabled sm:invisible"
+                                  className="btn btn-xs visible sm:btn-disabled sm:invisible"
                                 >
                                   {job.listeners.length - 1} more Users
                                 </label>
@@ -574,7 +574,7 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                         ) : (
                           <label>
                             {job.listeners[0]?.listener.name} and{" "}
-                            <label htmlFor={job.jobId} className=" btn-xs btn">
+                            <label htmlFor={job.jobId} className=" btn btn-xs">
                               {job.listeners.length - 1} more Users
                             </label>
                           </label>
@@ -587,7 +587,7 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                           disabled={!!author || !meAsListener}
                           onClick={() => takeOwnership.mutate(job.cron)}
                           className={classNames(
-                            "btn-square btn-xs btn place-self-center",
+                            "btn btn-square btn-xs place-self-center",
                             { ["loading"]: takeOwnership.isLoading }
                           )}
                         >
@@ -600,7 +600,7 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                 <td>
                   {job.title}
                   <br />
-                  <span className="badge-ghost badge badge-sm">
+                  <span className="badge badge-ghost badge-sm">
                     {job.isGlobal ? "Global" : "Özel"}
                   </span>
                 </td>
@@ -617,14 +617,14 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                   <br />
                   <label
                     htmlFor="next-dates"
-                    className="btn-xs btn"
+                    className="btn btn-xs"
                     onClick={() => handleSubmit(job.cron)}
                   >
                     tarihler
                   </label>
                   <br />
                   {routerExp === job.cron && (
-                    <span className="badge-ghost badge">
+                    <span className="badge badge-ghost">
                       Tıkladığınız hatırlatıcı
                     </span>
                   )}
@@ -635,7 +635,7 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                       <button
                         onClick={() => toggle.mutate(job.cron)}
                         disabled={toggle.isLoading || !meAsListener.isAuthor}
-                        className={classNames("btn-warning btn-xs btn", {
+                        className={classNames("btn btn-warning btn-xs", {
                           ["loading"]: toggle.isLoading,
                         })}
                       >
@@ -646,7 +646,7 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                       <button
                         onClick={() => leave.mutate(job.cron)}
                         disabled={leave.isLoading}
-                        className={classNames("btn-error btn-xs btn", {
+                        className={classNames("btn btn-error btn-xs", {
                           ["loading"]: leave.isLoading,
                         })}
                       >
@@ -660,7 +660,7 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                           join.mutate({ title: "31", cron: job.cron })
                         }
                         disabled={join.isLoading}
-                        className={classNames("btn-success btn-xs btn", {
+                        className={classNames("btn btn-success btn-xs", {
                           ["loading"]: join.isLoading,
                         })}
                       >

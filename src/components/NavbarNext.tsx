@@ -34,6 +34,7 @@ import {
   MessageSquare,
   Settings,
   User,
+  Wallet,
   WalletCards,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -47,9 +48,11 @@ import {
   CommandSeparator,
 } from "./ui/command";
 import { useGetAllCrons } from "~/utils/useCron";
+import { useGetWallet } from "~/utils/usePayments";
 
 export const NavbarNext: React.FC = () => {
   const { data: session } = useSession();
+  const balance = useGetWallet().data?.balance ?? 0;
   const forumNotif = useGetUserNotification();
   const setForumNotif = useSetUserNotification();
 
@@ -91,7 +94,7 @@ export const NavbarNext: React.FC = () => {
       </div>
       <div className="inline-flex flex-shrink-0 items-center"></div>
       <div className="inline-flex w-1/2 items-center justify-end gap-4">
-        <CommandDialogDemo />
+        <CommandMenu />
         {session ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -184,7 +187,7 @@ export const NavbarNext: React.FC = () => {
   );
 };
 
-export function CommandDialogDemo() {
+export function CommandMenu() {
   const router = useRouter();
   const threads = useGetForumThreads();
   const crons = useGetAllCrons();

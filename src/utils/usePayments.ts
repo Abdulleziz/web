@@ -1,5 +1,35 @@
 import { toast } from "react-hot-toast";
 import { api } from "./api";
+import { z } from "zod";
+import { UserId } from "./zod-utils";
+
+// validators
+export const SendMoneySchema = z.object({
+  toId: UserId,
+  amount: z.number().positive().int(),
+});
+
+export const CreateEntities = z
+  .object({
+    entityId: z.number().positive().int().min(1),
+    amount: z.number().min(1).default(1),
+  })
+  .array()
+  .nonempty();
+
+export const CreateSalary = z.object({
+  multiplier: z.number().min(1).max(20).default(10),
+  delay: z
+    .number()
+    .min(0)
+    .max(60 * 60 * 24 * 7)
+    .default(0)
+    .describe("in seconds"),
+});
+
+export type CreateEntities = z.infer<typeof CreateEntities>;
+export type CreateSalary = z.infer<typeof CreateSalary>;
+export type SendMoneySchema = z.infer<typeof SendMoneySchema>;
 
 // kaç paran var
 export const useGetWallet = () =>
