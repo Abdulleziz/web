@@ -6,6 +6,7 @@ import { createModal } from "~/utils/modal";
 import { useHydrated } from "~/pages/_app";
 import { useNotificationStage } from "~/lib/pusher/notifications";
 import { NavbarNext } from "./NavbarNext";
+import { SendMoneyDialog } from "./SendMoney";
 
 export const Themes = [
   "dracula",
@@ -141,6 +142,7 @@ export const LayoutNext: React.FC<Props> = ({
       <main className="min-h-screen bg-white dark:bg-zinc-950">
         <NavbarNext />
         {notifStage === "denied" && <Alert />}
+        <SendMoneyDialog />
         <Modal>
           <div className="flex flex-col items-center justify-center">
             <div className="loader h-32 w-32 rounded-full border-8 border-t-8 border-gray-200 ease-linear"></div>

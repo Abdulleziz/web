@@ -48,6 +48,7 @@ import {
   CommandSeparator,
 } from "./ui/command";
 import { useGetAllCrons } from "~/utils/useCron";
+import { useMoneyDialog } from "./SendMoney";
 import { useGetWallet } from "~/utils/usePayments";
 
 export const NavbarNext: React.FC = () => {
@@ -55,6 +56,7 @@ export const NavbarNext: React.FC = () => {
   const balance = useGetWallet().data?.balance ?? 0;
   const forumNotif = useGetUserNotification();
   const setForumNotif = useSetUserNotification();
+  const openMoneyDialog = useMoneyDialog((s) => s.setOpen);
 
   const [ref] = useAutoAnimate();
 
@@ -113,6 +115,13 @@ export const NavbarNext: React.FC = () => {
                     <span>Profil</span>
                   </Link>
                   <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => openMoneyDialog()}>
+                  <Wallet className="mr-2 h-4 w-4" />
+                  <span>Cüzdan</span>
+                  <DropdownMenuShortcut className="text-green-400">
+                    ${balance.toFixed()}
+                  </DropdownMenuShortcut>
                 </DropdownMenuItem>
                 {/* <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
@@ -193,6 +202,7 @@ export function CommandMenu() {
   const crons = useGetAllCrons();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const openMoneyDialog = useMoneyDialog((s) => s.setOpen);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -250,6 +260,9 @@ export function CommandMenu() {
               onSelect={() => runCommand(() => router.push("/manage"))}
             >
               Kullanıcıları Yönet
+            </CommandItem>
+            <CommandItem onSelect={() => openMoneyDialog()}>
+              Para Gönder
             </CommandItem>
           </CommandGroup>
           <CommandSeparator />
