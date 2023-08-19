@@ -7,6 +7,7 @@ import { useGetForumThreads } from "~/utils/useForum";
 import { getSystemEntityById } from "~/utils/entities";
 import { useConsumeTeaHistory } from "~/utils/useConsumable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Card } from "../ui/card";
 
 type PaymentData = RouterOutputs["payments"]["getAll"][number];
 type CronData = RouterOutputs["cron"]["getAll"][number];
@@ -37,7 +38,7 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
       const { createdAt, amountGram, consumer } = step.data;
       return (
         <li
-          className="step-primary step flex items-center space-x-4"
+          className="step step-primary flex items-center space-x-4"
           data-content="★"
         >
           <div className="text-sm">
@@ -55,12 +56,12 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
       const { id, creator, title, createdAt, pin } = step.data;
       return (
         <li
-          className="step-accent step flex items-center space-x-4"
+          className="step step-accent flex items-center space-x-4"
           data-content="★"
         >
           <div className="text-sm">
             Thread:{" "}
-            <Link className="link-secondary link" href={`/forum/threads/${id}`}>
+            <Link className="link link-secondary" href={`/forum/threads/${id}`}>
               {title.slice(0, 20)}
               {title.length > 20 && <span className="text-xs">...</span>}
             </Link>{" "}
@@ -79,12 +80,12 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
       url.searchParams.set("exp", cron);
       return (
         <li
-          className="step-secondary step flex items-center space-x-4"
+          className="step step-secondary flex items-center space-x-4"
           data-content="★"
         >
           <div className="text-sm">
             Cron:{" "}
-            <Link className="link-secondary link" href={url}>
+            <Link className="link link-secondary" href={url}>
               {title}
             </Link>{" "}
             exp: {cron} Herkese Açık: {isGlobal ? "✅" : "🟥"}{" "}
@@ -113,7 +114,7 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
           const users = pool.map((s) => s.to);
           return (
             <li
-              className="step-success step flex items-center space-x-4"
+              className="step step-success flex items-center space-x-4"
               data-content="$"
             >
               <div className="text-sm">
@@ -130,7 +131,7 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
           const { from, to, amount } = step.data;
           return (
             <li
-              className="step-info step flex items-center space-x-4"
+              className="step step-info flex items-center space-x-4"
               data-content="$"
             >
               Transfer kimden: {from.name} kime: {to.name} miktar: ${amount}
@@ -175,7 +176,7 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
           );
           return (
             <li
-              className="step-primary step flex items-center space-x-4"
+              className="step step-primary flex items-center space-x-4"
               data-content="$"
             >
               <div>
@@ -217,7 +218,7 @@ export const HistoryPanel = createPanel([], () => {
   ].sort((a, b) => b.data.createdAt.getTime() - a.data.createdAt.getTime());
 
   return (
-    <div className="row-span-3 rounded-lg bg-base-100 shadow">
+    <Card className="row-span-3 rounded-lg shadow">
       <div className="flex items-center justify-between border-b border-base-200 px-6 py-5 font-semibold">
         <span>Geçmiş Paneli</span>
       </div>
@@ -231,6 +232,6 @@ export const HistoryPanel = createPanel([], () => {
           ))}
         </ul>
       </div>
-    </div>
+    </Card>
   );
 });

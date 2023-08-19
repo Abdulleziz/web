@@ -22,6 +22,7 @@ import {
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import { formatName } from "~/utils/abdulleziz";
 import { VoteEvent } from ".";
+import { Card } from "~/components/ui/card";
 
 const Worker: NextPage = () => {
   const router = useRouter();
@@ -32,7 +33,7 @@ const Worker: NextPage = () => {
         <div className="flex h-screen flex-col items-center justify-center gap-4">
           <p>Gerçek bir Discord id gibi durmuyor!</p>
           <div
-            className="btn-primary btn"
+            className="btn btn-primary"
             onClick={() => void router.push("/manage")}
           >
             Geri Dön
@@ -98,23 +99,20 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
               ))}
             </div>
           </div>
-          <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            <div className="flex items-center gap-4 rounded-lg bg-base-100 p-8 shadow"></div>
+          <Card>
+            <div className="flex rounded-lg shadow"></div>
             {worker?.roles[0]?.name !== "CEO" ? (
-              <div className="flex flex-col items-start gap-4 rounded-lg bg-base-100 p-8 shadow">
+              <div className="flex flex-col gap-2 rounded-lg p-4 shadow lg:gap-4 lg:p-8">
                 {roles.map((role) => {
                   if (role === "CEO") {
                     return (
-                      <div
-                        className="flex items-center justify-center gap-4"
-                        key={role}
-                      >
-                        <h1 className="text-2xl">{role}</h1>
+                      <div className="flex items-start gap-4" key={role}>
+                        <h1 className="md:text-2xl">{role}</h1>
                         <button
                           disabled={!!voteEventCEO.data?.sitUntil}
                           onClick={() => voteCEO.mutate(worker?.user.id ?? "")}
                           className={classNames(
-                            "btn-xs btn bg-black text-zinc-300",
+                            "btn btn-xs bg-black text-zinc-300",
                             { ["loading"]: voteCEO.isLoading }
                           )}
                         >
@@ -143,17 +141,14 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
                   const instant =
                     (userSelf && quit) || required <= selfSeverity;
                   return (
-                    <div
-                      className="flex items-center justify-center gap-4"
-                      key={role}
-                    >
-                      <h1 className="text-2xl">{role}</h1>
+                    <div className="flex items-start gap-4" key={role}>
+                      <h1 className="md:text-2xl">{role}</h1>
                       <button
                         onClick={() =>
                           vote.mutate({ role, user: worker?.user.id ?? "" })
                         }
                         className={classNames(
-                          "btn-xs btn",
+                          "btn btn-xs",
                           quit
                             ? "btn-error"
                             : promote
@@ -180,23 +175,23 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
                 })}
               </div>
             ) : (
-              <div className="flex flex-col items-start gap-4 rounded-lg bg-base-100 p-8 shadow">
+              <div className="flex flex-col items-start gap-4 rounded-lg p-8 shadow">
                 <p className="text-2xl">{"CEO'yu"} yönetemezsin</p>
               </div>
             )}
-          </section>
-          <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          </Card>
+          <Card className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             {voteEvents
               .filter((e) => e.target.user.id === worker?.user.id)
               .map((event) => (
                 <div
                   key={event.id}
-                  className="flex flex-col items-center rounded-lg bg-base-100 p-8 shadow"
+                  className="flex flex-col items-center rounded-lg p-8 shadow"
                 >
                   <VoteEvent event={event} />
                 </div>
               ))}
-          </section>
+          </Card>
         </main>
       </div>
     </Layout>

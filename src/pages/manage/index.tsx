@@ -5,7 +5,6 @@ import classNames from "classnames";
 import { Layout } from "~/components/Layout";
 import {
   useGetAbdullezizUser,
-  useGetAbdullezizUsers,
   useGetAbdullezizUsersSorted,
   useGetVoteEventsWithMembers,
   useVote,
@@ -19,20 +18,105 @@ import {
   PROMOTE,
   abdullezizRoleSeverities,
 } from "~/utils/zod-utils";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 
 export type VoteEventWithMember = NonNullable<
   ReturnType<typeof useGetVoteEventsWithMembers>["data"]
 >[number];
 
 const Manage: NextPage = () => {
-  const { isLoading } = useGetAbdullezizUsers();
+  const { data, isLoading } = useGetAbdullezizUsersSorted();
+  const members = data ?? [];
+  const events = useGetVoteEventsWithMembers();
 
-  return isLoading ? (
-    <LoadingDashboard />
-  ) : (
+  if (isLoading || events.isLoading) {
+    return <LoadingDashboard />;
+  }
+
+  return (
     <Layout>
       <div className="flex min-h-screen flex-row items-center justify-center pb-32">
-        <Members />
+        <div className="flex flex-col gap-6 sm:flex-row">
+          <Card className="rounded-lg shadow">
+            <CardHeader>
+              <CardTitle>Abdulleziz Çalışanları</CardTitle>
+              <CardDescription>
+                Yönetmek İstediğiniz Çalışanı Seçin
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-y-auto">
+              <ul className="grid gap-5 space-y-6 p-6 md:grid-cols-2 xl:grid-cols-3">
+                {members.map((member) => {
+                  const highestRole = member.roles[0];
+                  const avatar = getAvatarUrl(member.user, member.avatar);
+                  const style = highestRole
+                    ? {
+                        color: `#${highestRole.color
+                          .toString(16)
+                          .padStart(6, "0")}`,
+                      }
+                    : { color: "white" };
+                  return (
+                    <Card
+                      key={member.user.id}
+                      className="mt-auto cursor-pointer rounded bg-slate-300 transition-all hover:scale-110 hover:bg-info-content dark:bg-zinc-900"
+                    >
+                      {member.user.id && (
+                        <Link
+                          href={`manage/${member.user.id}`}
+                          className="mb-5 ml-5 mr-5 mt-5 flex flex-col items-center"
+                        >
+                          <div className="avatar-group">
+                            {avatar && (
+                              <Image
+                                className="avatar w-14"
+                                src={avatar}
+                                alt="Profile photo"
+                                width={256}
+                                height={256}
+                              />
+                            )}
+                          </div>
+                          <p style={style}>{member.nick}</p>
+                          <p className="text-gray-400">
+                            {member.user.username}
+                          </p>
+
+                          {highestRole ? (
+                            <p style={style}>({highestRole.name})</p>
+                          ) : (
+                            "(Unemployeed 🤣)"
+                          )}
+                        </Link>
+                      )}
+                    </Card>
+                  );
+                })}
+              </ul>
+            </CardContent>
+          </Card>
+          {!!events.data && (
+            <Card className="rounded sm:col-span-1">
+              <CardHeader>
+                <CardTitle>Oylama Etkinliği Mevcut!</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center px-6 py-5 font-semibold">
+                <div className="grid gap-6 md:grid-cols-1 xl:grid-cols-1 ">
+                  {/* TODO: CEO VOTE HERE */}
+                  {events.data.map((event) => (
+                    <VoteEvent key={event.id} event={event} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </Layout>
   );
@@ -119,7 +203,7 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
           <div className="flex gap-2">
             Toplam Oy: {event.votes.length}
             <UsersModal id={event.id} votes={event.votes} />{" "}
-            <label htmlFor={event.id} className=" btn-xs btn">
+            <label htmlFor={event.id} className=" btn btn-xs">
               (oylar)
             </label>
           </div>
@@ -130,7 +214,7 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
       <button
         disabled={!!event.endedAt}
         className={classNames(
-          "btn-xs btn mx-2 mb-2",
+          "btn btn-xs mx-2 mb-2",
           instant && !quit && "btn-success",
           quit && "btn-error"
         )}
@@ -157,86 +241,6 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
           ? "Düşürmek için son oyu ver!"
           : `Düşürme oyu ver (+${selfSeverity})YD`}
       </button>
-    </div>
-  );
-};
-
-export const Members: React.FC = () => {
-  const { data, isLoading } = useGetAbdullezizUsersSorted();
-  const members = data ?? [];
-  const events = useGetVoteEventsWithMembers();
-
-  return isLoading || events.isLoading ? (
-    <LoadingDashboard />
-  ) : (
-    <div className="flex flex-col gap-6 sm:flex-row">
-      <div className="rounded-lg bg-base-200 shadow">
-        <div className="flex items-center justify-between border-b border-base-200 px-6 py-5 font-semibold">
-          <span>Abdulleziz Çalışanları</span>
-          <span>Yönetmek İstediğiniz Çalışanı Seçin</span>
-        </div>
-        <div className="overflow-y-auto ">
-          <ul className="grid gap-5 space-y-6 p-6 md:grid-cols-2 xl:grid-cols-3">
-            {members.map((member) => {
-              const highestRole = member.roles[0];
-              const avatar = getAvatarUrl(member.user, member.avatar);
-              const style = highestRole
-                ? {
-                    color: `#${highestRole.color
-                      .toString(16)
-                      .padStart(6, "0")}`,
-                  }
-                : { color: "white" };
-              return (
-                <li
-                  key={member.user.id}
-                  className="mt-auto cursor-pointer rounded bg-base-100 transition-all hover:scale-110 hover:bg-info-content"
-                >
-                  {member.user.id && (
-                    <Link
-                      href={`manage/${member.user.id}`}
-                      className="mt-5 mb-5 ml-5 mr-5 flex flex-col items-center"
-                    >
-                      <div className="avatar-group">
-                        {avatar && (
-                          <Image
-                            className="avatar w-14"
-                            src={avatar}
-                            alt="Profile photo"
-                            width={256}
-                            height={256}
-                          />
-                        )}
-                      </div>
-                      <p style={style}>{member.nick}</p>
-                      <p className="text-gray-400">{member.user.username}</p>
-
-                      {highestRole ? (
-                        <p style={style}>({highestRole.name})</p>
-                      ) : (
-                        "(Unemployeed 🤣)"
-                      )}
-                    </Link>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </div>
-      {!!events.data && (
-        <div className="rounded bg-base-200 sm:col-span-1">
-          <div className="flex flex-col items-center  border-b border-base-200 px-6 py-5 font-semibold">
-            <h1 className="mb-3">Oylama Etkinliği Mevcut!</h1>
-            <div className="grid gap-6 md:grid-cols-1 xl:grid-cols-1 ">
-              {/* TODO: CEO VOTE HERE */}
-              {events.data.map((event) => (
-                <VoteEvent key={event.id} event={event} />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

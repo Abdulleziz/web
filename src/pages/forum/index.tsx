@@ -2,6 +2,7 @@ import type { NextPage } from "next";
 import Link from "next/link";
 import { Layout } from "~/components/Layout";
 import Threads from "./threads/index";
+import { Button } from "~/components/ui/button";
 
 const Forum: NextPage = () => {
   return (
@@ -18,19 +19,19 @@ const Forum: NextPage = () => {
 const ForumWelcome: React.FC = () => {
   return (
     <>
-      <div className="navbar pt-8 flex sm:flex-row flex-col">
+      <div className="navbar flex flex-col pt-8 sm:flex-row">
         <div className="navbar-start"></div>
         <div className="navbar-center">
-          <h1 className="px-16 text-xl md:text-3xl font-extrabold tracking-tight text-current">
+          <h1 className="px-16 text-xl font-extrabold tracking-tight text-current md:text-3xl">
             Abdulleziz Forumuna Hoş Geldin!
           </h1>
         </div>
         <div className="navbar-end">
           <Link
             href="/forum/threads/new"
-            className="transtion-all text-1xl btn-success btn mr-7 rounded-full p-2 text-base font-semibold transition-all hover:scale-110"
+            className="mr-7 p-2 font-semibold transition-all hover:scale-110"
           >
-            Yeni Thread
+            <Button size="relative-lg">Yeni Thread</Button>
           </Link>
         </div>
       </div>

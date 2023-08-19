@@ -22,12 +22,22 @@ import {
   useGetDiscordMembers,
 } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
-import classNames from "classnames";
 import { toast } from "react-hot-toast";
 import { useBuyEntities, useNextSalaryDate } from "~/utils/usePayments";
 import { useConsumeTea, useGetRemainingTea } from "~/utils/useConsumable";
 import { createPanel } from "./utils";
 import { formatName } from "~/utils/abdulleziz";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "../ui/card";
+import { Button } from "../ui/button";
+import { CurrentAvatar, CurrentGuildAvatar } from "../CurrentAvatar";
+import { useMoneyDialog } from "../SendMoney";
 
 ChartJS.register(
   RadialLinearScale,
@@ -45,194 +55,203 @@ export const Panel: React.FC<PanelProps> = ({ children }) => {
 };
 
 export const GlobalPanel = createPanel(undefined, () => {
+  const openMoneyDialog = useMoneyDialog((s) => s.setOpen);
+
   return (
-    <Panel>
-      <div className="menu flex items-center gap-4">
-        <div className="menu-title">Kullanıcı İşlemleri</div>
-        <Link className="menu-item btn-success btn-sm btn" href="/forum">
-          Foruma git
+    <Card>
+      <CardHeader>
+        <CardTitle>Kullanıcı İşlemleri</CardTitle>
+        <CardDescription>Herkesin kullanabildiği işlemler.</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center gap-4">
+        <Button size="sm" onClick={() => openMoneyDialog()}>
+          Para gönder
+        </Button>
+        <Link href="/forum">
+          <Button size="sm">Foruma git</Button>
         </Link>
-        <Link className="menu-item btn-primary btn-sm btn" href="/cron">
-          Hatırlatıcıya git
+        <Link href="/cron">
+          <Button size="sm">Hatırlatıcıya git</Button>
         </Link>
-      </div>
-    </Panel>
+      </CardContent>
+      <CardFooter className="flex items-center justify-center gap-4">
+        <CurrentAvatar />
+      </CardFooter>
+    </Card>
   );
 });
 
 export const MemberPanel = createPanel(undefined, () => {
   const voteCEO = useGetCEOVoteEvent();
   const { data, isLoading } = useGetAbdullezizUser();
-  if (isLoading) return <button className="loading btn">Yükleniyor</button>;
+  if (isLoading) return <button className="btn loading">Yükleniyor</button>;
   if (!data) return <button className="btn">Error</button>;
   if (data.roles.length === 0) return null;
 
   const canVote = data.perms.includes("oylamaya katıl");
-  const canRequestBonus = data.perms.includes("bonus iste");
+  const canRequestBonus = data.perms.includes("bonus iste") && false;
   const canTakeSalary = data.perms.includes("maaş al");
 
   return (
-    <Panel>
-      <div className="menu flex items-center gap-4">
-        <div className="menu-title">Çalışan İşlemleri</div>
-        <div className="menu-item">
-          <Link href="/manage">
-            <button
-              className={classNames("btn-sm btn", {
-                ["loading"]: voteCEO.isLoading,
-              })}
-              disabled={voteCEO.isLoading || (!voteCEO.data && !canVote)}
-            >
-              {voteCEO.data ? "Oylamaya katıl" : "Oylama başlat"}
-            </button>
-          </Link>
-        </div>
-        <div className="menu-item">
-          <button className="btn-sm btn" disabled={!canRequestBonus}>
-            Bonus iste
-            {/* CEO uyarıp fazladan maaş iste */}
-          </button>
-        </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Çalışan İşlemleri</CardTitle>
+        <CardDescription>
+          Abdülleziz çalışanlarının kullanabildiği işlemler.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center gap-4">
+        <Link href="/manage">
+          <Button
+            size="sm"
+            isLoading={voteCEO.isLoading}
+            disabled={voteCEO.isLoading || (!voteCEO.data && !canVote)}
+          >
+            {voteCEO.data ? "Oylamaya katıl" : "Oylama başlat"}
+          </Button>
+        </Link>
+        <Button disabled={!canRequestBonus} size="sm">
+          Bonus iste
+          {/* CEO uyarıp fazladan maaş iste */}
+        </Button>
+      </CardContent>
+      <CardFooter className="flex items-center justify-center gap-4">
+        <CurrentGuildAvatar />
         {canTakeSalary && (
-          <div className="menu-item">
+          <div>
             Sonraki Maaş
             <SalaryCounter />
           </div>
         )}
-      </div>
-    </Panel>
+      </CardFooter>
+    </Card>
   );
 });
 
 export const AdminPanel = createPanel(undefined, () => {
   const { data, isLoading } = useGetAbdullezizUser();
 
-  if (isLoading) return <button className="loading btn">Yükleniyor</button>;
+  if (isLoading) return <button className="btn loading">Yükleniyor</button>;
   if (!data) return <button className="btn">Error</button>;
 
   const manageForum = data.perms.includes("forumu yönet");
   const manageForumPins = data.perms.includes("forum thread pinle");
 
   return (
-    <Panel>
-      <div className="menu flex items-center gap-4">
-        <div className="menu-title">Yönetici İşlemleri</div>
-        <div className="menu-item">
-          <Link href="/manage">
-            <button className="btn-sm btn">Çalışanları Yönet!</button>
-          </Link>
-        </div>
-        <div className="menu-item">
-          <Link href="/forum">
-            <button
-              className="btn-sm btn"
-              disabled={!manageForum && !manageForumPins}
-            >
-              {manageForumPins && !manageForum
-                ? "Thread Pinle"
-                : "Forumu yönet"}
-            </button>
-          </Link>
-        </div>
-      </div>
-    </Panel>
+    <Card>
+      <CardHeader>
+        <CardTitle>Yönetici İşlemleri</CardTitle>
+        <CardDescription>
+          Abdülleziz büyüklerinin kullanabildiği işlemler. Satranç oynamak gibi
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center gap-4">
+        <Link href="/manage">
+          <Button size="sm">Çalışanları Yönet!</Button>
+        </Link>
+        <Link href="/forum">
+          <Button size="sm" disabled={!manageForum && !manageForumPins}>
+            {manageForumPins && !manageForum ? "Thread Pinle" : "Forumu yönet"}
+          </Button>
+        </Link>
+      </CardContent>
+      <CardFooter className="flex items-center justify-center gap-4">
+        <CurrentGuildAvatar />
+      </CardFooter>
+    </Card>
   );
 });
 
 export const DriveablePabel = createPanel(undefined, () => {
   const { data, isLoading } = useGetAbdullezizUser();
-  if (isLoading) return <button className="loading btn">Yükleniyor</button>;
+  if (isLoading) return <button className="btn loading">Yükleniyor</button>;
   if (!data) return <button className="btn">Error</button>;
 
-  const canDrive = data.perms.includes("araba sür");
-  const canManage = data.perms.includes("arabaları yönet");
-
+  const canDrive = data.perms.includes("araba sür") && false;
+  const canManage = data.perms.includes("arabaları yönet") && false;
   return (
-    <Panel>
-      <div className="menu flex items-center gap-4">
-        <div className="menu-title">Araç İşlemleri</div>
-        <div className="menu-item">
-          <button className="btn-sm btn" disabled={!canDrive}>
-            Araba sür
-          </button>
-        </div>
-        <div className="menu-item">
-          <button className="btn-sm btn" disabled={!canManage}>
-            Arabaları yönet
-          </button>
-        </div>
-      </div>
-    </Panel>
+    <Card>
+      <CardHeader>
+        <CardTitle>Araç İşlemleri</CardTitle>
+        <CardDescription>
+          Megan sürmek veya araba yönetmek için kullanılan işlemler.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center gap-4">
+        <Button size="sm" disabled={!canDrive}>
+          Araba sür
+        </Button>
+        <Button size="sm" disabled={!canManage}>
+          Arabaları yönet
+        </Button>
+      </CardContent>
+      <CardFooter className="flex items-center justify-center gap-4">
+        <CurrentGuildAvatar />
+      </CardFooter>
+    </Card>
   );
 });
 
-export const CEOVotePanel = createPanel(
-  undefined,
-  () => {
-    const { data, isLoading } = useGetCEOVoteEventWithMembers();
+export const CEOVotePanel = createPanel(undefined, () => {
+  const { data, isLoading } = useGetCEOVoteEventWithMembers();
 
-    if (isLoading)
-      return (
-        <button className="loading btn">CEO oylamasına bakılıyor...</button>
-      );
-    if (!data) return null;
+  if (isLoading)
+    return <button className="btn loading">CEO oylamasına bakılıyor...</button>;
+  if (!data) return null;
 
-    return (
-      // should be black theme
-      <div className="menu flex items-center overflow-x-auto overflow-y-auto rounded-lg bg-black p-4 text-zinc-400 lg:w-max">
-        <div className="menu-title">CEO Oylaması</div>
-        <div className="menu-item flex">
+  return (
+    <div className="menu flex items-center overflow-x-auto overflow-y-auto rounded-lg bg-black p-4 text-zinc-400 lg:w-max">
+      <div className="menu-title">CEO Oylaması</div>
+      <div className="menu-item flex">
+        <div className="menu-item flex flex-col items-center p-2">
+          <span className="font-mono text-primary">Oy sayısı</span>
+          <span className="px-2 font-mono font-bold">
+            {data.votes.length} oy ({data.required} olan kazanır)
+          </span>
+        </div>
+        {data.estimated && (
           <div className="menu-item flex flex-col items-center p-2">
-            <span className="font-mono text-primary">Oy sayısı</span>
+            <span className="font-mono text-primary">Tahmini bitiş</span>
             <span className="px-2 font-mono font-bold">
-              {data.votes.length} oy ({data.required} olan kazanır)
+              {data.estimated.toLocaleString("tr-TR")}
             </span>
           </div>
-          {data.estimated && (
-            <div className="menu-item flex flex-col items-center p-2">
-              <span className="font-mono text-primary">Tahmini bitiş</span>
-              <span className="px-2 font-mono font-bold">
-                {data.estimated.toLocaleString("tr-TR")}
-              </span>
-            </div>
-          )}
-          {data.endedAt && (
-            <div className="menu-item flex flex-col items-center p-2">
-              <span className="font-mono text-primary">Bitti</span>
-              <span className="px-2 font-mono text-sm font-bold">
-                Oylama {data.endedAt.toLocaleString("tr-TR")} tarihinde bitti.
-              </span>
-              {data.sitUntil && (
-                <span className="px-2 font-mono text-sm font-bold">
-                  CEO {data.sitUntil.toLocaleString("tr-TR")}
-                  {"'e"} kadar koltuktan kaldırılamaz.
-                </span>
-              )}
-              {data.winner ? (
-                <span className="px-2 font-mono font-bold text-primary">
-                  Kazanan: {formatName(data.winner)}
-                </span>
-              ) : (
-                <span className="px-2 font-mono text-sm font-bold text-primary">
-                  Kazanan çıkmadığı için oylama tekrar başlatılabilir.
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="menu-item flex flex-col items-center whitespace-nowrap">
-          <span className="font-mono text-primary">Oy verenler</span>
-          {data.votes.map((v) => (
-            <span key={v.id} className="px-2 font-mono font-bold">
-              {`${formatName(v.voter)} -> ${formatName(v.target)}`}
+        )}
+        {data.endedAt && (
+          <div className="menu-item flex flex-col items-center p-2">
+            <span className="font-mono text-primary">Bitti</span>
+            <span className="px-2 font-mono text-sm font-bold">
+              Oylama {data.endedAt.toLocaleString("tr-TR")} tarihinde bitti.
             </span>
-          ))}
-        </div>
+            {data.sitUntil && (
+              <span className="px-2 font-mono text-sm font-bold">
+                CEO {data.sitUntil.toLocaleString("tr-TR")}
+                {"'e"} kadar koltuktan kaldırılamaz.
+              </span>
+            )}
+            {data.winner ? (
+              <span className="px-2 font-mono font-bold text-primary">
+                Kazanan: {formatName(data.winner)}
+              </span>
+            ) : (
+              <span className="px-2 font-mono text-sm font-bold text-primary">
+                Kazanan çıkmadığı için oylama tekrar başlatılabilir.
+              </span>
+            )}
+          </div>
+        )}
       </div>
-    );
-  },
-  { notAChild: true }
-);
+      <div className="menu-item flex flex-col items-center whitespace-nowrap">
+        <span className="font-mono text-primary">Oy verenler</span>
+        {data.votes.map((v) => (
+          <span key={v.id} className="px-2 font-mono font-bold">
+            {`${formatName(v.voter)} -> ${formatName(v.target)}`}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+});
 
 export const ServantPanel = createPanel(undefined, () => {
   const { data, isLoading } = useGetAbdullezizUser();
@@ -241,7 +260,7 @@ export const ServantPanel = createPanel(undefined, () => {
   const consumeTea = useConsumeTea();
   const buyEntities = useBuyEntities();
 
-  if (isLoading) return <button className="loading btn">Yükleniyor</button>;
+  if (isLoading) return <button className="btn loading">Yükleniyor</button>;
   if (!data) return <button className="btn">Error</button>;
 
   const canBuy = data.perms.includes("çay satın al");
@@ -250,10 +269,10 @@ export const ServantPanel = createPanel(undefined, () => {
   const ummmmm = data.perms.includes("*i*n-t*i.h?a_r ½e(t=");
 
   return (
-    <Panel>
-      <div className="menu flex items-center gap-4">
-        <div className="menu-title">Çay Paneli</div>
-        <div className="menu-item">
+    <Card>
+      <CardHeader>
+        <CardTitle>Çay Paneli</CardTitle>
+        <CardDescription>
           <span className="font-mono text-primary">Kalan çay</span>
           <span className="p-2 font-mono font-bold">
             {remainingTea.isLoading ||
@@ -263,65 +282,60 @@ export const ServantPanel = createPanel(undefined, () => {
               : remainingTea.data.amountGram}
             gr
           </span>
-        </div>
-        <div className="menu-item">
-          <button
-            className="btn-sm btn"
-            disabled={!remainingTea.data?.amountGram || consumeTea.isLoading}
-            onClick={() => consumeTea.mutate()}
-          >
-            {canServe ? "Çay koy" : "Çay söylet"}
-          </button>
-        </div>
-        <div className="menu-item">
-          <button
-            className={classNames("btn-sm btn gap-2", {
-              ["btn-warning"]: !remainingTea.data?.amountGram,
-              ["loading"]: buyEntities.isLoading,
-            })}
-            disabled={!canBuy || buyEntities.isLoading}
-            onClick={() => {
-              // TODO: ilerde bu button direkt mağazaya götürsün...
-              toast.loading("Çay satın alınıyor", { id: "buyTea" });
-              buyEntities.mutate(
-                [
-                  { entityId: 1, amount: 1 }, // 1kg
-                  { entityId: 2, amount: 5 }, // 200gr * 5 = 1kg
-                  // toplam 2kg çay 🤣🍔😭😎
-                ],
-                {
-                  onSuccess: () => {
-                    toast.success(
-                      "Çay satın alındı (1kg + 5x200gr) (400 serving)",
-                      { id: "buyTea" }
-                    );
-                  },
-                  onError: () =>
-                    toast.error("Çay satın alınamadı", { id: "buyTea" }),
-                }
-              );
-            }}
-          >
-            Çay satın al
-          </button>
-        </div>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center gap-4">
+        <Button
+          size="sm"
+          disabled={!remainingTea.data?.amountGram || consumeTea.isLoading}
+          onClick={() => consumeTea.mutate()}
+        >
+          {canServe ? "Çay koy" : "Çay söylet"}
+        </Button>
+        <Button
+          size="sm"
+          isLoading={buyEntities.isLoading}
+          variant={!remainingTea.data?.amountGram ? "warning" : undefined}
+          disabled={!canBuy || buyEntities.isLoading}
+          onClick={() => {
+            // TODO: ilerde bu button direkt mağazaya götürsün...
+            toast.loading("Çay satın alınıyor", { id: "buyTea" });
+            buyEntities.mutate(
+              [
+                { entityId: 1, amount: 1 }, // 1kg
+                { entityId: 2, amount: 5 }, // 200gr * 5 = 1kg
+                // toplam 2kg çay 🤣🍔😭😎
+              ],
+              {
+                onSuccess: () => {
+                  toast.success(
+                    "Çay satın alındı (1kg + 5x200gr) (400 serving)",
+                    { id: "buyTea" }
+                  );
+                },
+                onError: () =>
+                  toast.error("Çay satın alınamadı", { id: "buyTea" }),
+              }
+            );
+          }}
+        >
+          Çay satın al
+        </Button>
         {!canServe && (
-          <div className="menu-item">
-            <button
-              className="btn-warning btn-sm btn"
-              disabled={!canShout || !remainingTea}
-            >
-              Çaycıya kız
-            </button>
-          </div>
+          <Button
+            size="sm"
+            variant="warning"
+            disabled={!canShout || !remainingTea}
+          >
+            Çaycıya kız (0/5)
+          </Button>
         )}
-        {ummmmm && (
-          <div className="menu-item">
-            <button className="btn-error btn-sm btn">İntihar et</button>
-          </div>
-        )}
-      </div>
-    </Panel>
+        {ummmmm && <Button variant="destructive">İntihar et</Button>}
+      </CardContent>
+      <CardFooter className="flex items-center justify-center gap-4">
+        <CurrentGuildAvatar />
+      </CardFooter>
+    </Card>
   );
 });
 
@@ -409,9 +423,9 @@ export const VoteChart = createPanel(undefined, () => {
   };
 
   return (
-    <div className="flex items-center justify-center rounded-md border-2 border-dashed border-gray-200 bg-base-300 px-4 py-4 text-3xl font-semibold text-gray-400">
+    <Card className="flex items-center justify-center rounded-md border-2 border-dashed px-4 py-4 text-3xl font-semibold ">
       <Radar data={chartData} options={ChartOptions} />
-    </div>
+    </Card>
   );
 });
 
@@ -420,7 +434,7 @@ export const MembersPanel = createPanel(undefined, () => {
   const members = getMembers.data ?? [];
 
   return (
-    <div className="row-span-3 rounded-lg bg-base-100 shadow">
+    <Card className="row-span-3 rounded-lg shadow">
       <div className="flex items-center justify-between border-b border-base-200 px-6 py-5 font-semibold">
         <span>Abdulleziz Çalışanları</span>
       </div>
@@ -462,7 +476,7 @@ export const MembersPanel = createPanel(undefined, () => {
           })}
         </ul>
       </div>
-    </div>
+    </Card>
   );
 });
 

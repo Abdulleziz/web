@@ -37,7 +37,6 @@ import {
   Wallet,
   WalletCards,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
   CommandDialog,
   CommandEmpty,
@@ -50,6 +49,7 @@ import {
 import { useGetAllCrons } from "~/utils/useCron";
 import { useMoneyDialog } from "./SendMoney";
 import { useGetWallet } from "~/utils/usePayments";
+import { CurrentAvatar } from "./CurrentAvatar";
 
 export const NavbarNext: React.FC = () => {
   const { data: session } = useSession();
@@ -100,10 +100,7 @@ export const NavbarNext: React.FC = () => {
         {session ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Avatar>
-                <AvatarImage src={session.user.image || undefined} />
-                <AvatarFallback>{session.user.name}</AvatarFallback>
-              </Avatar>
+              <CurrentAvatar />
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
               <DropdownMenuLabel>Hesabım</DropdownMenuLabel>
