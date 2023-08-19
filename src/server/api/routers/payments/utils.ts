@@ -2,7 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { type Transaction, prisma } from "~/server/db";
 import { type SystemEntity, getSystemEntityById } from "~/utils/entities";
-import type { CreateEntities } from ".";
+import type { CreateEntities } from "~/utils/usePayments";
 
 export const ensurePayment = <
   P extends Prisma.PaymentGetPayload<{ include: { from: true; to: true } }>
