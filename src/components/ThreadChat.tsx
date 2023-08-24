@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Check, Plus, Send } from "lucide-react";
+import { Check, Plus, Send, Trash } from "lucide-react";
 
 import { cn } from "~/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -45,105 +45,178 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useGetAbdullezizUsers } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import { formatName } from "~/utils/abdulleziz";
+import {
+  ThreadUpload,
+  addAttachments,
+  removeAttachment,
+  setAttachments,
+  setProgress,
+  useAttachmentStore,
+} from "./ThreadUpload";
+import Image from "next/image";
+import { type FileWithPath, useDropzone } from "react-dropzone";
+import { useUploadThing } from "~/utils/uploadthing";
+import { toast } from "react-hot-toast";
+import { generateClientDropzoneAccept } from "uploadthing/client";
 
 type Attachment = { fileKey: string; fileUrl: string };
 
 export function CardsChat({ threadId }: { threadId: string }) {
   const thread = useGetForumThread(threadId);
   const createPost = useCreateForumPost();
-  const deleteAttachment = usePostDeleteAttachments();
   const abdullezizUsers = useGetAbdullezizUsers();
+  const [content, setContent] = React.useState("");
   const [mentions, setMentions] = React.useState(new Set<string>());
-  const [attachments, setAttachments] = React.useState<Attachment[]>([]);
-
+  const attachments = useAttachmentStore((s) => s.attachments);
   const users = (abdullezizUsers.data ?? []).filter(
     (m) => !m.user.bot && m.id !== undefined
   );
   const [open, setOpen] = React.useState(false);
   const [selectedUsers, setSelectedUsers] = React.useState<string[]>([]);
 
+  const [showDrag, setShowDrag] = React.useState(false);
+
+  const onDrop = React.useCallback((acceptedFiles: FileWithPath[]) => {
+    addAttachments(acceptedFiles);
+    setShowDrag(false);
+  }, []);
+
+  const { permittedFileInfo, startUpload, isUploading } = useUploadThing(
+    "threadPostAttachmentUploader",
+    {
+      onClientUploadComplete: () => {
+        // pass
+      },
+      onUploadError: ({ message }) => {
+        toast.error(`Upload failed: ${message}.`);
+      },
+      onUploadProgress: setProgress,
+    }
+  );
+
+  const fileTypes = permittedFileInfo?.config
+    ? Object.keys(permittedFileInfo.config)
+    : [];
+
+  const { getRootProps } = useDropzone({
+    onDragLeave: () => setShowDrag(false),
+    onDragOver: () => setShowDrag(true),
+    onDrop,
+    accept: fileTypes ? generateClientDropzoneAccept(fileTypes) : undefined,
+    noClick: true,
+  });
+
+  const handleCreatePost = (content: string, uploads: Attachment[]) => {
+    createPost.mutate(
+      {
+        threadId,
+        message:
+          content +
+          (uploads.length > 0
+            ? "\n" + uploads.map((a) => a.fileUrl).join(" ")
+            : ""),
+        mentions: [...mentions],
+      },
+      {
+        onSuccess: () => {
+          setMentions(new Set());
+          setAttachments([]);
+        },
+      }
+    );
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    let uploads = undefined;
+    if (attachments.length > 0) {
+      uploads = await startUpload(attachments);
+    }
+    handleCreatePost(content, uploads ?? []);
+    setContent("");
+  };
+
   if (!thread.data) return null;
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-center ">
-          <div className="overflow-x-auto">
-            <h1 className="text-lg font-semibold tracking-tight text-white sm:text-3xl">
-              {thread.data.title}
-            </h1>
-            <p className="pt-1 text-sm sm:text-base">
-              {thread.data.creator.name} •{" "}
-              {thread.data.createdAt.toLocaleString()} • Forum ayarları:
-              [Bildirimler: {thread.data.defaultNotify}]
-            </p>
+      <div {...getRootProps()}>
+        {showDrag ? (
+          <div className="mt-2 rounded-md border p-4">
+            <div className="flex h-screen w-full items-center justify-center rounded-md border-2 border-dashed">
+              <p className="flex flex-col text-sm">
+                <span className="mr-1 font-semibold">Click to upload</span>
+                <span>or drag and drop.</span>
+                <span className="text-xs text-muted-foreground">
+                  (Max {permittedFileInfo?.config.image?.maxFileSize})
+                </span>
+              </p>
+            </div>
           </div>
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
+        ) : (
+          <Card>
+            <CardHeader className="flex flex-row items-center">
+              <div className="overflow-x-auto">
+                <h1 className="text-lg font-semibold tracking-tight text-white sm:text-3xl">
+                  {thread.data.title}
+                </h1>
+                <p className="pt-1 text-sm sm:text-base">
+                  {thread.data.creator.name} •{" "}
+                  {thread.data.createdAt.toLocaleString()} • Forum ayarları:
+                  [Bildirimler: {thread.data.defaultNotify}]
+                </p>
+              </div>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="ml-auto rounded-full"
+                      onClick={() => setOpen(true)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={10}>
+                    Bir kullanıcıyı bahset
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </CardHeader>
+            <CardContent>
+              <Posts threadId={threadId} />
+            </CardContent>
+            <CardFooter>
+              <form
+                onSubmit={(e) => void handleSubmit(e)}
+                className="flex w-full items-center space-x-2"
+              >
+                <Input
+                  id="message"
+                  placeholder="Mesajınızı yazın..."
+                  className="flex-1"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                />
+                <ThreadUpload />
                 <Button
+                  type="submit"
                   size="icon"
-                  variant="outline"
-                  className="ml-auto rounded-full"
-                  onClick={() => setOpen(true)}
+                  disabled={createPost.isLoading || isUploading}
+                  isLoading={createPost.isLoading || isUploading}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Send className="h-4 w-4" />
+                  <span className="sr-only">Gönder</span>
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent sideOffset={10}>
-                Bir kullanıcıyı bahset
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </CardHeader>
-        <CardContent>
-          <Posts threadId={threadId} />
-        </CardContent>
-        <CardFooter>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-              const content: string = event.currentTarget.message.value;
-              createPost.mutate(
-                {
-                  threadId,
-                  message:
-                    content +
-                    (attachments.length > 0
-                      ? "\n" + attachments.map((a) => a.fileUrl).join(" ")
-                      : ""),
-                  mentions: [...mentions],
-                },
-                {
-                  onSuccess: () => {
-                    setMentions(new Set());
-                    setAttachments([]);
-                  },
-                }
-              );
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              event.currentTarget.message.value = "";
-            }}
-            className="flex w-full items-center space-x-2"
-          >
-            <Input
-              id="message"
-              placeholder="Mesajınızı yazın..."
-              className="flex-1"
-            />
-            <Button
-              type="submit"
-              size="icon"
-              disabled={createPost.isLoading}
-              isLoading={createPost.isLoading}
-            >
-              <Send className="h-4 w-4" />
-              <span className="sr-only">Gönder</span>
-            </Button>
-          </form>
-        </CardFooter>
-      </Card>
+              </form>
+            </CardFooter>
+            <div className="flex items-center justify-center">
+              <Attachments />
+            </div>
+          </Card>
+        )}
+      </div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="gap-0 p-0 outline-none">
           <DialogHeader className="px-4 pb-4 pt-5">
@@ -251,6 +324,37 @@ export function CardsChat({ threadId }: { threadId: string }) {
   );
 }
 
+export function Attachments() {
+  const attachments = useAttachmentStore((s) => s.attachments);
+  return (
+    <div className="overflow-x-auto">
+      {attachments.length > 0 && (
+        <div className="m-4 flex flex-row gap-4">
+          {attachments.map((file, i) => (
+            <div className="flex flex-col items-center gap-2" key={i}>
+              <Image
+                width={128}
+                height={128}
+                alt={file.name}
+                src={URL.createObjectURL(file)}
+              />
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => {
+                  removeAttachment(file.name);
+                }}
+              >
+                <Trash className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ThreadProps = { threadId: string };
 
 const Posts: React.FC<ThreadProps> = ({ threadId }) => {
@@ -310,7 +414,7 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
             )}
             <div
               className={cn(
-                "flex w-max max-w-[16rem] sm:max-w-md lg:max-w-2xl flex-col overflow-x-auto rounded-lg px-3 py-2 text-sm",
+                "flex w-max max-w-[16rem] flex-col overflow-x-auto rounded-lg px-3 py-2 text-sm sm:max-w-md lg:max-w-2xl",
                 session?.user.id === post.creatorId
                   ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
                   : "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
@@ -326,7 +430,7 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
         ))}
       </div>
 
-      <div className="flex flex-wrap justify-center space-y-0 space-x-2 pr-4 pb-4 md:justify-end md:space-y-0 md:space-x-4">
+      <div className="flex flex-wrap justify-center space-x-2 space-y-0 pb-4 pr-4 md:justify-end md:space-x-4 md:space-y-0">
         {Array.from({ length: data.pages.length }).map((_, i) => (
           <Button key={i} onClick={() => setPage(i)}>
             {i + 1}

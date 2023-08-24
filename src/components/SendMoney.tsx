@@ -132,7 +132,6 @@ export const SendMoneyDialog = () => {
                         <div className="flex items-center justify-between">
                           <FormLabel>Miktar</FormLabel>
                           <Button
-                            type="button"
                             size="sm"
                             variant="outline"
                             onClick={() => field.onChange(balance)}
