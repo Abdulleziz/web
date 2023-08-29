@@ -186,7 +186,9 @@ export const NavbarNext: React.FC = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <Button onClick={() => void signIn("discord")}>Giriş yap</Button>
+          <Button variant="destructive" onClick={() => void signIn("discord")}>
+            Giriş yap
+          </Button>
         )}
       </div>
     </div>

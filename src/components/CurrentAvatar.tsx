@@ -9,11 +9,11 @@ export const CurrentGuildAvatar = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof Avatar>
 >((props, ref) => {
   const { data: member } = useGetAbdullezizUser();
-  if (!member) return null;
-  const image = getAvatarUrl(member.user, member.avatar);
+  const image = member ? getAvatarUrl(member.user, member.avatar) : undefined;
   return (
     <Avatar ref={ref} {...props}>
       <AvatarImage src={image} />
+      <AvatarFallback>{member?.nick || member?.user.username}</AvatarFallback>
     </Avatar>
   );
 });

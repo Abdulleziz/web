@@ -1,5 +1,5 @@
-import classNames from "classnames";
 import { signIn, useSession } from "next-auth/react";
+import { Button } from "./ui/button";
 
 export const WelcomeComponent: React.FC = () => {
   return (
@@ -34,15 +34,13 @@ export const SignComponent: React.FC = () => {
       {session ? (
         <></>
       ) : (
-        <button
-          className={classNames("btn-primary btn", {
-            ["loading"]: status === "loading",
-          })}
+        <Button
+          isLoading={status === "loading"}
           disabled={status === "loading"}
           onClick={() => void signIn("discord")}
         >
           Giriş Yap
-        </button>
+        </Button>
       )}
     </div>
   );

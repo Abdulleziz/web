@@ -9,6 +9,14 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { env } from "~/env.mjs";
 import { prisma } from "~/server/db";
 import { getGuildMembers } from "./discord-api/guild";
+import { REST } from "@discordjs/rest";
+import {
+  type RESTGetAPICurrentUserResult,
+  Routes,
+} from "discord-api-types/v10";
+import { getAvatarUrl } from "./discord-api/utils";
+
+type User = RESTGetAPICurrentUserResult;
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -58,6 +66,21 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    async signIn({ user: { id }, account }) {
+      const access_token = account?.access_token;
+      if (!access_token) return false;
+
+      const discord = new REST({
+        version: "10",
+        authPrefix: "Bearer",
+      }).setToken(access_token);
+
+      // update user image
+      const user = (await discord.get(Routes.user())) as User;
+      const image = getAvatarUrl(user);
+      await prisma.user.update({ where: { id }, data: { image } });
+      return true;
+    },
   },
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -66,12 +89,6 @@ export const authOptions: NextAuthOptions = {
       clientSecret: env.DISCORD_CLIENT_SECRET,
     }),
     /**
-     * ...add more providers here.
-     *
-     * Most other providers require a bit more work than the Discord provider. For example, the
-     * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
-     * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
-     *
      * @see https://next-auth.js.org/providers/github
      */
   ],
