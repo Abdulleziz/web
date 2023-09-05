@@ -12,9 +12,11 @@ export async function discordFetch<T>(path: string, options: RequestInit) {
   if (!res.ok) {
     switch (res.status) {
       case 401:
-        throw new TRPCError({ code: "UNAUTHORIZED", cause: res.statusText });
+        throw new TRPCError({ code: "UNAUTHORIZED", message: res.statusText });
       case 403:
-        throw new TRPCError({ code: "FORBIDDEN", cause: res.statusText });
+        throw new TRPCError({ code: "FORBIDDEN", message: res.statusText });
+      case 404:
+        throw new TRPCError({ code: "NOT_FOUND", message: res.statusText });
       case 429:
         throw new TRPCError({
           code: "TOO_MANY_REQUESTS",

@@ -1,7 +1,6 @@
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import { Layout, LayoutNext } from "~/components/Layout";
-import { ThreadId } from "~/utils/zod-utils";
 import { useDeleteForumThread, useGetForumThread } from "~/utils/useForum";
 import { useGetAbdullezizUser } from "~/utils/useDiscord";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -10,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { WalletCards } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { toast } from "react-hot-toast";
+import { ThreadId } from "~/server/api/routers/forum/types";
 
 const ForumThread: NextPage = () => {
   const router = useRouter();

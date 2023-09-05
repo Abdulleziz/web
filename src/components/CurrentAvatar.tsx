@@ -4,12 +4,22 @@ import { useGetAbdullezizUser } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import React from "react";
 
-export const CurrentGuildAvatar = React.forwardRef<
+export interface SpecifiedAvatarProps
+  extends React.ComponentPropsWithoutRef<typeof Avatar> {
+  userId?: string; // database user id
+  type?: "user" | "guild";
+}
+
+export const UserAvatar = React.forwardRef<
   React.ElementRef<typeof Avatar>,
-  React.ComponentPropsWithoutRef<typeof Avatar>
->((props, ref) => {
-  const { data: member } = useGetAbdullezizUser();
-  const image = member ? getAvatarUrl(member.user, member.avatar) : undefined;
+  SpecifiedAvatarProps
+>(({ userId, type = "user", ...props }, ref) => {
+  const { data: member } = useGetAbdullezizUser(userId);
+
+  const image = member
+    ? getAvatarUrl(member.user, type === "guild" ? member.avatar : undefined)
+    : undefined;
+
   return (
     <Avatar ref={ref} {...props}>
       <AvatarImage src={image} />
@@ -17,8 +27,9 @@ export const CurrentGuildAvatar = React.forwardRef<
     </Avatar>
   );
 });
-CurrentGuildAvatar.displayName = Avatar.displayName;
+UserAvatar.displayName = Avatar.displayName;
 
+export const CurrentGuildAvatar = () => <UserAvatar type="guild" />;
 export const CurrentAvatar = React.forwardRef<
   React.ElementRef<typeof Avatar>,
   React.ComponentPropsWithoutRef<typeof Avatar>

@@ -1,11 +1,5 @@
 import { z } from "zod";
 
-export const ThreadId = z.string().cuid();
-export type ThreadId = z.infer<typeof ThreadId>;
-
-export const PostId = z.string().cuid();
-export type PostId = z.infer<typeof PostId>;
-
 export const UserId = z.string().cuid();
 export type UserId = z.infer<typeof UserId>;
 

@@ -20,6 +20,8 @@ module.exports = {
     },
     extend: {
       colors: {
+        success: colors.green[700],
+        primary: "#95ffff",
         "muted-foreground": colors.zinc[400],
       },
       keyframes: {

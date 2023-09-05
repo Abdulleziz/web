@@ -1,31 +1,20 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { env } from "~/env.mjs";
 import {
   createPermissionProcedure,
   createTRPCRouter,
   protectedProcedure,
 } from "~/server/api/trpc";
-import { nonEmptyString, ThreadId, UserId } from "~/utils/zod-utils";
 import { getDomainUrl } from "~/utils/api";
-import { env } from "~/env.mjs";
-import { forumPostsRouter } from "./posts";
+import { UserId } from "~/utils/zod-utils";
 import { forumNotificationsRouter } from "./notifications";
+import { forumPostsRouter } from "./posts";
 import { getForumNotificationListeners } from "./trpc";
+import { ThreadId, ThreadMessage, ThreadTag, ThreadTitle } from "./types";
 
 const _28DAYS = 1000 * 60 * 60 * 24 * 28;
-
-const ThreadTitle = z
-  .string({ required_error: "Thread başlığı boş olamaz" })
-  .trim()
-  .min(1, "Thread başlığı en az 1 karakter olmalıdır")
-  .max(100, "Thread başlığı en fazla 100 karakter olmalıdır");
-
-const ThreadMessage = z
-  .string({ required_error: "Thread mesajı boş olamaz" })
-  .trim()
-  .min(1, "Thread mesajı en az 1 karakter olmalıdır")
-  .max(1000, "Thread mesajı en fazla 1000 karakter olmalıdır");
 
 const managePinsProcedure = createPermissionProcedure(["forum thread pinle"]);
 const deleteThreadsProcedure = createPermissionProcedure(["forum thread sil"]);
@@ -78,7 +67,7 @@ export const forumRouter = createTRPCRouter({
     .input(
       z.object({
         title: ThreadTitle,
-        tags: nonEmptyString.array(),
+        tags: ThreadTag.array().default([]),
         message: ThreadMessage,
         mentions: UserId.array().default([]),
         notify: z.boolean().default(true),

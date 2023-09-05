@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
-import { ThreadId } from "~/utils/zod-utils";
 import { TRPCError } from "@trpc/server";
+import { ThreadId } from "./types";
 
 const vError = {
   invalid_type_error: "Bildirim ayar tipi geçersiz",

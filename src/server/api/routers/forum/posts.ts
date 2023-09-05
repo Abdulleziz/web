@@ -1,11 +1,12 @@
 import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-import { nonEmptyString, PostId, ThreadId, UserId } from "~/utils/zod-utils";
-import { createTRPCRouter, protectedProcedure } from "../../trpc";
-import { getDomainUrl } from "~/utils/api";
-import { env } from "~/env.mjs";
-import { getForumNotificationListeners } from "./trpc";
 import { utapi } from "uploadthing/server";
+import { z } from "zod";
+import { env } from "~/env.mjs";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { getDomainUrl } from "~/utils/api";
+import { UserId } from "~/utils/zod-utils";
+import { getForumNotificationListeners } from "./trpc";
+import { PostId, ThreadId, ThreadMessage } from "./types";
 
 export const forumPostsRouter = createTRPCRouter({
   getMany: protectedProcedure
@@ -13,7 +14,7 @@ export const forumPostsRouter = createTRPCRouter({
       z.object({
         threadId: ThreadId,
         cursor: PostId.optional(),
-        limit: z.number().min(1).max(25).default(5),
+        limit: z.number().min(1).max(25).default(10),
       })
     )
     .query(async ({ ctx, input: { limit, threadId, cursor } }) => {
@@ -33,7 +34,7 @@ export const forumPostsRouter = createTRPCRouter({
     .input(
       z.object({
         threadId: ThreadId,
-        message: nonEmptyString.max(1000),
+        message: ThreadMessage,
         mentions: UserId.array().default([]),
       })
     )

@@ -57,9 +57,12 @@ import Image from "next/image";
 import { type FileWithPath, useDropzone } from "react-dropzone";
 import { useUploadThing } from "~/utils/uploadthing";
 import { toast } from "react-hot-toast";
-import { generateClientDropzoneAccept } from "uploadthing/client";
+import {
+  type UploadFileResponse,
+  generateClientDropzoneAccept,
+} from "uploadthing/client";
 
-type Attachment = { fileKey: string; fileUrl: string };
+type Attachment = UploadFileResponse;
 
 export function CardsChat({ threadId }: { threadId: string }) {
   const thread = useGetForumThread(threadId);
@@ -87,8 +90,16 @@ export function CardsChat({ threadId }: { threadId: string }) {
       onClientUploadComplete: () => {
         // pass
       },
-      onUploadError: ({ message }) => {
-        toast.error(`Upload failed: ${message}.`);
+      onUploadError: ({ message, code, data }) => {
+        if (
+          code === "BAD_REQUEST" &&
+          message.includes("running") &&
+          !data?.zodError
+        )
+          // most likely file type is not permitted
+          // fucking worst library to upload things 😃😅
+          toast.error(`Dosya yükleme izin verilmeyen dosya tipi içeriyor.`);
+        else toast.error(`Dosya yükleme başarısız. ${code}: ${message}.`);
       },
       onUploadProgress: setProgress,
     }
@@ -128,10 +139,16 @@ export function CardsChat({ threadId }: { threadId: string }) {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    let uploads = undefined;
+    let uploads: Attachment[] | undefined = undefined;
     if (attachments.length > 0) {
       uploads = await startUpload(attachments);
     }
+
+    if (attachments.length !== (uploads?.length ?? 0)) {
+      // upload failed
+      return;
+    }
+
     handleCreatePost(content, uploads ?? []);
     setContent("");
   };
@@ -198,6 +215,11 @@ export function CardsChat({ threadId }: { threadId: string }) {
                   className="flex-1"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
+                  onPaste={(e) => {
+                    if (e.clipboardData.files.length > 0) {
+                      addAttachments(Array.from(e.clipboardData.files));
+                    }
+                  }}
                 />
                 <ThreadUpload />
                 <Button
@@ -336,7 +358,7 @@ export function Attachments() {
                 width={128}
                 height={128}
                 alt={file.name}
-                src={URL.createObjectURL(file)}
+                src={URL.createObjectURL(file)} // should revoke too
               />
               <Button
                 size="sm"

@@ -13,8 +13,9 @@ const f = createUploadthing({
 
 export const uploadRouter = {
   threadPostAttachmentUploader: f({
-    image: { maxFileCount: 5, maxFileSize: "8MB" },
-    video: { maxFileSize: "32MB" },
+    image: { maxFileCount: 6, maxFileSize: "8MB" },
+    video: { maxFileCount: 4, maxFileSize: "32MB" },
+    pdf: { maxFileCount: 10, maxFileSize: "64MB" },
   })
     .middleware(async ({ req, res }) => {
       const session = await getServerAuthSession({ req, res });

@@ -8,6 +8,8 @@ import { getSystemEntityById } from "~/utils/entities";
 import { useConsumeTeaHistory } from "~/utils/useConsumable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Card } from "../ui/card";
+import { Button } from "../ui/button";
+import { AbdullezizUser } from "../AbdullezizUser";
 
 type PaymentData = RouterOutputs["payments"]["getAll"][number];
 type CronData = RouterOutputs["cron"]["getAll"][number];
@@ -15,113 +17,80 @@ type ThreadData = RouterOutputs["forum"]["getThreads"][number];
 type ConsumeTeaData = RouterOutputs["consumable"]["tea"]["history"][number];
 
 type HistoryStep =
-  | {
-      type: "payment";
-      data: PaymentData;
-    }
-  | {
-      type: "cron";
-      data: CronData;
-    }
-  | {
-      type: "thread";
-      data: ThreadData;
-    }
-  | {
-      type: "consumeTea";
-      data: ConsumeTeaData;
-    };
+  | { type: "payment"; data: PaymentData }
+  | { type: "cron"; data: CronData }
+  | { type: "thread"; data: ThreadData }
+  | { type: "consumeTea"; data: ConsumeTeaData };
 
 const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
   switch (step.type) {
     case "consumeTea": {
-      const { createdAt, amountGram, consumer } = step.data;
+      const { amountGram, consumer } = step.data;
+      const quantity = amountGram / 5;
       return (
-        <li
-          className="step step-primary flex items-center space-x-4"
-          data-content="★"
-        >
-          <div className="text-sm">
-            {consumer.name} kardeşimiz güzelinden{" "}
-            <span className="text-success">{(amountGram / 5).toFixed()} </span>
-            çay içti. tarih:{" "}
-            <span className="text-accent">
-              {createdAt.toLocaleString("tr-TR")}
-            </span>
+        <li className="flex items-center justify-center space-x-4">
+          <div className="flex items-center justify-center gap-1 text-sm">
+            <AbdullezizUser data={consumer} /> kardeşimiz güzelinden{" "}
+            {quantity > 1 && <span className="text-success">{quantity} </span>}
+            çay içti.
           </div>
         </li>
       );
     }
     case "thread": {
-      const { id, creator, title, createdAt, pin } = step.data;
+      const { id, creator, title, pin } = step.data;
       return (
-        <li
-          className="step step-accent flex items-center space-x-4"
-          data-content="★"
-        >
-          <div className="text-sm">
-            Thread:{" "}
-            <Link className="link link-secondary" href={`/forum/threads/${id}`}>
-              {title.slice(0, 20)}
-              {title.length > 20 && <span className="text-xs">...</span>}
-            </Link>{" "}
-            oluşturan: {creator.name} pinli: {pin ? "✅" : "🟥"} tarih:{" "}
-            <span className="text-accent">
-              {createdAt.toLocaleString("tr-TR")}
-            </span>
-            {!!pin && <> pin tarihi: {pin.createdAt.toLocaleString("tr-TR")}</>}
-          </div>
+        <li className="flex flex-col items-center justify-center gap-1 md:flex-row">
+          <p>Yeni Thread</p>
+          <Link href={`/forum/threads/${id}`}>
+            <Button
+              className="max-w-[15rem] truncate md:max-w-md"
+              variant={pin ? "default" : "outline"}
+              size="sm"
+            >
+              {title}
+            </Button>
+          </Link>
+          <AbdullezizUser data={creator} />
+          {!!pin && <p> Pin: {pin.createdAt.toLocaleString("tr-TR")}</p>}
         </li>
       );
     }
     case "cron": {
-      const { cron, isGlobal, listeners, title, createdAt } = step.data;
+      const { cron, isGlobal, title } = step.data;
       const url = new URL("/cron", window.location.href);
       url.searchParams.set("exp", cron);
       return (
-        <li
-          className="step step-secondary flex items-center space-x-4"
-          data-content="★"
-        >
-          <div className="text-sm">
-            Cron:{" "}
-            <Link className="link link-secondary" href={url}>
-              {title}
-            </Link>{" "}
-            exp: {cron} Herkese Açık: {isGlobal ? "✅" : "🟥"}{" "}
-            {isGlobal && (
-              <>
-                dinleyiciler:{" "}
-                <span className="text-xs">
-                  {listeners.map((l) => l.listener.name).join(", ")}
-                </span>
-              </>
-            )}
-            <span className="text-accent">
-              {" "}
-              {createdAt.toLocaleString("tr-TR")}
-            </span>
-          </div>
+        <li className="flex items-center justify-center gap-2">
+          Yeni Hatırlatıcı{" "}
+          <Link href={url}>
+            <Button
+              className="max-w-[15rem] truncate md:max-w-md"
+              variant={isGlobal ? "outline" : "default"}
+              size="sm"
+            >
+              <span>
+                {title} ({cron})
+              </span>
+            </Button>
+          </Link>
         </li>
       );
     }
     case "payment":
       {
-        const { type, createdAt } = step.data;
+        const { type } = step.data;
         if (type === "salary") {
           const { pool } = step.data;
           const total = pool.reduce((acc, s) => acc + s.amount, 0);
           const users = pool.map((s) => s.to);
           return (
-            <li
-              className="step step-success flex items-center space-x-4"
-              data-content="$"
-            >
-              <div className="text-sm">
+            <li className="flex items-center justify-center space-x-4">
+              <div className="flex items-center justify-center gap-1 text-sm">
                 Maaş: <span className="text-success">${total}</span>{" "}
-                kullanıcılar: ({users.length} kullanıcı) tarih:{" "}
-                <span className="text-accent">
-                  {createdAt.toLocaleString("tr-TR")}
+                kullanıcılar:{" "}
+                <span className="text-xs">
+                  {users.map((l) => l.name).join(", ")}
                 </span>
               </div>
             </li>
@@ -130,11 +99,16 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
         if (type === "transfer") {
           const { from, to, amount } = step.data;
           return (
-            <li
-              className="step step-info flex items-center space-x-4"
-              data-content="$"
-            >
-              Transfer kimden: {from.name} kime: {to.name} miktar: ${amount}
+            <li className="flex flex-col items-center justify-center gap-2">
+              <p>
+                Para Transferi{" "}
+                <span className="text-green-700">(${amount})</span>
+              </p>
+              <div className="flex items-center justify-center space-x-2">
+                <AbdullezizUser data={from} />
+                <span>{"->"}</span>
+                <AbdullezizUser data={to} />
+              </div>
             </li>
           );
         }
@@ -163,9 +137,14 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
 
             return (
               <div className="text-xs">
-                {name}: {amount}x
-                <span className="text-primary">${entity.price}</span>=
-                <span className="text-success">${amount * entity.price}</span>
+                {amount > 1 && <span>{amount} adet </span>}
+                {amount > 1 && (
+                  <span className="text-red-400">${entity.price}</span>
+                )}{" "}
+                {name}{" "}
+                <span className="text-green-700">
+                  (${amount * entity.price})
+                </span>
               </div>
             );
           };
@@ -175,21 +154,14 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
             0
           );
           return (
-            <li
-              className="step step-primary flex items-center space-x-4"
-              data-content="$"
-            >
-              <div>
-                Satın Alma:
-                {pool.map((d, i) => (
-                  <EntityDetails key={i} data={d} />
-                ))}{" "}
-                alıcı: {to.name} toplam:{" "}
-                <span className="text-success">${total}</span> tarih:{" "}
-                <span className="text-accent">
-                  {createdAt.toLocaleString("tr-TR")}
-                </span>
-              </div>
+            <li className="flex flex-col items-center justify-center gap-1">
+              <p>
+                Satın Alma <span className="text-green-700">${total}</span>
+              </p>
+              {pool.map((d, i) => (
+                <EntityDetails key={i} data={d} />
+              ))}{" "}
+              <AbdullezizUser data={to} />
             </li>
           );
         }
@@ -218,17 +190,22 @@ export const HistoryPanel = createPanel([], () => {
   ].sort((a, b) => b.data.createdAt.getTime() - a.data.createdAt.getTime());
 
   return (
-    <Card className="row-span-3 rounded-lg shadow">
+    <Card className="row-span-3 rounded-lg shadow md:col-span-2">
       <div className="flex items-center justify-between border-b border-base-200 px-6 py-5 font-semibold">
         <span>Geçmiş Paneli</span>
       </div>
-      <div className="overflow-y-auto">
-        <ul className="steps steps-vertical p-6" ref={ref}>
+      <div className="overflow-hidden overflow-y-auto">
+        <ul ref={ref}>
           {history.map((h) => (
-            <HistoryStep
+            <div
+              className="space-y-1 border-b border-base-200 px-1 py-5 font-semibold"
               key={`${h.type}-${h.data.createdAt.getTime()}`}
-              step={h}
-            />
+            >
+              <HistoryStep step={h} />
+              <div className="flex items-center justify-center gap-1 font-mono text-sm text-accent">
+                {h.data.createdAt.toLocaleString("tr-TR")}
+              </div>
+            </div>
           ))}
         </ul>
       </div>

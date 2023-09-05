@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { AbdullezizUser } from "~/components/AbdullezizUser";
+import { Button } from "~/components/ui/button";
 
 const urlRegex = /https:\/\/[^\s]+/g;
 const mentionsRegex = /@\[([^\]]+)\]\(([^)]+)\)/;
@@ -69,11 +71,27 @@ const extractUrl = (token: Token & { type: "url" }, key: number) => {
   else if (url.includes("https://tenor.com/view"))
     // TODO: custom tenor api endpoint
     return (
-      <a key={key} className="link-error link" href={url}>
+      <a key={key} className="link link-error" href={url}>
         *tenor gif not supported yet*
       </a>
     );
-  else return url;
+  else {
+    const fileName =
+      new URL(url).pathname
+        .split("/")
+        .pop() // last url segment
+        ?.split("_") // id_filename
+        .slice(1)
+        .join("_") ?? "unknown";
+    return (
+      // TODO: attachment.name
+      <a href={url} target="_blank">
+        <Button variant="link" key={key}>
+          {fileName}
+        </Button>
+      </a>
+    );
+  }
 };
 
 export const tokenizePostContent = (content: string) => {
@@ -95,13 +113,12 @@ export const tokenizePostContent = (content: string) => {
       tokens.push(extractUrl(token, i));
     } else if (token.type === "mention") {
       tokens.push(
-        <Link
-          className="link-secondary link"
-          href={`/profiles/${token.userId}`}
+        <AbdullezizUser
+          variant="ghost"
           key={i}
-        >
-          @{token.content}
-        </Link>
+          fallback={"@"}
+          data={{ id: token.userId, name: token.content, image: null }}
+        />
       );
     } else tokens.push(token.content);
   });

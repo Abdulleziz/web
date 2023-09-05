@@ -78,8 +78,6 @@ export const Dashboard: React.FC = () => {
               ))}
             </section>
             <section className="grid gap-6 md:grid-cols-2 xl:grid-flow-col xl:grid-cols-4 xl:grid-rows-3">
-              <MembersPanel />
-              <HistoryPanel />
               <Card className="flex flex-col rounded-lg shadow md:col-span-2 md:row-span-2">
                 <div className="border-b border-gray-100 px-6 py-5 font-semibold">
                   Oylar!
@@ -88,6 +86,7 @@ export const Dashboard: React.FC = () => {
                   <VoteChart />
                 </div>
               </Card>
+            <HistoryPanel />
             </section>
           </main>
         </div>
