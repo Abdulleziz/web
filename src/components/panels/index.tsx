@@ -74,9 +74,7 @@ export const GlobalPanel = createPanel(undefined, () => {
           <Button size="sm">Hatırlatıcıya git</Button>
         </Link>
       </CardContent>
-      <CardFooter className="flex items-center justify-center gap-4">
-        <CurrentAvatar />
-      </CardFooter>
+      <CardFooter className="flex items-center justify-center gap-4"></CardFooter>
     </Card>
   );
 });
@@ -116,7 +114,6 @@ export const MemberPanel = createPanel(undefined, () => {
         </Button>
       </CardContent>
       <CardFooter className="flex items-center justify-center gap-4">
-        <CurrentGuildAvatar />
         {canTakeSalary && (
           <div>
             Sonraki Maaş
@@ -155,9 +152,7 @@ export const AdminPanel = createPanel(undefined, () => {
           </Button>
         </Link>
       </CardContent>
-      <CardFooter className="flex items-center justify-center gap-4">
-        <CurrentGuildAvatar />
-      </CardFooter>
+      <CardFooter className="flex items-center justify-center gap-4"></CardFooter>
     </Card>
   );
 });
@@ -185,9 +180,7 @@ export const DriveablePabel = createPanel(undefined, () => {
           Arabaları yönet
         </Button>
       </CardContent>
-      <CardFooter className="flex items-center justify-center gap-4">
-        <CurrentGuildAvatar />
-      </CardFooter>
+      <CardFooter className="flex items-center justify-center gap-4"></CardFooter>
     </Card>
   );
 });
@@ -332,9 +325,7 @@ export const ServantPanel = createPanel(undefined, () => {
         )}
         {ummmmm && <Button variant="destructive">İntihar et</Button>}
       </CardContent>
-      <CardFooter className="flex items-center justify-center gap-4">
-        <CurrentGuildAvatar />
-      </CardFooter>
+      <CardFooter className="flex items-center justify-center gap-4"></CardFooter>
     </Card>
   );
 });

@@ -1,4 +1,4 @@
-import { Layout } from "./Layout";
+import { Layout } from "~/components/Layout";
 import {
   GlobalPanel,
   ServantPanel,
@@ -9,18 +9,19 @@ import {
   MembersPanel,
   HistoryPanel,
   CEOVotePanel,
-} from "./panels";
+} from "~/components/panels";
+import type { NextPage } from "next";
 import {
   useGetAbdullezizUser,
   useGetAbdullezizUsersSorted,
 } from "~/utils/useDiscord";
 import { useSession } from "next-auth/react";
-import { LoadingDashboard } from "./LoadingDashboard";
+import { LoadingDashboard } from "~/components/LoadingDashboard";
 import { type AbdullezizPerm } from "~/utils/abdulleziz";
 import { Users } from "lucide-react";
-import { Card } from "./ui/card";
+import { Card } from "~/components/ui/card";
 
-export const Dashboard: React.FC = () => {
+const Dashboard: NextPage = () => {
   const { data: session } = useSession();
   const { isLoading, data } = useGetAbdullezizUser();
   const members = useGetAbdullezizUsersSorted().data ?? [];
@@ -86,7 +87,7 @@ export const Dashboard: React.FC = () => {
                   <VoteChart />
                 </div>
               </Card>
-            <HistoryPanel />
+              <HistoryPanel />
             </section>
           </main>
         </div>
@@ -94,3 +95,5 @@ export const Dashboard: React.FC = () => {
     </>
   );
 };
+
+export default Dashboard;

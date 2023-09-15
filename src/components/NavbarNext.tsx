@@ -75,7 +75,7 @@ export const NavbarNext: React.FC = () => {
             </Link>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <Link href="/">
+            <Link href="/dashboard">
               <DropdownMenuLabel>Anasayfa</DropdownMenuLabel>
             </Link>
             <DropdownMenuSeparator />
@@ -242,7 +242,9 @@ export function CommandMenu() {
         <CommandList>
           <CommandEmpty>Hiçbir sonuç bulunamadı.</CommandEmpty>
           <CommandGroup heading="Tavsiye edilenler">
-            <CommandItem onSelect={() => runCommand(() => router.push("/"))}>
+            <CommandItem
+              onSelect={() => runCommand(() => router.push("/dashboard"))}
+            >
               Anasayfaya git
             </CommandItem>
             <CommandItem
