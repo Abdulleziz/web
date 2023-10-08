@@ -7,6 +7,7 @@ import { useHydrated } from "~/pages/_app";
 import { useNotificationStage } from "~/lib/pusher/notifications";
 import { NavbarNext } from "./NavbarNext";
 import { SendMoneyDialog } from "./SendMoney";
+import { useSession } from "next-auth/react";
 
 export const Themes = [
   "dracula",
@@ -114,11 +115,12 @@ export const LayoutNext: React.FC<Props> = ({
   title = "Abdulleziz Corp.",
   location = "",
 }) => {
+  const { data: session } = useSession();
   const notifStage = useNotificationStage();
   const { Modal } = createModal(
     "notif",
     "unreachable",
-    notifStage === "loading"
+    notifStage === "loading" && session !== null
   );
 
   return (

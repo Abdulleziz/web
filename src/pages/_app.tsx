@@ -29,8 +29,8 @@ const MyApp: AppType<{ session: Session | null }> = ({
   return (
     <SessionProvider session={session}>
       <Notifications />
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <Component {...pageProps} />
+      <ThemeProvider attribute="class" forcedTheme="dark">
+        <Component {...pageProps} />  
       </ThemeProvider>
       <Toaster />
     </SessionProvider>
