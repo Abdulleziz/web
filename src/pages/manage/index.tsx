@@ -186,8 +186,41 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
   const instant =
     (userSelf && quit) || required <= (!voted ? selfSeverity : 0) + collected;
 
+  function getVoteMessage() {
+    if (event.endedAt) {
+      return `Oylama ${event.endedAt.toLocaleString("tr-TR")} tarihinde bitti`;
+    }
+
+    if (quit) {
+      if (userSelf) {
+        return "Ayrıl";
+      }
+
+      if (instant) {
+        return "Kovmak için son oyu ver!";
+      }
+
+      return `Kovma oyu ver (+${selfSeverity})YD`;
+    }
+
+    if (promote) {
+      if (instant) {
+        return "Yükseltmek için son oyu ver!";
+      }
+
+      return `Yükseltme oyu ver (+${selfSeverity})YD`;
+    }
+
+    if (instant) {
+      return "Düşürmek için son oyu ver!";
+    }
+
+    return `Düşürme oyu ver (+${selfSeverity})YD`;
+  }
+
   return (
     <div className={`flex flex-col rounded`} style={style}>
+      1
       <ul className="flex list-disc flex-col p-2">
         <li>Oylanan Kullanıcı: {formatName(event.target)}</li>
         <li>
@@ -225,21 +258,7 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
           });
         }}
       >
-        {!!event.endedAt
-          ? `Oylama ${event.endedAt.toLocaleString("tr-TR")}  tarihinde bitti`
-          : quit
-          ? userSelf
-            ? "Ayrıl"
-            : instant
-            ? "Kovmak için son oyu ver!"
-            : `Kovma oyu ver (+${selfSeverity})YD`
-          : promote
-          ? instant
-            ? "Yükseltmek için son oyu ver!"
-            : `Yükseltme oyu ver (+${selfSeverity})YD`
-          : instant
-          ? "Düşürmek için son oyu ver!"
-          : `Düşürme oyu ver (+${selfSeverity})YD`}
+        {getVoteMessage()}
       </button>
     </div>
   );
