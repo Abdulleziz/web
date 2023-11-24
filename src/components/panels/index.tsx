@@ -36,7 +36,6 @@ import {
   CardFooter,
 } from "../ui/card";
 import { Button } from "../ui/button";
-import { CurrentAvatar, CurrentGuildAvatar } from "../CurrentAvatar";
 import { useMoneyDialog } from "../SendMoney";
 
 ChartJS.register(
@@ -72,6 +71,9 @@ export const GlobalPanel = createPanel(undefined, () => {
         </Link>
         <Link href="/cron">
           <Button size="sm">Hatırlatıcıya git</Button>
+        </Link>
+        <Link href="/mbt/index.html">
+          <Button size="sm">Projeye git</Button>
         </Link>
       </CardContent>
       <CardFooter className="flex items-center justify-center gap-4"></CardFooter>

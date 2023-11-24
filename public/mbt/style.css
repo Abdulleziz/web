@@ -1,0 +1,75 @@
+html{
+    height: 100%;
+}
+body{
+    background-color: darkslategrey;
+    background-image: url(photos/BackgroundPhoto3.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+h2{
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    font-size: 70px;
+    color: blanchedalmond;
+}
+header{
+    font-size: xx-large;
+    color: whitesmoke;
+    height: 50px;
+    width: 1080px;
+    text-align: center;
+}
+nav{
+    background-color: rgba(0, 0, 0, 0.4);
+    text-align: center;
+    height: 30px;
+    width: 1080px;
+}
+main{
+    text-align: center;
+    padding-bottom: 40px;
+    height: 100px;
+    width: 1050px;
+}
+footer{
+    background-color: rgba(30, 33, 33, 0.632);
+    padding-left: 30px;
+    padding-right: 20px;
+    padding-top: 50px;
+    height: 550px;
+    width: 1050px;
+    color: whitesmoke;
+    border-color: black;
+}
+.container{
+    margin-left: auto;
+    margin-right: auto;
+    width: 1080px;
+}
+.p1{
+    text-align: left;
+    font-size: large;
+    color: whitesmoke;
+}
+a{
+    color: black;
+    font-size: x-large;
+}
+nav a{
+    text-decoration: none;
+    color: whitesmoke;
+    padding-left: 30px;
+    padding-right: 30px;
+}
+.row{
+    display: flex;
+    flex-wrap: wrap;
+}
+.column{
+    flex:25%
+}
+footer a{
+    color: whitesmoke;
+    text-decoration: none;
+}
