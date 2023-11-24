@@ -26,7 +26,7 @@ export type AbdullezizRole = keyof typeof abdullezizRoles;
 export type Severity = IntRange<2, 101>;
 // export type Severity = IntRange<1, 101>;
 
-export const PROMOTE = 0.5;
+export const PROMOTE = 1.5;
 export const DEMOTE = 2.0;
 
 export const abdullezizRoleSeverities = {
