@@ -75,10 +75,20 @@ export const authOptions: NextAuthOptions = {
         authPrefix: "Bearer",
       }).setToken(access_token);
 
-      // update user image
-      const user = (await discord.get(Routes.user())) as User;
-      const image = getAvatarUrl(user);
-      await prisma.user.update({ where: { id }, data: { image } });
+      try {
+        // update user image
+        const user = (await discord.get(Routes.user())) as User;
+        const image = getAvatarUrl(user);
+        const to_update = await prisma.user.findUnique({
+          where: { id },
+          select: { image: true },
+        });
+        if (to_update && to_update.image !== image)
+          await prisma.user.update({ where: { id }, data: { image } });
+      } catch (e) {
+        console.error("Unable to update user image");
+        console.error(e);
+      }
       return true;
     },
   },
