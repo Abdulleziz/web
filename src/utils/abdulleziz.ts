@@ -8,8 +8,8 @@ import {
 
 export const formatName = (user: {
   nick?: string | null;
-  user: { username: string };
-}) => user.nick || user.user.username;
+  user: { username: string | "Deleted user" };
+}) => (user.nick ? user.nick + ` (${user.user.username})` : user.user.username);
 
 type Range = Exclude<Severity, 1>; // Exclude everyone
 type Role = Exclude<AbdullezizRole, "@everyone">; // Exclude everyone
@@ -29,7 +29,6 @@ type RequiredSeverity = { perm: string } & (
 export const noRolePerms = ["staja başvur"] as const;
 
 export const requiredSeverity = [
-  { perm: "forum thread sil", min: 2 }, // şimdilik herkes thread silebilir, ilerde silme olmayacak
   { perm: "oylamaya katıl", min: 2 }, // CEO oylaması
   { perm: "maaş al", min: 2, exclude: ["Intern"] }, // INTERN'E MAAŞ YOK ZAAAA
   { perm: "çay koy", every: ["Servant"] },
@@ -42,6 +41,7 @@ export const requiredSeverity = [
   { perm: "forum thread pinle", min: 80, include: ["Advertisement Lead"] },
   { perm: "arabaları yönet", min: 80 }, // MEGAN EKLE
   { perm: "çalışanları yönet", min: 80 }, // kovmak veya işe almak
+  { perm: "forum thread sil", min: 80 },
   { perm: "forumu yönet", min: 80 }, // thread/post kilitleme vb.
 ] as const satisfies readonly RequiredSeverity[];
 

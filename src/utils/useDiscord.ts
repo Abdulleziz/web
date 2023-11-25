@@ -4,13 +4,23 @@ import { type RouterInputs, api } from "./api";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 type In = RouterInputs["discord"];
 
-export const memberFinder = <T extends { user: { id: string } }>(
+export const memberFinder = <
+  T extends { user: { id: string; username: string }; roles: unknown[] }
+>(
   members: T[]
 ) => {
   return (id: string) => {
     const member = members.find((m) => m.user.id === id);
-    if (!member) throw new Error(`No member with id ${id}`);
-    return member;
+
+    if (!member) {
+      console.log(`No member with id ${id}`);
+      return {
+        exist: false as const,
+        user: { id, username: "Deleted user" as const },
+        roles: [],
+      };
+    }
+    return { exist: true as const, ...member };
   };
 };
 
