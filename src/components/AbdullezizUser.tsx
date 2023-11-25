@@ -10,6 +10,7 @@ import {
   HoverCardTrigger,
 } from "~/components/ui/hover-card";
 import { useGetProfile } from "~/utils/useProfile";
+import { cx } from "class-variance-authority";
 
 type UserData = {
   id: string;
@@ -41,7 +42,7 @@ export const AbdullezizUser = React.forwardRef<
             ref={ref}
             {...props}
           >
-            <Avatar className="h-4 w-4">
+            <Avatar className={cx(size === "lg-long" ? "h-8 w-8" : "h-4 w-4")}>
               <AvatarImage src={avatar || undefined} />
               <AvatarFallback>{fallback ?? name}</AvatarFallback>
             </Avatar>

@@ -37,6 +37,7 @@ import {
 } from "../ui/card";
 import { Button } from "../ui/button";
 import { useMoneyDialog } from "../SendMoney";
+import { AbdullezizUser } from "../AbdullezizUser";
 
 ChartJS.register(
   RadialLinearScale,
@@ -201,7 +202,7 @@ export const CEOVotePanel = createPanel(undefined, () => {
         <div className="menu-item flex flex-col items-center p-2">
           <span className="font-mono text-primary">Oy sayısı</span>
           <span className="px-2 font-mono font-bold">
-            {data.votes.length} oy ({data.required} olan kazanır)
+            toplam {data.votes.length} oy ({data.required} olan kazanır)
           </span>
         </div>
         {data.estimated && (
@@ -239,8 +240,42 @@ export const CEOVotePanel = createPanel(undefined, () => {
       <div className="menu-item flex flex-col items-center whitespace-nowrap">
         <span className="font-mono text-primary">Oy verenler</span>
         {data.votes.map((v) => (
-          <span key={v.id} className="px-2 font-mono font-bold">
-            {`${formatName(v.voter)} -> ${formatName(v.target)}`}
+          <span key={v.id} className="flex px-2 font-bold items-center">
+            {v.voter.exist && v.voter.id ? (
+              <AbdullezizUser
+              size={"lg-long"}
+              variant={"link"}
+                data={{
+                  id: v.voter.id,
+                  name: v.voter.user.username,
+                  image: getAvatarUrl(v.voter.user, v.voter.avatar),
+                }}
+                fallback=""
+              />
+            ) : (
+              <div>
+                <span>{"KAYITSIZ: "}</span>
+                <span>{v.voter.user.username}</span>
+              </div>
+            )}
+            {"-->"}
+            {v.target.exist && v.target.id ? (
+              <AbdullezizUser
+              size={"lg-long"}
+              variant={"link"}
+                data={{
+                  id: v.target.id,
+                  name: v.target.user.username,
+                  image: getAvatarUrl(v.target.user, v.target.avatar),
+                }}
+                fallback=""
+              />
+            ) : (
+              <div>
+                <span>{"KAYITSIZ: "}</span>
+                <span>{v.target.user.username}</span>
+              </div>
+            )}
           </span>
         ))}
       </div>

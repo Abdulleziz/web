@@ -8,8 +8,8 @@ import {
 
 export const formatName = (user: {
   nick?: string | null;
-  user: { username: string };
-}) => user.nick || user.user.username;
+  user: { username: string | "Deleted user" };
+}) => (user.nick ? user.nick + ` (${user.user.username})` : user.user.username);
 
 type Range = Exclude<Severity, 1>; // Exclude everyone
 type Role = Exclude<AbdullezizRole, "@everyone">; // Exclude everyone

@@ -161,7 +161,9 @@ function checkVoteCEO(
     ([, count]) => count / usersLength >= CEO_VOTE_PERCENTAGE
   )?.[0];
 
-  return { finisherId, voteChanged };
+  const required = Math.ceil(usersLength * CEO_VOTE_PERCENTAGE);
+
+  return { finisherId, voteChanged, required };
 }
 
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
@@ -176,10 +178,10 @@ const THREE_DAYS_OR_THREE_HOURS =
 const ONE_WEEK_OR_ONE_DAY =
   env.NEXT_PUBLIC_VERCEL_ENV === "production" ? ONE_WEEK : ONE_DAY;
 
-const [CEO_VOTE_REQUIRED, CEO_VOTE_PERCENTAGE] =
+const CEO_VOTE_PERCENTAGE =
   env.NEXT_PUBLIC_VERCEL_ENV === "production"
-    ? ([6, 0.66] as const)
-    : ([6, 0.66] as const); // change here for testing in dev [2, 0.66]
+    ? (0.66 as const)
+    : (0.66 as const); // change here for testing in dev [2, 0.66]
 
 export const rolesRouter = createTRPCRouter({
   getSeverities: internalProcedure.query(() => {
@@ -219,10 +221,10 @@ export const rolesRouter = createTRPCRouter({
       orderBy: { createdAt: "desc" },
     });
     if (!event) return event;
-    const { finisherId } = checkVoteCEO(event, null, null, total);
+    const { finisherId, required } = checkVoteCEO(event, null, null, total);
     return {
       ...event,
-      required: CEO_VOTE_REQUIRED,
+      required,
       finisherId,
       sitUntil:
         event.endedAt && finisherId
@@ -257,6 +259,12 @@ export const rolesRouter = createTRPCRouter({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Kendine oy veremezsin",
+        });
+
+      if (new Date(voter.joined_at).getTime() > Date.now() - ONE_WEEK)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Oy verebilmek için sunucuda en az bir hafta geçirmelisin",
         });
 
       // to create event, check if user is the starter of any "ongoing" event
@@ -392,6 +400,12 @@ export const rolesRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Kullanıcı bulunamadı",
+        });
+
+      if (new Date(voter.joined_at).getTime() > Date.now() - ONE_WEEK)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Oy verebilmek için sunucuda en az bir hafta geçirmelisin",
         });
 
       const latest = await ctx.prisma.voteEventCEO.findFirst({

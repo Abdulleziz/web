@@ -1,7 +1,6 @@
 import type { NextPage } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import classNames from "classnames";
 import { Layout } from "~/components/Layout";
 import {
   useGetAbdullezizUser,
@@ -25,6 +24,25 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
+import { AbdullezizUser } from "~/components/AbdullezizUser";
+import { Button } from "~/components/ui/button";
+
+export function colorMapping(targetColor: string) {
+  const color =
+    targetColor.charAt(0) === "#" ? targetColor.substring(1, 7) : targetColor;
+  const r = parseInt(color.substring(0, 2), 16); // hexToR
+  const g = parseInt(color.substring(2, 4), 16); // hexToG
+  const b = parseInt(color.substring(4, 6), 16); // hexToB
+  const uicolors = [r / 255, g / 255, b / 255] as const;
+  const c = uicolors.map((col) => {
+    if (col <= 0.03928) {
+      return col / 12.92;
+    }
+    return Math.pow((col + 0.055) / 1.055, 2.4);
+  }) as unknown as typeof uicolors;
+  const L = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  return L > 0.179 ? "light" : "dark";
+}
 
 export type VoteEventWithMember = NonNullable<
   ReturnType<typeof useGetVoteEventsWithMembers>["data"]
@@ -55,17 +73,19 @@ const Manage: NextPage = () => {
                 {members.map((member) => {
                   const highestRole = member.roles[0];
                   const avatar = getAvatarUrl(member.user, member.avatar);
-                  const style = highestRole
-                    ? {
-                        color: `#${highestRole.color
-                          .toString(16)
-                          .padStart(6, "0")}`,
-                      }
-                    : { color: "white" };
+                  const color =
+                    "#" +
+                    (highestRole
+                      ? highestRole.color.toString(16).padStart(6, "0")
+                      : "ffffff");
+
+                  const style = {
+                    color: color === "#000001" ? "#fafafa" : color,
+                  };
                   return (
                     <Card
                       key={member.user.id}
-                      className="mt-auto cursor-pointer rounded bg-slate-300 transition-all hover:scale-110 hover:bg-info-content dark:bg-zinc-900"
+                      className="mt-auto cursor-pointer rounded bg-slate-300 transition-all hover:scale-110 hover:bg-info-content dark:bg-zinc-950"
                     >
                       {member.user.id && (
                         <Link
@@ -220,13 +240,29 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
 
   return (
     <div className={`flex flex-col rounded`} style={style}>
-      1
       <ul className="flex list-disc flex-col p-2">
-        <li>Oylanan Kullanıcı: {formatName(event.target)}</li>
+        <li>
+          {event.target.exist && event.target.id ? (
+            <AbdullezizUser
+              size={"lg-long"}
+              data={{
+                id: event.target.id,
+                name: event.target.user.username,
+                image: getAvatarUrl(event.target.user, event.target.avatar),
+              }}
+              fallback=""
+            />
+          ) : (
+            <div>
+              <span>{"KAYITSIZ: "}</span>
+              <span>{event.target.user.username}</span>
+            </div>
+          )}
+        </li>
         <li>
           {!quit ? (
             <span>
-              {promote ? "Yükseltmek" : "Düşürmek"}: {event.role.name}
+              {promote ? "Terfi" : "Tenzil"}: {event.role.name}
             </span>
           ) : (
             <span>{event.role.name} istifa</span>
@@ -241,16 +277,15 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
             </label>
           </div>
         </li>
-        <li>Gereken Yetki Değeri: {required}</li>
-        <li>Toplanan Yetki Değeri: {collected}</li>
+        <li>
+          Toplanan:
+          <span className="font-bold"> {collected} </span>(YD) / Gereken:{" "}
+          <span className="font-bold">{required}</span> (YD)
+        </li>
       </ul>
-      <button
+      <Button
         disabled={!!event.endedAt}
-        className={classNames(
-          "btn btn-xs mx-2 mb-2",
-          instant && !quit && "btn-success",
-          quit && "btn-error"
-        )}
+        variant={quit ? "destructive" : instant ? "default" : "secondary"}
         onClick={() => {
           vote.mutate({
             role: event.role.name,
@@ -259,7 +294,7 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
         }}
       >
         {getVoteMessage()}
-      </button>
+      </Button>
     </div>
   );
 };

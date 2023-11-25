@@ -26,12 +26,11 @@ export async function getGuildMember(
 }
 
 const createGetGuildMembers = (guildId: string) => {
-  // çok fazla discord api request atmasın diye 1 dakika cacheleyelim
   return timedCache(async () => {
     return await discordFetch<Member[]>(`guilds/${guildId}/members?limit=100`, {
       method: "GET",
     });
-  }, 1000 * 60);
+  }, 1000 * 15);
 };
 
 const getGuildMembersIdCache = new Map<
@@ -40,12 +39,18 @@ const getGuildMembersIdCache = new Map<
 >();
 
 export async function getGuildMembers(guildId = ABDULLEZIZ_SERVER_ID) {
-  let cache = getGuildMembersIdCache.get(guildId);
+  let cache = getGuildMembersIdCache.get(guildId)?.[0];
+  let invalidate = getGuildMembersIdCache.get(guildId)?.[1];
   if (!cache) {
-    cache = createGetGuildMembers(guildId);
-    getGuildMembersIdCache.set(guildId, cache);
+    cache = createGetGuildMembers(guildId)[0];
+    invalidate = createGetGuildMembers(guildId)[1];
+    getGuildMembersIdCache.set(guildId, [cache, invalidate]);
   }
   return await cache();
+}
+
+export const invalidateGetGuildMembers = (guildId = ABDULLEZIZ_SERVER_ID) => {
+  getGuildMembersIdCache.get(guildId)?.[1]();
 }
 
 export async function modifyGuildMember(
@@ -53,10 +58,16 @@ export async function modifyGuildMember(
   options?: RESTPatchAPIGuildMemberJSONBody,
   guildId = ABDULLEZIZ_SERVER_ID
 ) {
-  return await discordFetch<Member>(`guilds/${guildId}/members/${userId}`, {
-    method: "PATCH",
-    body: options ? JSON.stringify(options) : undefined,
-  });
+  const ret = await discordFetch<Member>(
+    `guilds/${guildId}/members/${userId}`,
+    {
+      method: "PATCH",
+      body: options ? JSON.stringify(options) : undefined,
+    }
+  );
+  
+  invalidateGetGuildMembers(guildId);
+  return ret;
 }
 
 export async function modifyGuildMemberRole(
@@ -65,10 +76,13 @@ export async function modifyGuildMemberRole(
   method: "PUT" | "DELETE",
   guildId = ABDULLEZIZ_SERVER_ID
 ) {
-  return await discordFetch<undefined>(
+  const ret = await discordFetch<undefined>(
     `guilds/${guildId}/members/${userId}/roles/${roleId}`,
     { method }
   );
+
+  invalidateGetGuildMembers(guildId);
+  return ret;
 }
 
 export async function getGuildRoles(guildId = ABDULLEZIZ_SERVER_ID) {
@@ -100,7 +114,10 @@ export async function deleteGuildRole(
   roleId: string,
   guildId = ABDULLEZIZ_SERVER_ID
 ) {
-  return await discordFetch<undefined>(`guilds/${guildId}/roles/${roleId}`, {
+  const ret = await discordFetch<undefined>(`guilds/${guildId}/roles/${roleId}`, {
     method: "DELETE",
   });
+
+  invalidateGetGuildMembers(guildId);
+  return ret;
 }
