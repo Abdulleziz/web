@@ -67,9 +67,13 @@ export const NavbarNext: React.FC = () => {
     >
       <div className="inline-flex w-1/2 items-center justify-start">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger disabled={!session} asChild>
             <Link href="/">
-              <Button variant={"brand"} size={"relative-lg"}>
+              <Button
+                variant={"brand"}
+                disabled={!session}
+                size={"relative-lg"}
+              >
                 Abdulleziz Corp.
               </Button>
             </Link>
@@ -96,95 +100,97 @@ export const NavbarNext: React.FC = () => {
       </div>
       <div className="inline-flex flex-shrink-0 items-center"></div>
       <div className="inline-flex w-1/2 items-center justify-end gap-4">
-        <CommandMenu />
         {session ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <CurrentAvatar />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>Hesabım</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <Link href={`/profiles/${session.user.id}`}>
-                    <span>Profil</span>
-                  </Link>
-                  <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => openMoneyDialog()}>
-                  <Wallet className="mr-2 h-4 w-4" />
-                  <span>Cüzdan</span>
-                  <DropdownMenuShortcut className="text-green-400">
-                    ${balance.toFixed()}
-                  </DropdownMenuShortcut>
-                </DropdownMenuItem>
-                {/* <DropdownMenuItem>
+          <>
+            <CommandMenu />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <CurrentAvatar />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56">
+                <DropdownMenuLabel>Hesabım</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <Link href={`/profiles/${session.user.id}`}>
+                      <span>Profil</span>
+                    </Link>
+                    <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openMoneyDialog()}>
+                    <Wallet className="mr-2 h-4 w-4" />
+                    <span>Cüzdan</span>
+                    <DropdownMenuShortcut className="text-green-400">
+                      ${balance.toFixed()}
+                    </DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                  {/* <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Ayarlar</span>
                   <DropdownMenuShortcut>⌘A</DropdownMenuShortcut>
                 </DropdownMenuItem> */}
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Ayarlar
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <Bell className="mr-2 h-4 w-4" />
-                        Forum Thread Bildirimleri
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        <DropdownMenuRadioGroup
-                          value={forumNotif.data ?? "all"}
-                          onValueChange={(value) => {
-                            setForumNotif.mutate(value as "all" | "mentions");
-                          }}
-                        >
-                          <DropdownMenuRadioItem value={"all"}>
-                            <BellRing className="mr-2 h-4 w-4" />
-                            Her şey
-                          </DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value={"mentions"}>
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            Bahsetmeler
-                          </DropdownMenuRadioItem>
-                        </DropdownMenuRadioGroup>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <a href="https://github.com/Abdulleziz/web" target="_blank">
-                  <Github className="mr-2 h-4 w-4" />
-                  GitHub
-                </a>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <a
-                  href="https://discord.com/channels/918833527389315092/1081863173910569061"
-                  target="_blank"
-                >
-                  <LifeBuoy className="mr-2 h-4 w-4" />
-                  Destek
-                </a>
-              </DropdownMenuItem>
-              {/* <DropdownMenuItem disabled>
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Ayarlar
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                          <Bell className="mr-2 h-4 w-4" />
+                          Forum Thread Bildirimleri
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          <DropdownMenuRadioGroup
+                            value={forumNotif.data ?? "all"}
+                            onValueChange={(value) => {
+                              setForumNotif.mutate(value as "all" | "mentions");
+                            }}
+                          >
+                            <DropdownMenuRadioItem value={"all"}>
+                              <BellRing className="mr-2 h-4 w-4" />
+                              Her şey
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value={"mentions"}>
+                              <MessageSquare className="mr-2 h-4 w-4" />
+                              Bahsetmeler
+                            </DropdownMenuRadioItem>
+                          </DropdownMenuRadioGroup>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <a href="https://github.com/Abdulleziz/web" target="_blank">
+                    <Github className="mr-2 h-4 w-4" />
+                    GitHub
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a
+                    href="https://discord.com/channels/918833527389315092/1081863173910569061"
+                    target="_blank"
+                  >
+                    <LifeBuoy className="mr-2 h-4 w-4" />
+                    Destek
+                  </a>
+                </DropdownMenuItem>
+                {/* <DropdownMenuItem disabled>
                 <Cloud className="mr-2 h-4 w-4" />
                 <span>API</span>
               </DropdownMenuItem> */}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => void signOut()}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Çıkış Yap</span>
-                <DropdownMenuShortcut>⌘Ç</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => void signOut()}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Çıkış Yap</span>
+                  <DropdownMenuShortcut>⌘Ç</DropdownMenuShortcut>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
         ) : (
           <Button variant="destructive" onClick={() => void signIn("discord")}>
             Giriş yap

@@ -8,6 +8,8 @@ import { useNotificationStage } from "~/lib/pusher/notifications";
 import { NavbarNext } from "./NavbarNext";
 import { SendMoneyDialog } from "./SendMoney";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export const Themes = [
   "dracula",
@@ -62,6 +64,17 @@ export const Layout: React.FC<Props> = ({
     "unreachable",
     notifStage === "loading"
   );
+
+  const router = useRouter();
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    if (!session) {
+      return router.replace("/");
+    }
+  }, [session, router]);
+
+
 
   return <LayoutNext {...{ children, title, location }} />;
 
