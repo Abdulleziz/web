@@ -71,7 +71,7 @@ export const GlobalPanel = createPanel(undefined, () => {
         <Link href="/cron">
           <Button size="sm">Hatırlatıcıya git</Button>
         </Link>
-        <Link href="/mbt/index.html">
+        <Link href="/projects/mbt">
           <Button variant={"warning"} size="sm">
             MBT projesine git
           </Button>

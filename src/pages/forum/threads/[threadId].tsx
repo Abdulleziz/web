@@ -1,6 +1,6 @@
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
-import { Layout, LayoutNext } from "~/components/Layout";
+import { Layout } from "~/components/Layout";
 import {
   useDeleteForumThread,
   useGetForumThread,
@@ -44,7 +44,7 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
 
   const [threadRef] = useAutoAnimate();
   return (
-    <LayoutNext>
+    <Layout>
       <div
         className="flex h-auto flex-col items-center justify-center p-4 py-2"
         ref={threadRef}
@@ -66,7 +66,7 @@ const ThreadPage: React.FC<ThreadProps> = ({ threadId }) => {
           {thread.data && <CardsChat threadId={threadId} />}
         </main>
       </div>
-    </LayoutNext>
+    </Layout>
   );
 };
 
