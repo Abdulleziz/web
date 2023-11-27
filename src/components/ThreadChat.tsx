@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Check, Plus, Send, Trash } from "lucide-react";
+import { Check, Lock, Plus, Send, Trash } from "lucide-react";
 
 import { cn } from "~/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -38,11 +38,15 @@ import {
   useGetForumPosts,
   useGetForumThread,
   usePostDeleteAttachments,
+  useSetForumNotification,
 } from "~/utils/useForum";
 import { useSession } from "next-auth/react";
 import { tokenizePostContent } from "~/utils/forumThread";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useGetAbdullezizUsers } from "~/utils/useDiscord";
+import {
+  useGetAbdullezizUser,
+  useGetAbdullezizUsers,
+} from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import { formatName } from "~/utils/abdulleziz";
 import {
@@ -65,9 +69,15 @@ import {
 type Attachment = UploadFileResponse;
 
 export function CardsChat({ threadId }: { threadId: string }) {
+  const session = useSession();
   const thread = useGetForumThread(threadId);
   const createPost = useCreateForumPost();
   const abdullezizUsers = useGetAbdullezizUsers();
+  const permissions = useGetAbdullezizUser().data?.perms;
+  const threadNotif = useSetForumNotification();
+  const canManage = permissions?.includes("forumu yönet");
+  const canSend =
+    !thread.data?.locked || permissions?.includes("forum thread kilitle");
   const [content, setContent] = React.useState("");
   const [mentions, setMentions] = React.useState(new Set<string>());
   const attachments = useAttachmentStore((s) => s.attachments);
@@ -179,8 +189,38 @@ export function CardsChat({ threadId }: { threadId: string }) {
                 </h1>
                 <p className="pt-1 text-sm sm:text-base">
                   {thread.data.creator.name} •{" "}
-                  {thread.data.createdAt.toLocaleString()} • Forum ayarları:
-                  [Bildirimler: {thread.data.defaultNotify}]
+                  {thread.data.createdAt.toLocaleString("tr-TR")} • Thread
+                  ayarları: [Bildirimler:{" "}
+                  {thread.data.defaultNotify === "none"
+                    ? "Ssusturulmuş"
+                    : thread.data.defaultNotify === "mentions"
+                    ? "Sadece bahsetmeler"
+                    : "Açık"}
+                  ]{" "}
+                  <Button
+                    size={"relative-sm"}
+                    variant={"outline"}
+                    onClick={() =>
+                      thread.data &&
+                      threadNotif.mutate({
+                        threadId,
+                        preference:
+                          thread.data.defaultNotify === "all"
+                            ? "mentions"
+                            : "all",
+                      })
+                    }
+                    disabled={
+                      thread.data.creatorId !== session.data?.user.id ||
+                      !canManage ||
+                      threadNotif.isLoading
+                    }
+                    isLoading={threadNotif.isLoading}
+                  >
+                    {thread.data.defaultNotify === "all"
+                      ? "Sadece bahsetmeler"
+                      : "Herkese aç"}
+                  </Button>
                 </p>
               </div>
               <TooltipProvider delayDuration={0}>
@@ -202,7 +242,11 @@ export function CardsChat({ threadId }: { threadId: string }) {
               </TooltipProvider>
             </CardHeader>
             <CardContent>
-              <Posts threadId={threadId} />
+              <Posts
+                threadId={threadId}
+                locked={thread.data.locked}
+                canSend={!!canSend}
+              />
             </CardContent>
             <CardFooter>
               <form
@@ -211,24 +255,31 @@ export function CardsChat({ threadId }: { threadId: string }) {
               >
                 <Input
                   id="message"
-                  placeholder="Mesajınızı yazın..."
+                  placeholder={
+                    canSend ? "Mesajınızı yazın..." : "Bu thread kilitli!"
+                  }
                   className="flex-1"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
+                  disabled={!canSend}
                   onPaste={(e) => {
                     if (e.clipboardData.files.length > 0) {
                       addAttachments(Array.from(e.clipboardData.files));
                     }
                   }}
                 />
-                <ThreadUpload />
+                <ThreadUpload disabled={!canSend} />
                 <Button
                   type="submit"
                   size="icon"
-                  disabled={createPost.isLoading || isUploading}
+                  disabled={createPost.isLoading || isUploading || !canSend}
                   isLoading={createPost.isLoading || isUploading}
                 >
-                  <Send className="h-4 w-4" />
+                  {thread.data.locked ? (
+                    <Lock className="h-4 w-4" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                   <span className="sr-only">Gönder</span>
                 </Button>
               </form>
@@ -377,9 +428,9 @@ export function Attachments() {
   );
 }
 
-type ThreadProps = { threadId: string };
+type ThreadProps = { threadId: string; locked: boolean; canSend: boolean };
 
-const Posts: React.FC<ThreadProps> = ({ threadId }) => {
+const Posts: React.FC<ThreadProps> = ({ threadId, locked, canSend }) => {
   const { data: session } = useSession();
   const {
     data,
@@ -450,6 +501,13 @@ const Posts: React.FC<ThreadProps> = ({ threadId }) => {
             {/* <div className="chat-footer opacity-50">Delivered</div> */}
           </div>
         ))}
+        {locked && (
+          <div className="flex flex-col items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm">
+            <Lock className="h-6 w-6" />
+            <span>Bu thread kilitli!</span>
+            {canSend && <span>Fakat sen mesaj gönderebilirsin.</span>}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap justify-center space-x-2 space-y-0 pb-4 pr-4 md:justify-end md:space-x-4 md:space-y-0">

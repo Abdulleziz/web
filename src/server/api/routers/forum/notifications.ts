@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../../trpc";
+import {
+  createTRPCRouter,
+  permissionProcedure,
+  protectedProcedure,
+} from "../../trpc";
 import { TRPCError } from "@trpc/server";
 import { ThreadId } from "./types";
 
@@ -28,7 +32,7 @@ export const forumNotificationsRouter = createTRPCRouter({
         data: { defaultThreadNotify: input },
       });
     }),
-  setForumNotification: protectedProcedure
+  setForumNotification: permissionProcedure
     .input(
       z.object({
         threadId: ThreadId,
@@ -36,9 +40,24 @@ export const forumNotificationsRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input: { threadId, preference } }) => {
-      await ctx.prisma.forumThread.update({
-        where: { id: threadId },
-        data: { defaultNotify: preference },
+      return await ctx.prisma.$transaction(async (prisma) => {
+        const thread = await prisma.forumThread.findUniqueOrThrow({
+          where: { id: threadId },
+          select: { creatorId: true },
+        });
+        if (
+          thread.creatorId !== ctx.session.user.id ||
+          !ctx.verifiedPerms.includes("forumu yönet")
+        )
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Forum bildirimi değiştirme yetkiniz yok",
+          });
+
+        await prisma.forumThread.update({
+          where: { id: threadId },
+          data: { defaultNotify: preference },
+        });
       });
     }),
   setForumUserNotification: protectedProcedure

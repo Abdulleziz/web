@@ -97,7 +97,7 @@ export async function calculateRemainingTea(db: Transaction = prisma) {
     .map((p) => {
       // FUCK TYPESCRIPT .MAP
       if (p.entity.type !== "tea") throw new Error("unreachable");
-      return { ...p, entity: { ...p.entity, type: p.entity.type } };
+      return p as (typeof p) & {entity: {type: "tea"}}
     });
 
   const has = { amountGram: 0, amountSugar: 0 };

@@ -204,3 +204,5 @@ export const createPermissionProcedure = (requiredPerms: AbdullezizPerm[]) =>
       });
     })
   );
+
+export const permissionProcedure = createPermissionProcedure([]);

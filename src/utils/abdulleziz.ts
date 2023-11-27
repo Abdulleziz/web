@@ -42,7 +42,8 @@ export const requiredSeverity = [
   { perm: "arabaları yönet", min: 80 }, // MEGAN EKLE
   { perm: "çalışanları yönet", min: 80 }, // kovmak veya işe almak
   { perm: "forum thread sil", min: 80 },
-  { perm: "forumu yönet", min: 80 }, // thread/post kilitleme vb.
+  { perm: "forum thread kilitle", min: 80 },
+  { perm: "forumu yönet", min: 80 }, // thread/post kilitleme vb. + forum bildirimleri yönetme
 ] as const satisfies readonly RequiredSeverity[];
 
 export type AbdullezizPerm =
@@ -56,7 +57,11 @@ export type RequiredSeverities = readonly (RequiredSeverity & {
 export const boundPerms: Partial<
   Record<AbdullezizPerm, AtLeastOne<AbdullezizPerm>>
 > = {
-  "forumu yönet": ["forum thread sil", "forum thread pinle"],
+  "forumu yönet": [
+    "forum thread sil",
+    "forum thread pinle",
+    "forum thread kilitle",
+  ],
   "çalışanları yönet": ["stajları yönet", "oylamaya katıl"],
   "arabaları yönet": ["araba sür"],
 };

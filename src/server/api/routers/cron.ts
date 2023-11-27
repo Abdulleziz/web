@@ -37,6 +37,7 @@ export const cronRouter = createTRPCRouter({
   toggleEnabled: protectedProcedure
     .input(CronInput)
     .mutation(async ({ ctx, input: cron }) => {
+      // TODO: transaction
       const job = await ctx.prisma.cronJob.findUnique({
         where: { cron },
         select: {

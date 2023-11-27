@@ -1,5 +1,4 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import type { ForumPin } from "@prisma/client";
 import classNames from "classnames";
 import {
   BellOff,
@@ -32,14 +31,41 @@ import {
 
 type Thread = RouterOutputs["forum"]["getThreads"][number];
 
+const groupByDate = (threads: Thread[]) => {
+  const grouped = threads.reduce((acc, thread) => {
+    const date = thread.createdAt.toLocaleString("tr-TR", {
+      month: "long",
+      year: "numeric",
+    });
+    const current = acc[date] ?? [];
+    return { ...acc, [date]: [...current, thread] };
+  }, {} as Record<string, Thread[]>);
+
+  return Object.entries(grouped).map(([date, threads]) => ({
+    date,
+    threads,
+  }));
+};
+
 const Threads: NextPage = () => {
-  const threads = useGetForumThreads();
   const prefecth = usePrefetchThreads();
   const [threadRef] = useAutoAnimate();
-  const [threadItemsRef] = useAutoAnimate();
+  const threads = useGetForumThreads(undefined, {
+    select(data) {
+      const pins: Thread[] = [];
+      const nonPins: Thread[] = [];
+      data
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .forEach((thread) => {
+          if (thread.pin) pins.push(thread);
+          else nonPins.push(thread);
+        });
+      return { pins, nonPins };
+    },
+  });
 
   useEffect(() => {
-    if (threads.data) prefecth(threads.data);
+    if (threads.data) prefecth(threads.data.nonPins.concat(threads.data.pins));
   }, [prefecth, threads.data]);
 
   const currentUser = useGetAbdullezizUser();
@@ -50,13 +76,6 @@ const Threads: NextPage = () => {
   const canDelete =
     currentUser.data?.perms.includes("forum thread sil") ?? false;
 
-  const sortByPin = (a: ForumPin | null, b: ForumPin | null) => {
-    // threads with pins first
-    if (a && !b) return -1;
-    if (!a && b) return 1;
-    return 0;
-  };
-
   return (
     <Card className="flex flex-col justify-center p-10" ref={threadRef}>
       <CardHeader>Threadler</CardHeader>
@@ -65,58 +84,107 @@ const Threads: NextPage = () => {
       )}
       {threads.isError && <p className="text-error">Hata!</p>}
       {threads.data && (
-        <ul ref={threadItemsRef}>
-          {threads.data
-            .sort((a, b) => sortByPin(a.pin, b.pin))
-            .map((thread) => (
-              <Card
-                key={thread.id}
-                className="relative transition-all hover:bg-base-300"
-              >
-                <Link href={`/forum/threads/${thread.id}`}>
-                  <div className="p-3">
-                    {!!thread.pin && (
-                      <span>Pinned by {thread.pin.pinnedBy.name}</span>
-                    )}
-                    <div
-                      className="group flex overflow-auto"
-                      data-size={thread.title.length > 50 ? "long" : "short"}
-                    >
-                      <p className="text-ellipsis text-lg text-white">
-                        {thread.title.slice(0, 50)}
-                      </p>
-                      <span className="text-secondary group-data-[size=short]:hidden">
-                        ...
-                      </span>
-                    </div>
-                    <div className="flex flex-row items-center py-2">
-                      {thread.creator.image && (
-                        <Image
-                          alt="Profile Image"
-                          src={thread.creator.image}
-                          className="w-8 rounded-full"
-                          width={128}
-                          height={128}
-                        />
-                      )}
-                      <p className="px-2">{thread.creator.name}</p>
-                      <div className="ml-auto flex items-center justify-center gap-4 text-sm">
-                        <p>Oluşturuldu: {thread.createdAt.toLocaleString()}</p>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-
-                <div className="absolute right-3 top-3 flex items-center justify-center gap-1 md:gap-2">
-                  {canPin && <PinThread thread={thread} />}
-                  {canMute && <MuteThread thread={thread} />}
-                  {canDelete && <DeleteThread threadId={thread.id} />}
-                </div>
-                <div className="divider m-0" />
-              </Card>
-            ))}
-        </ul>
+        <>
+          {!!threads.data.pins.length && (
+            <div>
+              <h1 className="p-4 text-center text-2xl">Pinler</h1>
+              <ul>
+                {threads.data.pins.map((thread) => (
+                  <ThreadRow
+                    key={thread.id}
+                    thread={thread}
+                    canDelete={canDelete}
+                    canMute={canMute}
+                    canPin={canPin}
+                  />
+                ))}
+              </ul>
+            </div>
+          )}
+          {groupByDate(threads.data.nonPins).map(({ date, threads }) => (
+            <div key={date}>
+              <h1 className="p-4 text-center text-2xl">{date}</h1>
+              <ul>
+                {threads.map((thread) => (
+                  <ThreadRow
+                    key={thread.id}
+                    thread={thread}
+                    canDelete={canDelete}
+                    canMute={canMute}
+                    canPin={canPin}
+                  />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </>
       )}
+    </Card>
+  );
+};
+
+const ThreadRow = ({
+  thread,
+  canDelete,
+  canMute,
+  canPin,
+}: {
+  thread: Thread;
+  canPin: boolean;
+  canMute: boolean;
+  canDelete: boolean;
+}) => {
+  return (
+    <Card key={thread.id} className="relative transition-all hover:bg-base-300">
+      <Link href={`/forum/threads/${thread.id}`}>
+        <div className="p-3">
+          {!!thread.pin && <span>Pinned by {thread.pin.pinnedBy.name}</span>}
+          <div
+            className="group flex overflow-auto"
+            data-size={thread.title.length > 50 ? "long" : "short"}
+          >
+            <p className="text-ellipsis text-lg text-white">
+              {thread.title.slice(0, 50)}
+            </p>
+            <span className="text-secondary group-data-[size=short]:hidden">
+              ...
+            </span>
+          </div>
+          <div className="flex flex-row items-center py-2">
+            {thread.creator.image && (
+              <Image
+                alt="Profile Image"
+                src={thread.creator.image}
+                className="w-8 rounded-full"
+                width={128}
+                height={128}
+              />
+            )}
+            <p className="px-2">{thread.creator.name}</p>
+            <div className="ml-auto flex items-center justify-center gap-4 text-sm">
+              <p>{thread.createdAt.toLocaleString("tr-TR")}</p>
+            </div>
+          </div>
+        </div>
+      </Link>
+      <div className="absolute right-3 top-3 flex items-center justify-center gap-1 md:gap-2">
+        {canPin && <PinThread thread={thread} />}
+        {canMute && <MuteThread thread={thread} />}
+        {canDelete && <DeleteThread threadId={thread.id} />}
+      </div>
+      <div className="flex items-center justify-center">
+        {thread.tags.slice(0, 4).map((tag) => (
+          <div
+            key={tag.id}
+            className={classNames(
+              "mr-2 rounded-full px-2 py-1 text-xs dark:text-zinc-300"
+            )}
+          >
+            #{tag.name.slice(0, 10)}
+          </div>
+        ))}
+      </div>
+      <div className="divider m-0" />
     </Card>
   );
 };
@@ -128,7 +196,7 @@ const DeleteThread = ({ threadId }: { threadId: Thread["id"] }) => {
     <Button
       onClick={() => deleteThread.mutate(threadId)}
       variant="destructive"
-      size="sm"
+      size="relative-sm"
       isLoading={deleteThread.isLoading}
       disabled={deleteThread.isLoading}
     >
@@ -145,7 +213,7 @@ const PinThread = ({ thread }: { thread: Thread }) => {
     return (
       <Button
         onClick={() => createPin.mutate(thread.id)}
-        size="sm"
+        size="relative-sm"
         variant="outline"
         isLoading={createPin.isLoading}
         disabled={createPin.isLoading}
@@ -157,7 +225,7 @@ const PinThread = ({ thread }: { thread: Thread }) => {
   return (
     <Button
       onClick={() => deletePin.mutate(thread.id)}
-      size="sm"
+      size="relative-sm"
       isLoading={deletePin.isLoading}
       disabled={deletePin.isLoading}
     >
@@ -207,7 +275,7 @@ const MuteThread = ({ thread }: { thread: Thread }) => {
   const { Modal } = createModal(`mute-thread-${thread.id}-modal`, svg);
   return (
     <>
-      <Button size="sm" variant="secondary">
+      <Button size="relative-sm" variant="secondary">
         <Label htmlFor={`mute-thread-${thread.id}-modal`}>{svg}</Label>
       </Button>
       <Modal>

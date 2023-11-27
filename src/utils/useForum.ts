@@ -1,8 +1,6 @@
 import { toast } from "react-hot-toast";
 import { api, type RouterOutputs, type RouterInputs } from "./api";
 
-type GetThreads = RouterInputs["forum"]["getThreads"];
-type GetForum = RouterInputs["forum"]["getThreadById"];
 type GetPosts = RouterInputs["forum"]["posts"]["getMany"];
 
 type Threads = RouterOutputs["forum"]["getThreads"];
@@ -25,22 +23,41 @@ export const usePrefetchThreads = () => {
   };
 };
 
-export const useGetForumThreads = (input: GetThreads) =>
-  api.forum.getThreads.useQuery(input);
-
-export const useGetForumThread = (input: GetForum) =>
-  api.forum.getThreadById.useQuery(input);
+export const useGetForumThreads = api.forum.getThreads.useQuery;
+export const useGetForumThread = api.forum.getThreadById.useQuery;
 
 export const useGetForumPosts = (input: GetPosts) =>
   api.forum.posts.getMany.useInfiniteQuery(input, {
     getNextPageParam: (lastPage) => lastPage.next,
   });
 
+export const useToggleLockForumThread = () => {
+  const utils = api.useContext();
+  return api.forum.toggleLockThread.useMutation({
+    onSuccess: async (_d, threadId) => {
+      toast.success("Thread kilidi değiştirildi!", { id: "forum.toggleLock" });
+      await utils.forum.getThreadById.invalidate(threadId);
+      await utils.forum.getThreads.invalidate();
+    },
+    onMutate: () => {
+      toast.loading("Thread kilidi değiştiriliyor...", {
+        id: "forum.toggleLock",
+      });
+    },
+    onError(error) {
+      toast.error(error.data?.zodError || error.message, {
+        id: "forum.toggleLock",
+      });
+    },
+  });
+};
+
 export const useCreateForumPin = () => {
   const utils = api.useContext();
   return api.forum.createPin.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (_d, threadId) => {
       toast.success("Thread pinlendi!", { id: "forum.createPin" });
+      await utils.forum.getThreadById.invalidate(threadId);
       await utils.forum.getThreads.invalidate();
     },
     onMutate: () => {
@@ -57,8 +74,9 @@ export const useCreateForumPin = () => {
 export const useDeleteForumPin = () => {
   const utils = api.useContext();
   return api.forum.deletePin.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (_d, threadId) => {
       toast.success("Thread pin kaldırıldı!", { id: "forum.deletePin" });
+      await utils.forum.getThreadById.invalidate(threadId);
       await utils.forum.getThreads.invalidate();
     },
     onMutate: () => {
@@ -87,14 +105,28 @@ export const useSetUserNotification = () => {
   });
 };
 
+export const useSetForumNotification = () => {
+  const utils = api.useContext();
+  return api.forum.notifications.setForumNotification.useMutation({
+    onSuccess: async (_d, { threadId }) => {
+      toast.success("Bildirim ayarları kaydedildi!", {
+        id: "forum.setForumNotification",
+      });
+      await utils.forum.getThreads.invalidate();
+      await utils.forum.getThreadById.invalidate(threadId);
+    },
+  });
+};
+
 export const useSetForumUserNotification = () => {
   const utils = api.useContext();
   return api.forum.notifications.setForumUserNotification.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (_d, { threadId }) => {
       toast.success("Bildirim ayarları kaydedildi!", {
         id: "forum.setForumUserNotification",
       });
       await utils.forum.getThreads.invalidate();
+      await utils.forum.getThreadById.invalidate(threadId);
     },
   });
 };
@@ -122,6 +154,7 @@ export const usePostDeleteAttachments = () => {
   const id = "forum.post.deleteAttachments";
   return api.forum.posts.deleteAttachments.useMutation({
     onSuccess: () => {
+      // TODO: invalidate the post
       toast.success("Thread Post'u dosya eki silindi!", { id });
     },
     onMutate: () => {

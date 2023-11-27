@@ -6,7 +6,6 @@ import {
   DriveablePabel,
   MemberPanel,
   VoteChart,
-  MembersPanel,
   HistoryPanel,
   CEOVotePanel,
 } from "~/components/panels";

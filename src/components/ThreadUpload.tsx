@@ -48,7 +48,7 @@ export const removeAttachment = (name: File["name"]) =>
 
 /* Attachment Store end*/
 
-export function ThreadUpload() {
+export function ThreadUpload({ disabled }: { disabled: boolean }) {
   const onDrop = useCallback((acceptedFiles: FileWithPath[]) => {
     addAttachments(acceptedFiles);
   }, []);
@@ -62,6 +62,13 @@ export function ThreadUpload() {
     onDrop,
     accept: fileTypes ? generateClientDropzoneAccept(fileTypes) : undefined,
   });
+
+  if (disabled)
+    return (
+      <Button size="icon" disabled>
+        <ImageIcon className="h-4 w-4" />
+      </Button>
+    );
 
   return (
     <div {...getRootProps()}>

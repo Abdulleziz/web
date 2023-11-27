@@ -11,12 +11,10 @@ import type { ChartData, ChartOptions } from "chart.js";
 import { Radar } from "react-chartjs-2";
 
 import Link from "next/link";
-import Image from "next/image";
 import { type CSSProperties, useEffect, useState, useCallback } from "react";
 
 import {
   useGetAbdullezizUser,
-  useGetAbdullezizUsersSorted,
   useGetCEOVoteEvent,
   useGetCEOVoteEventWithMembers,
   useGetDiscordMembers,
@@ -74,7 +72,9 @@ export const GlobalPanel = createPanel(undefined, () => {
           <Button size="sm">Hatırlatıcıya git</Button>
         </Link>
         <Link href="/mbt/index.html">
-          <Button size="sm">Projeye git</Button>
+          <Button variant={"warning"} size="sm">
+            MBT projesine git
+          </Button>
         </Link>
       </CardContent>
       <CardFooter className="flex items-center justify-center gap-4"></CardFooter>
@@ -240,11 +240,11 @@ export const CEOVotePanel = createPanel(undefined, () => {
       <div className="menu-item flex flex-col items-center whitespace-nowrap">
         <span className="font-mono text-primary">Oy verenler</span>
         {data.votes.map((v) => (
-          <span key={v.id} className="flex px-2 font-bold items-center">
+          <span key={v.id} className="flex items-center px-2 font-bold">
             {v.voter.exist && v.voter.id ? (
               <AbdullezizUser
-              size={"lg-long"}
-              variant={"link"}
+                size={"lg-long"}
+                variant={"link"}
                 data={{
                   id: v.voter.id,
                   name: v.voter.user.username,
@@ -261,8 +261,8 @@ export const CEOVotePanel = createPanel(undefined, () => {
             {"-->"}
             {v.target.exist && v.target.id ? (
               <AbdullezizUser
-              size={"lg-long"}
-              variant={"link"}
+                size={"lg-long"}
+                variant={"link"}
                 data={{
                   id: v.target.id,
                   name: v.target.user.username,
@@ -453,57 +453,6 @@ export const VoteChart = createPanel(undefined, () => {
   return (
     <Card className="flex items-center justify-center rounded-md border-2 border-dashed px-4 py-4 text-3xl font-semibold ">
       <Radar data={chartData} options={ChartOptions} />
-    </Card>
-  );
-});
-
-export const MembersPanel = createPanel(undefined, () => {
-  const getMembers = useGetAbdullezizUsersSorted();
-  const members = getMembers.data ?? [];
-
-  return (
-    <Card className="row-span-3 rounded-lg shadow">
-      <div className="flex items-center justify-between border-b border-base-200 px-6 py-5 font-semibold">
-        <span>Abdulleziz Çalışanları</span>
-      </div>
-      <div className="overflow-y-auto">
-        <ul className="space-y-6 p-6">
-          {members.map((member) => {
-            const highestRole = member.roles[0];
-            const avatar = getAvatarUrl(member.user, member.avatar);
-            const style = highestRole
-              ? { color: `#${highestRole.color.toString(16).padStart(6, "0")}` }
-              : { color: "white" };
-
-            return (
-              <li
-                key={member.user.id}
-                className="flex flex-col items-center justify-center text-center"
-              >
-                <div className="avatar-group">
-                  {avatar && (
-                    <Image
-                      className="avatar w-12"
-                      src={avatar}
-                      alt="Profile photo"
-                      width={128}
-                      height={128}
-                    />
-                  )}
-                </div>
-                <p style={style}>{member.nick}</p>
-                <p className="text-gray-400">{member.user.username}</p>
-
-                {highestRole ? (
-                  <p style={style}>({highestRole.name})</p>
-                ) : (
-                  "(Unemployeed 🤣)"
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </div>
     </Card>
   );
 });

@@ -18,6 +18,9 @@ const _28DAYS = 1000 * 60 * 60 * 24 * 28;
 
 const managePinsProcedure = createPermissionProcedure(["forum thread pinle"]);
 const deleteThreadsProcedure = createPermissionProcedure(["forum thread sil"]);
+const lockThreadsProcedure = createPermissionProcedure([
+  "forum thread kilitle",
+]);
 
 export const forumRouter = createTRPCRouter({
   posts: forumPostsRouter,
@@ -61,7 +64,25 @@ export const forumRouter = createTRPCRouter({
   deletePin: managePinsProcedure
     .input(ThreadId)
     .mutation(({ ctx, input: id }) => {
-      return ctx.prisma.forumPin.delete({ where: { id } });
+      return ctx.prisma.forumPin.delete({
+        where: { id },
+        select: { thread: { select: { id: true } } },
+      });
+    }),
+  toggleLockThread: lockThreadsProcedure
+    .input(ThreadId)
+    .mutation(async ({ ctx, input: id }) => {
+      return await ctx.prisma.$transaction(async (prisma) => {
+        const thread = await prisma.forumThread.findUnique({
+          where: { id },
+          select: { locked: true },
+        });
+        if (!thread) throw new TRPCError({ code: "NOT_FOUND" });
+        await prisma.forumThread.update({
+          where: { id },
+          data: { locked: !thread.locked },
+        });
+      });
     }),
   createThread: protectedProcedure
     .input(

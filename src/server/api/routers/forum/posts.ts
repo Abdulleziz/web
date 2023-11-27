@@ -2,7 +2,11 @@ import { TRPCError } from "@trpc/server";
 import { utapi } from "uploadthing/server";
 import { z } from "zod";
 import { env } from "~/env.mjs";
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  permissionProcedure,
+  protectedProcedure,
+} from "~/server/api/trpc";
 import { getDomainUrl } from "~/utils/api";
 import { UserId } from "~/utils/zod-utils";
 import { getForumNotificationListeners } from "./trpc";
@@ -30,7 +34,7 @@ export const forumPostsRouter = createTRPCRouter({
       const next = hasNext ? posts.pop()?.id : undefined;
       return { posts, next };
     }),
-  create: protectedProcedure
+  create: permissionProcedure
     .input(
       z.object({
         threadId: ThreadId,
@@ -39,17 +43,37 @@ export const forumPostsRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input: { threadId, message, mentions } }) => {
-      const post = await ctx.prisma.forumPost.create({
-        data: {
-          message,
-          thread: { connect: { id: threadId } },
-          creator: { connect: { id: ctx.session.user.id } },
-        },
-        include: {
-          thread: {
-            select: { title: true, notifications: true, defaultNotify: true },
+      const post = await ctx.prisma.$transaction(async (prisma) => {
+        const thread = await prisma.forumThread.findUnique({
+          where: { id: threadId },
+          select: { locked: true },
+        });
+        if (!thread)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Thread bulunamadı!",
+          });
+
+        if (
+          thread.locked &&
+          !ctx.verifiedPerms.includes("forum thread kilitle")
+        )
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Thread kilitli!",
+          });
+        return await prisma.forumPost.create({
+          data: {
+            message,
+            thread: { connect: { id: threadId } },
+            creator: { connect: { id: ctx.session.user.id } },
           },
-        },
+          include: {
+            thread: {
+              select: { title: true, notifications: true, defaultNotify: true },
+            },
+          },
+        });
       });
       const notifyUsers = await getForumNotificationListeners(
         ctx.prisma,
