@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse, NextConfig } from "next";
-import { verifySignature } from "@upstash/qstash/nextjs";
+import { verifySignature } from "@upstash/qstash/dist/nextjs";
 import { z } from "zod";
 import { prisma } from "~/server/db";
 import type {
@@ -13,7 +13,7 @@ import { REST } from "@discordjs/rest";
 import { CreateSalary } from "~/utils/usePayments";
 import { getSalaryTakers } from "~/server/discord-api/trpc";
 import { getDomainUrl } from "~/utils/api";
-import { Client } from "@upstash/qstash/nodejs";
+import { Client } from "@upstash/qstash";
 import { Vote } from "~/server/api/routers/discord/roles";
 
 // const CronHeader = z.object({
@@ -40,11 +40,6 @@ type DMBody = RESTPostAPICurrentUserCreateDMChannelJSONBody;
 type DMResult = RESTPostAPICurrentUserCreateDMChannelResult;
 
 type MessageBody = RESTPostAPIChannelMessageJSONBody;
-
-// const messageId = CronHeader.parse(headers)["upstash-message-id"];
-// const c = new Client({ token: env.QSTASH_TOKEN });
-// const message = await c.messages.get({ id: messageId });
-// const jobId = (message as typeof message & { scheduleId?: string }).scheduleId;
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -111,7 +106,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const schedules = await c.schedules.list();
       const id = schedules.find((s) => s.cron === cron)?.scheduleId;
       if (id) {
-        await c.schedules.delete({ id });
+        await c.schedules.delete(id);
         res.status(410).send("Job not found - cron.deleted");
       } else {
         res.status(404).send("Job not found");

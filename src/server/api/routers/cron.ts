@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { Client } from "@upstash/qstash/nodejs";
+import { Client } from "@upstash/qstash";
 import { z } from "zod";
 import { env } from "~/env.mjs";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -178,7 +178,7 @@ export const cronRouter = createTRPCRouter({
       if (dbCron.listeners.length === 1) {
         if (env.NEXT_PUBLIC_VERCEL_ENV === "production") {
           const c = new Client({ token: env.QSTASH_TOKEN });
-          await c.schedules.delete({ id: dbCron.jobId });
+          await c.schedules.delete(dbCron.jobId);
         }
         return await ctx.prisma.cronJob.delete({ where: { cron } });
       }
@@ -240,11 +240,13 @@ export const cronRouter = createTRPCRouter({
       let jobId: string; // development reasons...
       if (env.NEXT_PUBLIC_VERCEL_ENV === "production") {
         const c = new Client({ token: env.QSTASH_TOKEN });
-        const url = getDomainUrl() + "/api/cron";
-        const res = await c.publishJSON({
-          url,
+        const destination = getDomainUrl() + "/api/cron";
+        const body = { cron } as z.input<typeof CronBody>;
+        const res = await c.schedules.create({
+          destination,
           cron,
-          body: { cron } as z.input<typeof CronBody>,
+          body: JSON.stringify(body),
+          headers: { "Content-Type": "application/json" },
         });
         jobId = res.scheduleId;
       } else {

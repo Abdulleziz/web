@@ -23,7 +23,7 @@ import {
   fetchMembersWithRoles,
   getGuildMembersWithRoles,
 } from "~/server/discord-api/trpc";
-import { Client } from "@upstash/qstash/nodejs";
+import { Client } from "@upstash/qstash";
 import { env } from "~/env.mjs";
 import { getDomainUrl } from "~/utils/api";
 import { type CronBody } from "~/pages/api/cron";
@@ -338,7 +338,7 @@ export const rolesRouter = createTRPCRouter({
           await modifyGuildMemberRole(target.user.id, before, "DELETE");
         const roleId = abdullezizRoles[role];
         if (!quit) await modifyGuildMemberRole(target.user.id, roleId, "PUT");
-        if (ongoing?.jobId) await c.messages.delete({ id: ongoing.jobId });
+        if (ongoing?.jobId) await c.messages.delete(ongoing.jobId);
       }
 
       if (!ongoing) {
@@ -505,7 +505,7 @@ export const rolesRouter = createTRPCRouter({
           );
 
           await modifyGuildMemberRole(finisher, CEO, "PUT");
-          if (latest.jobId) await c.messages.delete({ id: latest.jobId });
+          if (latest.jobId) await c.messages.delete(latest.jobId);
           if (event)
             await modifyGuildEvent(
               event.id,

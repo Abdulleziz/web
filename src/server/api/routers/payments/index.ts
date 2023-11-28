@@ -5,7 +5,7 @@ import {
   protectedProcedure,
 } from "~/server/api/trpc";
 import { env } from "~/env.mjs";
-import { Client } from "@upstash/qstash/nodejs";
+import { Client } from "@upstash/qstash";
 import { parseExpression } from "cron-parser";
 import type { CronBody } from "~/pages/api/cron";
 import { getSalaryTakers } from "~/server/discord-api/trpc";
@@ -99,42 +99,49 @@ export const paymentsRouter = createTRPCRouter({
     }),
   createSalary: manageEmployeesProcedure
     .input(CreateSalary)
-    .mutation(async ({ ctx, input: { delay, multiplier } }) => {
-      if (env.NODE_ENV !== "development") {
-        const c = new Client({ token: env.QSTASH_TOKEN });
-        const { messages } = await c.messages.list();
-        const salaryMessages = messages.filter((m) =>
-          m.body.includes("salary")
-        );
-        if (salaryMessages.length > 0)
-          throw new TRPCError({ code: "PRECONDITION_FAILED" });
+    .mutation(({ ctx, input: { delay, multiplier } }) => {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message:
+          "Due to migration of the message broker, this feature is disabled",
+      });
+      // if (env.NODE_ENV !== "development") {
+      //   const c = new Client({ token: env.QSTASH_TOKEN });
+      //   // TODO: since we cannot list messages, we need to create scheduled job for salary and destroy it
+      //   // or we store the message id in the db, that way, we could create ui that is mutable by the user at any time
+      //   const messages = await c.messages.list();
+      //   const salaryMessages = messages.filter((m) =>
+      //     m.body.includes("salary")
+      //   );
+      //   if (salaryMessages.length > 0)
+      //     throw new TRPCError({ code: "PRECONDITION_FAILED" });
 
-        const url = getDomainUrl() + "/api/cron";
-        return await c.publishJSON({
-          url,
-          delay,
-          body: {
-            type: "salary",
-            delay,
-            multiplier,
-            fromId: ctx.session.user.id,
-          } as z.input<typeof CronBody>,
-        });
-      } else {
-        // currently in dev, we don't have a cron job
-        const salaryTakers = await getSalaryTakers();
+      //   const url = getDomainUrl() + "/api/cron";
+      //   return await c.publishJSON({
+      //     url,
+      //     delay,
+      //     body: {
+      //       type: "salary",
+      //       delay,
+      //       multiplier,
+      //       fromId: ctx.session.user.id,
+      //     } as z.input<typeof CronBody>,
+      //   });
+      // } else {
+      //   // currently in dev, we don't have a cron job
+      //   const salaryTakers = await getSalaryTakers();
 
-        await ctx.prisma.payment.createMany({
-          data: salaryTakers.map((u) => {
-            return {
-              type: "salary",
-              toId: u.id,
-              amount:
-                // highest_role.severity x multiplier (90 * 10 = 900)
-                u.severity * multiplier,
-            };
-          }),
-        });
-      }
+      //   await ctx.prisma.payment.createMany({
+      //     data: salaryTakers.map((u) => {
+      //       return {
+      //         type: "salary",
+      //         toId: u.id,
+      //         amount:
+      //           // highest_role.severity x multiplier (90 * 10 = 900)
+      //           u.severity * multiplier,
+      //       };
+      //     }),
+      //   });
+      // }
     }),
 });
