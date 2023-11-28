@@ -1,6 +1,7 @@
 {
-  "name": "",
-  "short_name": "",
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "name": "Abdülleziz",
+  "short_name": "Abdulleziz",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -13,7 +14,9 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#20222c",
-  "background_color": "#20222c",
-  "display": "standalone"
+  "theme_color": "#09090b",
+  "background_color": "#09090b",
+  "display": "standalone",
+  "start_url": "/",
+  "orientation": "any"
 }

@@ -101,6 +101,8 @@ export const SystemEntities = SE.parse([
       model: "iPhone 8 Plus",
     },
     price: 500,
+    image:
+      "https://images.hepsiburada.net/assets/Telefon/ProductDesc/iphone8plus-a%C3%A7%C4%B1klama-yeni.jpg",
   },
   {
     id: 6,
@@ -110,6 +112,8 @@ export const SystemEntities = SE.parse([
       model: "iPhone 12 Pro Max",
     },
     price: 1000,
+    image:
+      "https://productimages.hepsiburada.net/s/66/375-375/110000007422583.jpg",
   },
 ] satisfies SE);
 
