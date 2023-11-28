@@ -18,5 +18,6 @@
   "background_color": "#09090b",
   "display": "standalone",
   "start_url": "/",
-  "orientation": "any"
+  "orientation": "any",
+  "prefer_related_applications": false
 }

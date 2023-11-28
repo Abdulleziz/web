@@ -5,8 +5,9 @@ import { Avatar } from "@radix-ui/react-avatar";
 import { AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { useCheckout } from "..";
 
-const EntityCard = ({ entity }: { entity: SystemEntity }) => {
+const EntityCard = ({ entity }: { entity?: SystemEntity }) => {
   const addItems = useCheckout((state) => state.addItems);
+  if (!entity) return null;
   return (
     <Card className="flex flex-col items-center justify-center gap-3 p-3">
       <Avatar>
