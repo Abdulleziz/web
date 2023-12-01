@@ -88,7 +88,7 @@ export const paymentsRouter = createTRPCRouter({
           });
 
         return await ctx.prisma.payment.createMany({
-          data: input.map(({ entityId, amount }) => ({
+          data: input.map(({ id: entityId, amount }) => ({
             type: "invoice",
             entityId,
             amount,

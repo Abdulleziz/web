@@ -59,7 +59,7 @@ export const calculateInvoices = (
 export const calculateEntitiesPrice = (entities: CreateEntities) => {
   let totalPrice = 0;
 
-  for (const { entityId, amount } of entities) {
+  for (const { id: entityId, amount } of entities) {
     const entity = getSystemEntityById(entityId);
     const price = entity.price * amount;
 

@@ -11,11 +11,11 @@ export const SendMoneySchema = z.object({
 
 export const CreateEntities = z
   .object({
-    entityId: z.number().positive().int().min(1),
+    id: z.number().positive().int().min(1),
     amount: z.number().min(1).default(1),
   })
   .array()
-  .nonempty();
+  .min(1);
 
 export const CreateSalary = z.object({
   multiplier: z.number().min(1).max(20).default(10),
@@ -62,8 +62,19 @@ export const usePaymentsHistory = () => api.payments.getAll.useQuery();
 export const useBuyEntities = () => {
   const utils = api.useContext();
   return api.payments.buyEntities.useMutation({
-    // refresh wallet
-    onSuccess: () => utils.payments.invalidate(),
+    onMutate: () => {
+      toast.loading("Satın alınıyor", { id: "payments.buyEntities" });
+    },
+    onError: (error) => {
+      toast.error(error.data?.zodError || error.message, {
+        id: "payments.buyEntities",
+      });
+    },
+    onSuccess: () => {
+      // refresh wallet
+      void utils.payments.invalidate();
+      toast.success("Satın alma başarılı", { id: "payments.buyEntities" });
+    },
   });
 };
 // mutate { entityId: number, amount: number }[]

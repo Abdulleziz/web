@@ -332,8 +332,8 @@ export const ServantPanel = createPanel(undefined, () => {
             toast.loading("Çay satın alınıyor", { id: "buyTea" });
             buyEntities.mutate(
               [
-                { entityId: 1, amount: 1 }, // 1kg
-                { entityId: 2, amount: 5 }, // 200gr * 5 = 1kg
+                { id: 1, amount: 1 }, // 1kg
+                { id: 2, amount: 5 }, // 200gr * 5 = 1kg
                 // toplam 2kg çay 🤣🍔😭😎
               ],
               {
