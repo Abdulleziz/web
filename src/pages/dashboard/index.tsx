@@ -72,6 +72,14 @@ const Dashboard: NextPage = () => {
                     Abdülleziz Çalışanı
                   </span>
                 </div>
+                <div>
+                  <span className="block text-2xl font-bold">
+                    {members.filter((m) => m.isStaff).length}
+                  </span>
+                  <span className="block text-gray-500">
+                    Abdülleziz Hissedar
+                  </span>
+                </div>
               </Card>
               {panels.map((Panel, i) => (
                 <Panel key={i} />

@@ -52,11 +52,11 @@ export const useGetAbdullezizUsersSorted = () => {
 export const useGetVoteEvents = api.discord.role.getVotes.useQuery;
 export const useGetCEOVoteEvent = api.discord.role.getCEOVotes.useQuery;
 
-export const useGetVoteEventsWithMembers = () => {
+export const useGetVoteEventsWithMembers = (q: In["role"]["getVotes"]) => {
   const roles = useGetAbdullezizRoles();
   const members = useGetAbdullezizUsersSorted();
   const memberFromId = memberFinder(members.data ?? []);
-  return api.discord.role.getVotes.useQuery(undefined, {
+  return api.discord.role.getVotes.useQuery(q, {
     enabled: !!roles.data,
     // query with dependent query wtf
     select(data) {

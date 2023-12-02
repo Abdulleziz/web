@@ -4,6 +4,7 @@ import {
   getGuildMember,
   getGuildMembers,
   getGuildRoles,
+  STAFF_ROLE_ID,
 } from "./guild";
 import { connectMembersWithIds, getAbdullezizRoles } from "./utils";
 import { type AtLeastOne, abdullezizRoleSeverities } from "~/utils/zod-utils";
@@ -13,10 +14,12 @@ import { prisma } from "../db";
 export async function fetchMembersWithRoles<M extends Member>(
   members: AtLeastOne<M>
 ) {
-  const roles = getAbdullezizRoles(await getGuildRoles());
+  const allRoles = await getGuildRoles();
+  const roles = getAbdullezizRoles(allRoles);
 
   const r = members.map((member) => ({
     ...member,
+    isStaff: member.roles.some((role) => role === STAFF_ROLE_ID),
     roles: roles.filter((role) => member.roles.includes(role.id)),
   }));
   return r as AtLeastOne<(typeof r)[number]>;

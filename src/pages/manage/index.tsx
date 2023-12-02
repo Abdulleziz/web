@@ -26,6 +26,7 @@ import {
 } from "~/components/ui/card";
 import { AbdullezizUser } from "~/components/AbdullezizUser";
 import { Button } from "~/components/ui/button";
+import ManageVoteEvents from "~/components/tables/ManageVoteEvents";
 
 export function colorMapping(targetColor: string) {
   const color =
@@ -53,7 +54,7 @@ const Manage: NextPage = () => {
   const members = data ?? [];
   const events = useGetVoteEventsWithMembers();
 
-  if (isLoading || events.isLoading) {
+  if (isLoading) {
     return <LoadingDashboard />;
   }
 
@@ -127,12 +128,7 @@ const Manage: NextPage = () => {
                 <CardTitle>Oylama Etkinliği Mevcut!</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center px-6 py-5 font-semibold">
-                <div className="grid gap-6 md:grid-cols-1 xl:grid-cols-1 ">
-                  {/* TODO: CEO VOTE HERE */}
-                  {events.data.map((event) => (
-                    <VoteEvent key={event.id} event={event} />
-                  ))}
-                </div>
+                <ManageVoteEvents />
               </CardContent>
             </Card>
           )}
@@ -239,12 +235,13 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
   }
 
   return (
-    <div className={`flex flex-col rounded`} style={style}>
-      <ul className="flex list-disc flex-col p-2">
+    <div className={`flex flex-col rounded`}>
+      <ul className="flex flex-col items-center justify-center p-2">
         <li>
           {event.target.exist && event.target.id ? (
             <AbdullezizUser
               size={"lg-long"}
+              variant={"ghost"}
               data={{
                 id: event.target.id,
                 name: event.target.user.username,
@@ -259,10 +256,10 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
             </div>
           )}
         </li>
-        <li>
+        <li style={style}>
           {!quit ? (
             <span>
-              {promote ? "Terfi" : "Tenzil"}: {event.role.name}
+              {event.beforeRole?.name ?? "Unemployee"} {"->"} {event.role.name}
             </span>
           ) : (
             <span>{event.role.name} istifa</span>
@@ -270,7 +267,7 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
         </li>
         <li>
           <div className="flex gap-2">
-            Toplam Oy: {event.votes.length}
+            {event.votes.length} oy
             <UsersModal id={event.id} votes={event.votes} />{" "}
             <label htmlFor={event.id} className=" btn btn-xs">
               (oylar)
@@ -278,14 +275,21 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
           </div>
         </li>
         <li>
-          Toplanan:
-          <span className="font-bold"> {collected} </span>(YD) / Gereken:{" "}
-          <span className="font-bold">{required}</span> (YD)
+          <span className="text-2xl font-bold">{collected}</span>/
+          <span>{required}</span>
         </li>
       </ul>
       <Button
         disabled={!!event.endedAt}
-        variant={quit ? "destructive" : instant ? "default" : "secondary"}
+        variant={
+          event.endedAt
+            ? "ghost"
+            : quit
+            ? "destructive"
+            : instant
+            ? "default"
+            : "secondary"
+        }
         onClick={() => {
           vote.mutate({
             role: event.role.name,
@@ -295,6 +299,8 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
       >
         {getVoteMessage()}
       </Button>
+      {/* line divider */}
+      <div className="divider m-0" />
     </div>
   );
 };

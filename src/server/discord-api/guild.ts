@@ -15,6 +15,7 @@ export type Member = RESTGetAPIGuildMemberResult & {
 };
 
 export const ABDULLEZIZ_SERVER_ID = "918833527389315092";
+export const STAFF_ROLE_ID = "918834668751704124";
 
 export async function getGuildMember(
   userId: string,
@@ -51,7 +52,7 @@ export async function getGuildMembers(guildId = ABDULLEZIZ_SERVER_ID) {
 
 export const invalidateGetGuildMembers = (guildId = ABDULLEZIZ_SERVER_ID) => {
   getGuildMembersIdCache.get(guildId)?.[1]();
-}
+};
 
 export async function modifyGuildMember(
   userId: string,
@@ -65,7 +66,7 @@ export async function modifyGuildMember(
       body: options ? JSON.stringify(options) : undefined,
     }
   );
-  
+
   invalidateGetGuildMembers(guildId);
   return ret;
 }
@@ -114,9 +115,12 @@ export async function deleteGuildRole(
   roleId: string,
   guildId = ABDULLEZIZ_SERVER_ID
 ) {
-  const ret = await discordFetch<undefined>(`guilds/${guildId}/roles/${roleId}`, {
-    method: "DELETE",
-  });
+  const ret = await discordFetch<undefined>(
+    `guilds/${guildId}/roles/${roleId}`,
+    {
+      method: "DELETE",
+    }
+  );
 
   invalidateGetGuildMembers(guildId);
   return ret;

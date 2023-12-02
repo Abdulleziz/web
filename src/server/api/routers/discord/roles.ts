@@ -179,9 +179,7 @@ const ONE_WEEK_OR_ONE_DAY =
   env.NEXT_PUBLIC_VERCEL_ENV === "production" ? ONE_WEEK : ONE_DAY;
 
 const CEO_VOTE_PERCENTAGE =
-  env.NEXT_PUBLIC_VERCEL_ENV === "production"
-    ? (0.66 as const)
-    : (0.66 as const); // change here for testing in dev [2, 0.66]
+  env.NEXT_PUBLIC_VERCEL_ENV === "production" ? (0.5 as const) : (0.5 as const); // change here for testing in dev [2, 0.5]
 
 export const rolesRouter = createTRPCRouter({
   getSeverities: internalProcedure.query(() => {
@@ -200,16 +198,26 @@ export const rolesRouter = createTRPCRouter({
       });
     return role;
   }),
-  getVotes: protectedProcedure.query(async ({ ctx }) => {
-    return await ctx.prisma.voteEvent.findMany({
-      take: 20,
-      include: { votes: { orderBy: { createdAt: "asc" } } },
-      orderBy: { createdAt: "desc" },
-    });
-  }),
+  getVotes: protectedProcedure
+    .input(z.boolean().default(false))
+    .query(async ({ ctx, input: unfinished }) => {
+      return await ctx.prisma.voteEvent.findMany({
+        where: unfinished
+          ? {
+              OR: [
+                { endedAt: null },
+                { endedAt: { gt: new Date(Date.now() - FIVE_MINUTES) } },
+              ],
+            }
+          : {},
+        take: 20,
+        include: { votes: { orderBy: { createdAt: "asc" } } },
+        orderBy: { createdAt: "desc" },
+      });
+    }),
   getCEOVotes: protectedProcedure.query(async ({ ctx }) => {
     const users = await getGuildMembersWithRoles();
-    const total = users.filter((u) => !u.user.bot).length;
+    const total = users.filter((u) => !u.user.bot && u.isStaff).length;
     const event = await ctx.prisma.voteEventCEO.findFirst({
       where: {
         OR: [
@@ -261,10 +269,11 @@ export const rolesRouter = createTRPCRouter({
           message: "Kendine oy veremezsin",
         });
 
-      if (new Date(voter.joined_at).getTime() > Date.now() - ONE_WEEK)
+      if (!voter.isStaff)
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Oy verebilmek için sunucuda en az bir hafta geçirmelisin",
+          message:
+            "Oy verebilmek için şirket hissedarı olmanız gerekir. Oylamalar sadece şirket hissedarları için geçerlidir.",
         });
 
       // to create event, check if user is the starter of any "ongoing" event
@@ -392,7 +401,7 @@ export const rolesRouter = createTRPCRouter({
         });
 
       const users = await getGuildMembersWithRoles();
-      const required = users.filter((u) => !u.user.bot).length;
+      const required = users.filter((u) => !u.user.bot && u.isStaff).length;
       const voter = users.find((u) => u.user.id === ctx.session.user.discordId);
       const target = users.find((u) => u.user.id === user);
 
@@ -402,10 +411,11 @@ export const rolesRouter = createTRPCRouter({
           message: "Kullanıcı bulunamadı",
         });
 
-      if (new Date(voter.joined_at).getTime() > Date.now() - ONE_WEEK)
+      if (!voter.isStaff)
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Oy verebilmek için sunucuda en az bir hafta geçirmelisin",
+          message:
+            "Oy verebilmek için şirket hissedarı olmanız gerekir. Oylamalar sadece şirket hissedarları için geçerlidir.",
         });
 
       const latest = await ctx.prisma.voteEventCEO.findFirst({
