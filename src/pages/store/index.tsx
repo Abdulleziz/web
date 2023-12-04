@@ -6,12 +6,14 @@ import {
   getSystemEntityById,
   type SystemEntity,
 } from "~/utils/entities";
-import { Card } from "~/components/ui/card";
+import * as Popover from "@radix-ui/react-popover";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useHydrated } from "../_app";
 import { Button } from "~/components/ui/button";
-import { useBuyEntities } from "~/utils/usePayments";
+import { ShoppingCartIcon, XCircleIcon } from "lucide-react";
+import { CardTitle } from "~/components/ui/card";
+import Link from "next/link";
 
 type Checkout = {
   items: Array<[SystemEntity["id"], number]>;
@@ -56,7 +58,6 @@ export const useCheckout = create<Checkout>()(
 
 const Store: NextPage = () => {
   const hydrated = useHydrated();
-  const buy = useBuyEntities();
   const store = useCheckout((state) => state.items).map(([i, amount]) => ({
     ...getSystemEntityById(i),
     amount,
@@ -67,22 +68,38 @@ const Store: NextPage = () => {
   return (
     <Layout>
       {/* checkout popup */}
-      <Card>
-        <div className="flex flex-col items-center justify-center gap-3 p-3">
-          <h1>Satın al</h1>
-          <p>Toplam: {total}$</p>
-          {items.map((item) => (
-            <div key={item.id} className="flex items-center justify-center text-3xl">
-              <p>{item.amount}x</p>
-              <EntityDetails entity={item} />
-            </div>
-          ))}
-          <Button disabled={buy.isLoading} onClick={() => buy.mutate(items)}>
-            Ödeme Yap
-          </Button>
-        </div>
-      </Card>
-      <div className="grid grid-cols-4 gap-3 p-24">
+      <div className="flex flex-col items-end justify-center gap-3 p-3">
+        <Popover.Root>
+          <Popover.Trigger asChild>
+            <Button className="flex gap-1">
+              <ShoppingCartIcon />
+              <p>Sepet</p>
+            </Button>
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Content className="PopoverContent flex flex-col items-start justify-center gap-3 rounded bg-zinc-900 p-5">
+              <CardTitle>Sepet</CardTitle>
+
+              {items.map((item) => (
+                <div key={item.id} className="flex items-center justify-center">
+                  <p>{`${item.amount} x`} </p> <EntityDetails entity={item} />
+                </div>
+              ))}
+              <p>Toplam: {total}$</p>
+
+              <Link href="/store/cart">
+                <Button>Sepete Git</Button>
+              </Link>
+
+              <Popover.Close className="absolute right-2 top-2 inline-flex items-center justify-center">
+                <XCircleIcon height={25} width={25} />
+              </Popover.Close>
+              <Popover.Arrow className="PopoverArrow" />
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover.Root>
+      </div>
+      <div className="grid grid-cols-1 gap-3 p-24 sm:grid-cols-4">
         {SystemEntities.map((entity) => (
           <EntityCard key={entity.id} entity={entity} />
         ))}

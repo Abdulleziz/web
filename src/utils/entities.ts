@@ -62,7 +62,7 @@ export const SystemEntities = SE.parse([
     id: 2,
     type: "tea",
     tea: {
-      name: "Çaykur demlik poşet",
+      name: "Çaykur Demlik Poşet",
       amountGram: 200, // 200g/5g = 40x
     },
     price: 5,
@@ -73,8 +73,8 @@ export const SystemEntities = SE.parse([
     id: 3,
     type: "car",
     car: {
-      brand: "RENAULT",
-      model: "MEGAN",
+      brand: "Renault",
+      model: "Megan",
       year: 2005,
     },
     price: 9000,
@@ -85,8 +85,8 @@ export const SystemEntities = SE.parse([
     id: 4,
     type: "car",
     car: {
-      brand: "RENAULT",
-      model: "MEGAN",
+      brand: "Renault",
+      model: "Megan",
       year: 2021,
     },
     price: 10000,

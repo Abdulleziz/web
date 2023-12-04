@@ -50,56 +50,50 @@ const Dashboard: NextPage = () => {
   return isLoading ? (
     <LoadingDashboard />
   ) : (
-    <>
-      <Layout>
-        <div className="flex-grow">
-          <main className="space-y-6 p-6 sm:p-10">
-            <div className="flex flex-col justify-between space-y-6 md:flex-row md:space-y-0">
-              <div className="mr-6">
-                <h1 className="overflow-hidden pb-2 text-4xl font-semibold text-white">
-                  Hoş geldin {session?.user.name}!
-                </h1>
-              </div>
+    <Layout>
+      <div className="flex-grow">
+        <main className="space-y-6 p-6 sm:p-10">
+          <div className="flex flex-col justify-between space-y-6 md:flex-row md:space-y-0">
+            <div className="mr-6">
+              <h1 className="overflow-hidden pb-2 text-4xl font-semibold text-white">
+                Hoş geldin {session?.user.name}!
+              </h1>
             </div>
-            <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-              <Card className="flex items-center rounded-lg p-8 shadow">
-                <Users className="h-16 w-16" />
-                <div>
-                  <span className="block text-2xl font-bold">
-                    {members.length}
-                  </span>
-                  <span className="block text-gray-500">
-                    Abdülleziz Çalışanı
-                  </span>
-                </div>
-                <div>
-                  <span className="block text-2xl font-bold">
-                    {members.filter((m) => m.isStaff).length}
-                  </span>
-                  <span className="block text-gray-500">
-                    Abdülleziz Hissedar
-                  </span>
-                </div>
-              </Card>
-              {panels.map((Panel, i) => (
-                <Panel key={i} />
-              ))}
-            </section>
-            <section className="grid gap-6 md:grid-cols-2 xl:grid-flow-col xl:grid-cols-4 xl:grid-rows-3">
-              <Card className="flex flex-col rounded-lg shadow md:col-span-2 md:row-span-2">
-                <div className="border-b border-gray-100 px-6 py-5 font-semibold">
-                  Oylar!
-                </div>
-                <div className="flex-grow p-4">
-                  <VoteChart />
-                </div>
-              </Card>
-              <HistoryPanel />
-            </section>
-          </main>
-        </div>
-      </Layout>
-    </>
+          </div>
+          <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <Card className="flex items-center rounded-lg p-8 shadow">
+              <Users className="h-16 w-16" />
+              <div>
+                <span className="block text-2xl font-bold">
+                  {members.length}
+                </span>
+                <span className="block text-gray-500">Abdülleziz Çalışanı</span>
+              </div>
+              <div>
+                <span className="block text-2xl font-bold">
+                  {members.filter((m) => m.isStaff).length}
+                </span>
+                <span className="block text-gray-500">Abdülleziz Hissedar</span>
+              </div>
+            </Card>
+            {panels.map((Panel, i) => (
+              <Panel key={i} />
+            ))}
+          </section>
+          <section className="grid gap-6 md:grid-cols-2 xl:grid-flow-col xl:grid-cols-4 xl:grid-rows-3">
+            <Card className="flex flex-col rounded-lg shadow md:col-span-2 md:row-span-2">
+              <div className="border-b border-gray-100 px-6 py-5 font-semibold">
+                Oylar!
+              </div>
+              <div className="flex-grow p-4">
+                <VoteChart />
+              </div>
+            </Card>
+            <HistoryPanel />
+          </section>
+        </main>
+      </div>
+    </Layout>
   );
 };
 
