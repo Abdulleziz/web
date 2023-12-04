@@ -2,19 +2,20 @@
 
 ## [Yetkiler](/src/utils/abdulleziz.ts)
 
-- forum thread sil
 - oylamaya katıl
 - maaş al
 - çay koy
 - *i*n-t*i.h?a_r ½et=
-- çay satın
+- çay satın al
 - çaycıya kız
 - bonus iste
 - araba sür
 - stajları yönet
-- forum thread
+- forum thread pinle
 - arabaları yönet
 - çalışanları yönet
+- forum thread sil
+- forum thread kilitle
 - forumu yönet
 
 <!-- ***[yetki değerleri](/src/utils/zod-utils.ts)*** -->
@@ -26,7 +27,7 @@
 - CEO seçme oylaması
   - en fazla haftada bir olmalı
   - en fazla 3 gün sürmeli
-  - en az 6 oy gerekli (toplam 9 kullanıcı); %66.6 seçilme oranı
+  - en az %50 seçilme oranı
 - Rol düşürme
   - oylamayla yapılmalı*
   - CEO düşürülemez. (oylama ile seçilir)
@@ -45,6 +46,7 @@
 - Çay
 - Araba
 - Telefon
+- Hitman
 
 ## [Geçmiş](src/components/panels/HistoryPanel.tsx)
 
@@ -106,4 +108,49 @@ Hatırlatıcı Bildirim Seçenekleri:
 - [ ] Rol Değişikliği
 - [ ] Yeni Oy
 - [ ] 6 Kere çaycıya kızma -> atılma
-- [ ] Maaş* (12 saatte bir bildirim pek mantıklı olmayabilir)
+- [ ] Maaş* (haftada bir)
+
+## Banka
+
+Abdülleziz bankası, sadece CEO ve muhasebe yönetiminde olup şirketin gelir ve giderlerinin yapıldığı; CSO'nun herhangi bir illegal aksiyonda OHAL durumuna sokabilme yetkisi olan güvenli bir bankadır.
+
+- Her hafta maaş dağıtılmak zorundadır, 2 kere dağıtılmazsa otomatik olarak OHAL ilan edilir.
+- Bütün şirket sorumluluğu CEO'ya aittir
+- OHAL anında banka kitlenir, CEO düşer. Yeni CEO atanıncaya kadar böyle kalır.
+- CSO haricinde OHAL ilan edilirse, CSO da düşer.
+
+### Gelir/Gider
+
+- Gelirler
+
+  - Şirketin ortalama büyüklüğü, ahlak puanı ve proje sayısına göre gelir oluşur.
+    - Ahlak puanı, şirketin kara para aklaması ve düzensizliği sonucunda rol dışı adminler tarafından değiştirilir.
+    - Projeler hem şirkete hem de proje sahibine kazanç sağlar.
+- Giderler
+
+  - Maaşlar, rol sayısı ve rollerin yüksekliği bakımından hesaplanır.
+
+### CEO
+
+- Para akışını kontrol edebilir, parayı kendine çekebilir. Şirketin sahibi olduğu için şirket bütçesi aynı zamanda CEO'nun kişisel parasıdır.
+- Muhasebe ile iletişimde olmalıdır. Örneğin muhasebe zamanında maaş yatıramazsa bütün sorumluluk CEO'ya aittir.
+- Şirket bütçesinde açık varsa bu açığı kendi cebinden kapatmak zorundadır. Eğer kapatamazsa CSO OHAL ilan edebilir.
+
+### Muhasebe
+
+- Şirket bütçesini işletir. (Bütçeyi görüntüleyebilir, maaş dağıtabilir)
+- Her hafta maaşları düzenli yatırmalıdır.
+  - Muhasebe, maaş günü geldiğinde muhasebe panelinden herkese maaşları dağıtmalıdır.
+  - Maaş gününde 00:00 dan 23:59'a kadar dağıtma sorumluluğundadır.
+
+### CSO
+
+- Bankanın para akış trafiğini denetleme yetkisi vardır. Yapılan bütün işlemleri görebilir ama herhangi bir değişim yapamaz.
+- Herhangi bir illegal aksiyonda rapor yetkisi bulunmaktadır ve bu görevi yerine getirmelidir.
+- Herkesi sorgulatabilir. Muhasebeden kaynaklı bir problem oluştuğunda, muhasebeyi sorguya çekebilir.
+- OHAL ilan edebilir. Kurul toplanıtısı yapılır.
+
+### CIO
+
+- CEO dışında herkesi sorgulama yetkisi vardır.
+- Olası CSO harici OHAL durumunda, CSO yetkisi tanınır.

@@ -1,43 +1,10 @@
 import Head from "next/head";
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { createModal } from "~/utils/modal";
 import { useNotificationStage } from "~/lib/pusher/notifications";
 import { Navbar } from "./Navbar";
 import { SendMoneyDialog } from "./SendMoney";
 import { useSession } from "next-auth/react";
 
-export const Themes = [
-  "dracula",
-  "night",
-  "coffee",
-  "business",
-  "retro",
-  "cyberpunk",
-  "halloween",
-  "dark",
-  "black",
-  "light",
-] as const;
-
-export type Theme = (typeof Themes)[number];
-
-type ThemeStore = {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-};
-
-const emptyThemeStore = { theme: "dracula" } as const;
-
-export const useThemeStore = create<ThemeStore>()(
-  persist(
-    (set) => ({
-      ...emptyThemeStore,
-      setTheme: (theme) => set({ theme }),
-    }),
-    { name: "theme-store" }
-  )
-);
 
 type Props = {
   children?: React.ReactNode;
@@ -78,7 +45,7 @@ export const Layout: React.FC<Props> = ({
       </Head>
       <main className="min-h-screen bg-white dark:bg-zinc-950">
         <Navbar />
-        {notifStage === "denied" && <Alert />}
+        {/* {notifStage === "denied" && <Alert />} */}
         <SendMoneyDialog />
         <Modal>
           <div className="flex flex-col items-center justify-center">
@@ -101,41 +68,41 @@ export const Layout: React.FC<Props> = ({
   );
 };
 
-const Alert = () => {
-  return (
-    <div className="flex items-center justify-center p-4">
-      <div className="alert alert-error flex flex-row shadow-lg">
-        <div>
-          <ErrorSVG />
-          <span>
-            Abdülleziz bildirimleri şu anda kapalı. Bildirimleri açmak için
-            butona tıklayın.
-          </span>
-        </div>
-        <button
-          onClick={() => {
-            void Notification.requestPermission();
-          }}
-        >
-          Bildirimleri aç
-        </button>
-      </div>
-    </div>
-  );
-};
+// const Alert = () => {
+//   return (
+//     <div className="flex items-center justify-center p-4">
+//       <div className="alert alert-error flex flex-row shadow-lg">
+//         <div>
+//           <ErrorSVG />
+//           <span>
+//             Abdülleziz bildirimleri şu anda kapalı. Bildirimleri açmak için
+//             butona tıklayın.
+//           </span>
+//         </div>
+//         <button
+//           onClick={() => {
+//             void Notification.requestPermission();
+//           }}
+//         >
+//           Bildirimleri aç
+//         </button>
+//       </div>
+//     </div>
+//   );
+// };
 
-const ErrorSVG = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6 flex-shrink-0 stroke-current"
-    fill="none"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-    />
-  </svg>
-);
+// const ErrorSVG = () => (
+//   <svg
+//     xmlns="http://www.w3.org/2000/svg"
+//     className="h-6 w-6 flex-shrink-0 stroke-current"
+//     fill="none"
+//     viewBox="0 0 24 24"
+//   >
+//     <path
+//       strokeLinecap="round"
+//       strokeLinejoin="round"
+//       strokeWidth="2"
+//       d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+//     />
+//   </svg>
+// );

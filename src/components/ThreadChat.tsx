@@ -65,8 +65,12 @@ import {
   type UploadFileResponse,
   generateClientDropzoneAccept,
 } from "uploadthing/client";
+import { type RouterOutputs } from "~/utils/api";
 
 type Attachment = UploadFileResponse;
+type DatabaseUser = RouterOutputs["discord"]["getAbdullezizUsers"][number] & {
+  id: string;
+};
 
 export function CardsChat({ threadId }: { threadId: string }) {
   const session = useSession();
@@ -81,13 +85,16 @@ export function CardsChat({ threadId }: { threadId: string }) {
   const [content, setContent] = React.useState("");
   const [mentions, setMentions] = React.useState(new Set<string>());
   const attachments = useAttachmentStore((s) => s.attachments);
-  const users = (abdullezizUsers.data ?? []).filter(
-    (m) => !m.user.bot && m.id !== undefined
-  );
+  const users: DatabaseUser[] = [];
   const [open, setOpen] = React.useState(false);
   const [selectedUsers, setSelectedUsers] = React.useState<string[]>([]);
 
   const [showDrag, setShowDrag] = React.useState(false);
+
+  abdullezizUsers.data?.forEach((member) => {
+    if (!member.user.bot && member.id !== undefined)
+      users.push(member as DatabaseUser);
+  });
 
   const onDrop = React.useCallback((acceptedFiles: FileWithPath[]) => {
     addAttachments(acceptedFiles);
@@ -211,9 +218,9 @@ export function CardsChat({ threadId }: { threadId: string }) {
                       })
                     }
                     disabled={
-                      thread.data.creatorId !== session.data?.user.id ||
-                      !canManage ||
-                      threadNotif.isLoading
+                      threadNotif.isLoading ||
+                      (thread.data.creatorId !== session.data?.user.id &&
+                        !canManage)
                     }
                     isLoading={threadNotif.isLoading}
                   >
@@ -309,7 +316,7 @@ export function CardsChat({ threadId }: { threadId: string }) {
                     key={member.id}
                     className="flex items-center px-2"
                     onSelect={() => {
-                      if (selectedUsers.includes(member.id!)) {
+                      if (selectedUsers.includes(member.id)) {
                         return setSelectedUsers(
                           selectedUsers.filter(
                             (selectedUser) => selectedUser !== member.id
@@ -319,9 +326,9 @@ export function CardsChat({ threadId }: { threadId: string }) {
 
                       return setSelectedUsers(
                         users
-                          .map((u) => u.id!)
+                          .map((u) => u.id)
                           .filter((id) =>
-                            [...selectedUsers, member.id!].includes(id)
+                            [...selectedUsers, member.id].includes(id)
                           )
                       );
                     }}
@@ -339,7 +346,7 @@ export function CardsChat({ threadId }: { threadId: string }) {
                       </p>
                       <p className="text-sm text-zinc-400">{member.nick}</p>
                     </div>
-                    {selectedUsers.includes(member.id!) ? (
+                    {selectedUsers.includes(member.id) ? (
                       <Check className="ml-auto flex h-5 w-5 text-zinc-50" />
                     ) : null}
                   </CommandItem>
@@ -350,20 +357,22 @@ export function CardsChat({ threadId }: { threadId: string }) {
           <DialogFooter className="flex items-center border-t p-4 sm:justify-between">
             {selectedUsers.length > 0 ? (
               <div className="flex -space-x-2 overflow-hidden">
-                {selectedUsers.map((id) => {
-                  const member = users.find((u) => u.id === id)!;
-                  return (
-                    <Avatar
-                      key={member.id}
-                      className="border-background inline-block border-2"
-                    >
-                      <AvatarImage
-                        src={getAvatarUrl(member.user, member.avatar)}
-                      />
-                      <AvatarFallback>{formatName(member)[0]}</AvatarFallback>
-                    </Avatar>
-                  );
-                })}
+                {selectedUsers
+                  .map((id) => users.find((u) => u.id === id))
+                  .map((member) => {
+                    if (!member) return null;
+                    return (
+                      <Avatar
+                        key={member.id}
+                        className="border-background inline-block border-2"
+                      >
+                        <AvatarImage
+                          src={getAvatarUrl(member.user, member.avatar)}
+                        />
+                        <AvatarFallback>{formatName(member)[0]}</AvatarFallback>
+                      </Avatar>
+                    );
+                  })}
               </div>
             ) : (
               <p className="text-sm text-zinc-400">
@@ -374,14 +383,12 @@ export function CardsChat({ threadId }: { threadId: string }) {
               disabled={selectedUsers.length < 1}
               onClick={() => {
                 const members = users.filter((u) =>
-                  selectedUsers.includes(u.id!)
+                  selectedUsers.includes(u.id)
                 );
                 createPost.mutate({
                   threadId,
                   message: `${members
-                    .map(
-                      (member) => `@[${member.user.username}](${member.id!})`
-                    )
+                    .map((member) => `@[${member.user.username}](${member.id})`)
                     .join(" ")}`,
                   mentions: [...selectedUsers],
                 });

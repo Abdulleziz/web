@@ -9,7 +9,7 @@ const tokenRegex = new RegExp(
   "g"
 );
 
-function tokenize(content: string) {
+export function tokenize(content: string) {
   const result = [];
   const tokens = content.match(tokenRegex);
   if (!tokens) throw new Error("no tokens found in tokenize()!");
@@ -19,7 +19,15 @@ function tokenize(content: string) {
     } else if (token === "\n") {
       result.push({ type: "newline" as const, content: token } as const);
     } else if (token.match(urlRegex)) {
-      result.push({ type: "url" as const, content: token } as const);
+      // external if url does not match https://uploadthing.com/f/1621a05b-23cc-4cc5-85cb-c5b7757facdf-wpvi0o.jpg
+      const data = { type: "url" as const, content: token } as const;
+      const external = !token.match(/https:\/\/uploadthing.com\/f\/[a-z0-9-]+/);
+      if (!external) result.push({ ...data, external });
+      else {
+        const fileKey = token.split("/").pop();
+        if (!fileKey) throw new Error("no file key found in tokenize()!");
+        result.push({ ...data, external, fileKey });
+      }
     } else if (token.match(mentionsRegex)) {
       const matches = token.match(mentionsRegex);
       if (!matches) continue;
