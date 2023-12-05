@@ -6,7 +6,6 @@ import {
   getSystemEntityById,
   type SystemEntity,
 } from "~/utils/entities";
-import * as Popover from "@radix-ui/react-popover";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useHydrated } from "../_app";
@@ -14,6 +13,12 @@ import { Button } from "~/components/ui/button";
 import { ShoppingCartIcon, XCircleIcon } from "lucide-react";
 import { CardTitle } from "~/components/ui/card";
 import Link from "next/link";
+import {
+  Popover,
+  PopoverClose,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
 
 type Checkout = {
   items: Array<[SystemEntity["id"], number]>;
@@ -69,35 +74,32 @@ const Store: NextPage = () => {
     <Layout>
       {/* checkout popup */}
       <div className="flex flex-col items-end justify-center gap-3 p-3">
-        <Popover.Root>
-          <Popover.Trigger asChild>
+        <Popover>
+          <PopoverTrigger asChild>
             <Button className="flex gap-1">
               <ShoppingCartIcon />
               <p>Sepet</p>
             </Button>
-          </Popover.Trigger>
-          <Popover.Portal>
-            <Popover.Content className="PopoverContent flex flex-col items-start justify-center gap-3 rounded bg-zinc-900 p-5">
-              <CardTitle>Sepet</CardTitle>
+          </PopoverTrigger>
+          <PopoverContent className="flex flex-col items-start justify-center gap-3 rounded p-5">
+            <CardTitle>Sepet</CardTitle>
 
-              {items.map((item) => (
-                <div key={item.id} className="flex items-center justify-center">
-                  <p>{`${item.amount} x`} </p> <EntityDetails entity={item} />
-                </div>
-              ))}
-              <p>Toplam: {total}$</p>
+            {items.map((item) => (
+              <div key={item.id} className="flex items-center justify-center">
+                <p>{`${item.amount} x`} </p> <EntityDetails entity={item} />
+              </div>
+            ))}
+            <p>Toplam: {total}$</p>
 
-              <Link href="/store/cart">
-                <Button>Sepete Git</Button>
-              </Link>
+            <Link href="/store/cart">
+              <Button>Sepete Git</Button>
+            </Link>
 
-              <Popover.Close className="absolute right-2 top-2 inline-flex items-center justify-center">
-                <XCircleIcon height={25} width={25} />
-              </Popover.Close>
-              <Popover.Arrow className="PopoverArrow" />
-            </Popover.Content>
-          </Popover.Portal>
-        </Popover.Root>
+            <PopoverClose className="absolute right-2 top-2">
+              <XCircleIcon height={25} width={25} />
+            </PopoverClose>
+          </PopoverContent>
+        </Popover>
       </div>
       <div className="grid grid-cols-1 gap-3 p-24 sm:grid-cols-4">
         {SystemEntities.map((entity) => (

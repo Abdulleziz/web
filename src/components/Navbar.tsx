@@ -264,6 +264,11 @@ export function CommandMenu() {
               Hatırlatıcılara git
             </CommandItem>
             <CommandItem
+              onSelect={() => runCommand(() => router.push("/store"))}
+            >
+              Mağazaya git
+            </CommandItem>
+            <CommandItem
               onSelect={() => runCommand(() => router.push("/manage"))}
             >
               Kullanıcıları Yönet
