@@ -44,6 +44,7 @@ export const requiredSeverity = [
   { perm: "forum thread sil", min: 80 },
   { perm: "forum thread kilitle", min: 80 },
   { perm: "forumu yönet", min: 80 }, // thread/post kilitleme vb. + forum bildirimleri yönetme
+  { perm: "vice president seç", some: ["CEO"] },
 ] as const satisfies readonly RequiredSeverity[];
 
 export type AbdullezizPerm =

@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   createTRPCRouter,
   internalProcedure,
+  permissionProcedure,
   protectedProcedure,
 } from "../../trpc";
 import { TRPCError } from "@trpc/server";
@@ -12,6 +13,8 @@ import {
   PROMOTE,
   DEMOTE,
   DiscordId,
+  abdullezizUnvotableRoles,
+  type AbdullezizUnvotableRole,
 } from "~/utils/zod-utils";
 import {
   getGuildMember,
@@ -37,16 +40,38 @@ import {
 } from "~/server/discord-api/event";
 import { GuildScheduledEventStatus } from "discord-api-types/v10";
 
-const AbdullezizRole = z
+const abdullezizRole = z
   .string()
   .refine((role) => abdullezizRoles[role as AbdullezizRole] !== undefined)
   .transform((r) => r as AbdullezizRole);
 
+const abdullezizVotableRole = abdullezizRole
+  .refine(
+    (role) =>
+      !abdullezizUnvotableRoles.includes(role as AbdullezizUnvotableRole),
+    "Bu role oy verilemez"
+  )
+  .transform((r) => r as Exclude<AbdullezizRole, AbdullezizUnvotableRole>);
+
+const abdullezizUnvotableRole = abdullezizRole
+  .refine(
+    (role) =>
+      abdullezizUnvotableRoles.includes(role as AbdullezizUnvotableRole),
+    "Bu rol atanamaz"
+  )
+  .transform((r) => r as AbdullezizUnvotableRole);
+
 export const Vote = z.object({
   user: DiscordId,
-  role: AbdullezizRole,
+  role: abdullezizVotableRole,
 });
 export type Vote = z.infer<typeof Vote>;
+
+export const Assign = z.object({
+  user: DiscordId,
+  role: abdullezizUnvotableRole,
+});
+export type Assign = z.infer<typeof Assign>;
 
 function getSeverity<Role extends { name: AbdullezizRole }>(
   role: Role | undefined
@@ -141,7 +166,7 @@ function checkVoteCEO(
     });
 
   if (voteChanged && voter && target) {
-    if (isVoted.createdAt.getTime() + FIVE_MINUTES > Date.now())
+    if (isVoted.createdAt.getTime() + FIVE_MINUTES_OR_FIVE_SECONDS > Date.now())
       throw new TRPCError({
         code: "TOO_MANY_REQUESTS",
         message: "5 dakikada bir oy değiştirebilirsin",
@@ -173,6 +198,9 @@ const THREE_DAYS = 1000 * 60 * 60 * 24 * 3;
 const ONE_DAY = 1000 * 60 * 60 * 24;
 const THREE_HOURS = 1000 * 60 * 60 * 3;
 const FIVE_MINUTES = 1000 * 60 * 5;
+
+const FIVE_MINUTES_OR_FIVE_SECONDS =
+  env.NEXT_PUBLIC_VERCEL_ENV === "production" ? FIVE_MINUTES : 1000 * 5;
 
 const THREE_DAYS_OR_THREE_HOURS =
   env.NEXT_PUBLIC_VERCEL_ENV === "production" ? THREE_DAYS : THREE_HOURS;
@@ -245,6 +273,58 @@ export const rolesRouter = createTRPCRouter({
         : new Date(event.createdAt.getTime() + THREE_DAYS_OR_THREE_HOURS),
     };
   }),
+  assign: permissionProcedure
+    .input(Assign)
+    .mutation(async ({ ctx, input: { user, role } }) => {
+      if (["development"].includes(env.NEXT_PUBLIC_VERCEL_ENV))
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Development ortamında oy veremezsin",
+        });
+
+      if (ctx.session.user.discordId === user)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Kendine rol atayamazsın",
+        });
+
+      const users = await getGuildMembersWithRoles();
+      const voter = users.find((u) => u.user.id === ctx.session.user.discordId);
+      const target = users.find((u) => u.user.id === user);
+
+      if (!voter || !target)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Kullanıcı bulunamadı",
+        });
+
+      if (!ctx.verifiedPerms.includes("vice president seç"))
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Yetersiz yetki",
+        });
+
+      const anyOneHasRole = users.some(
+        (u) =>
+          u.user.id !== user &&
+          u.roles.some((r: { name: AbdullezizRole }) => r.name === role)
+      );
+
+      if (anyOneHasRole)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Bu role sahip biri zaten var",
+        });
+
+      const hasRole = target.roles.some(
+        (r: { name: AbdullezizRole }) => r.name === role
+      );
+
+      const roleId = abdullezizRoles[role];
+      if (!hasRole) return await modifyMemberRole(target, roleId, "PUT");
+
+      return await modifyMemberRole(target, roleId, "DELETE");
+    }),
   vote: protectedProcedure
     .input(Vote)
     .mutation(async ({ ctx, input: { user, role } }) => {
@@ -573,7 +653,7 @@ export const rolesRouter = createTRPCRouter({
       const voter = r[0];
       const target = r[1] as (typeof r)[0];
 
-      const parsed = AbdullezizRole.safeParse(input.role);
+      const parsed = abdullezizVotableRole.safeParse(input.role);
 
       if (!parsed.success)
         // not verified role, no need to check

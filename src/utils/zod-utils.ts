@@ -10,6 +10,7 @@ export const nonEmptyString = z.string().trim().min(1);
 
 export const abdullezizRoles = {
   CEO: "937780766446858273",
+  "Vice President": "1181660483225407548",
   CTO: "1045426389425328158",
   CIO: "918842869211594762",
   CSO: "1100828409736744990",
@@ -30,8 +31,15 @@ export type Severity = IntRange<2, 101>;
 export const PROMOTE = 1.5;
 export const DEMOTE = 2.0;
 
+export const abdullezizUnvotableRoles = [
+  "Vice President",
+] as const satisfies readonly AbdullezizRole[];
+
+export type AbdullezizUnvotableRole = typeof abdullezizUnvotableRoles[number];
+
 export const abdullezizRoleSeverities = {
   CEO: 100,
+  "Vice President": 95,
   CTO: 90,
   CIO: 80,
   CSO: 70,
