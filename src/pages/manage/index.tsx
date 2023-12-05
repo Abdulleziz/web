@@ -244,7 +244,7 @@ export const VoteEvent: React.FC<VoteEventProps> = ({ event }) => {
               variant={"ghost"}
               data={{
                 id: event.target.id,
-                name: event.target.user.username,
+                name: formatName(event.target),
                 image: getAvatarUrl(event.target.user, event.target.avatar),
               }}
               fallback=""

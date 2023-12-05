@@ -247,7 +247,7 @@ export const CEOVotePanel = createPanel(undefined, () => {
                 variant={"link"}
                 data={{
                   id: v.voter.id,
-                  name: v.voter.user.username,
+                  name: formatName(v.voter),
                   image: getAvatarUrl(v.voter.user, v.voter.avatar),
                 }}
                 fallback=""
@@ -265,7 +265,7 @@ export const CEOVotePanel = createPanel(undefined, () => {
                 variant={"link"}
                 data={{
                   id: v.target.id,
-                  name: v.target.user.username,
+                  name: formatName(v.target),
                   image: getAvatarUrl(v.target.user, v.target.avatar),
                 }}
                 fallback=""

@@ -17,11 +17,12 @@ import {
   getGuildMember,
   getGuildRole,
   getGuildRoles,
-  modifyGuildMemberRole,
 } from "~/server/discord-api/guild";
 import {
   fetchMembersWithRoles,
   getGuildMembersWithRoles,
+  modifyMemberRole,
+  removeAllRoles,
 } from "~/server/discord-api/trpc";
 import { Client } from "@upstash/qstash";
 import { env } from "~/env.mjs";
@@ -34,6 +35,7 @@ import {
   getGuildEvents,
   modifyGuildEvent,
 } from "~/server/discord-api/event";
+import { GuildScheduledEventStatus } from "discord-api-types/v10";
 
 const AbdullezizRole = z
   .string()
@@ -343,10 +345,9 @@ export const rolesRouter = createTRPCRouter({
 
       if (finished) {
         const before = target.roles[0]?.id;
-        if (before)
-          await modifyGuildMemberRole(target.user.id, before, "DELETE");
+        if (before) await modifyMemberRole(target, before, "DELETE");
         const roleId = abdullezizRoles[role];
-        if (!quit) await modifyGuildMemberRole(target.user.id, roleId, "PUT");
+        if (!quit) await modifyMemberRole(target, roleId, "PUT");
         if (ongoing?.jobId) await c.messages.delete(ongoing.jobId);
       }
 
@@ -401,7 +402,11 @@ export const rolesRouter = createTRPCRouter({
         });
 
       const users = await getGuildMembersWithRoles();
-      const required = users.filter((u) => !u.user.bot && u.isStaff).length;
+      const required =
+        env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
+        ctx.session.user.discordId === "223071656510357504"
+          ? 1
+          : users.filter((u) => !u.user.bot && u.isStaff).length;
       const voter = users.find((u) => u.user.id === ctx.session.user.discordId);
       const target = users.find((u) => u.user.id === user);
 
@@ -503,23 +508,30 @@ export const rolesRouter = createTRPCRouter({
         });
         if (finisher) {
           const beforeCEO = users.filter((u) => u.roles[0]?.name === "CEO");
+          const newCEO = users.find((u) => u.user.id === finisher);
+          if (!newCEO) throw new Error("newCEO should be in users");
           const CEO = abdullezizRoles["CEO"];
           const events = await getGuildEvents();
           const event = events.find(
-            (e) => e.name.includes("CEO") && ![3, 4].includes(e.status)
+            (e) =>
+              e.name.includes("CEO") &&
+              ![
+                GuildScheduledEventStatus.Completed,
+                GuildScheduledEventStatus.Canceled,
+              ].includes(e.status)
           );
-          await Promise.all(
-            beforeCEO.map((u) =>
-              modifyGuildMemberRole(u.user.id, CEO, "DELETE")
-            )
-          );
+          await Promise.all(beforeCEO.map(removeAllRoles));
+          await removeAllRoles(newCEO);
 
-          await modifyGuildMemberRole(finisher, CEO, "PUT");
+          await modifyMemberRole(newCEO, CEO, "PUT");
+
           if (latest.jobId) await c.messages.delete(latest.jobId);
           if (event)
             await modifyGuildEvent(
               event.id,
-              event.status == 2 ? "Completed" : "Canceled"
+              event.status == GuildScheduledEventStatus.Active
+                ? "Completed"
+                : "Canceled"
             );
 
           return true;
