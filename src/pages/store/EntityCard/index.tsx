@@ -4,9 +4,15 @@ import type { SystemEntity } from "~/utils/entities";
 import { Avatar } from "@radix-ui/react-avatar";
 import { AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { useCheckout } from "..";
+import { toast } from "react-hot-toast";
 
 const EntityCard = ({ entity }: { entity?: SystemEntity }) => {
   const addItems = useCheckout((state) => state.addItems);
+
+  const onAddItem = (itemId: number) => {
+    addItems([itemId]);
+    toast.success("Sepete Eklendi!");
+  };
 
   if (!entity) return null;
   return (
@@ -23,7 +29,7 @@ const EntityCard = ({ entity }: { entity?: SystemEntity }) => {
       <EntityDetails entity={entity} />
       <p>{entity.price}$</p>
       <div className="flex gap-2">
-        <Button variant={"default"} onClick={() => addItems([entity.id])}>
+        <Button variant={"default"} onClick={() => onAddItem(entity.id)}>
           Sepete Ekle
         </Button>
       </div>
