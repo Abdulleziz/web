@@ -5,7 +5,7 @@ import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 
 const ManageVoteEvents = () => {
-  const [unfinished, setUnfinished] = useState(false);
+  const [unfinished, setUnfinished] = useState(true);
   const events = useGetVoteEventsWithMembers(unfinished);
 
   if (events.isLoading || !events.data) {

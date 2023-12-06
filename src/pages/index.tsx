@@ -1,23 +1,16 @@
 import { type NextPage } from "next";
-import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Layout } from "~/components/Layout";
 import { WelcomeComponent } from "~/components/WelcomeComponents";
-import { Button } from "~/components/ui/button";
+import Dashboard from "./dashboard";
 
 const Home: NextPage = () => {
   const { data: session } = useSession();
-
-  return (
+  return !!session ? (
+    <Dashboard />
+  ) : (
     <Layout>
       <WelcomeComponent />
-      {!!session && (
-        <div className="flex flex-col items-center justify-center">
-          <Button disabled={!session.user.inAbdullezizServer}>
-            <Link href="/dashboard">Got to Dashboard</Link>
-          </Button>
-        </div>
-      )}
     </Layout>
   );
 };

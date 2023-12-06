@@ -9,9 +9,10 @@ import { toast } from "react-hot-toast";
 const EntityCard = ({ entity }: { entity?: SystemEntity }) => {
   const addItems = useCheckout((state) => state.addItems);
 
-  const onAddItem = (itemId: number) => {
-    addItems([itemId]);
-    toast.success("Sepete Eklendi!");
+  const onAddCart = (entityId: number) => {
+    //! bozuk :(
+    toast("Hello World");
+    addItems([entityId]);
   };
 
   if (!entity) return null;
@@ -29,7 +30,7 @@ const EntityCard = ({ entity }: { entity?: SystemEntity }) => {
       <EntityDetails entity={entity} />
       <p>{entity.price}$</p>
       <div className="flex gap-2">
-        <Button variant={"default"} onClick={() => onAddItem(entity.id)}>
+        <Button variant={"default"} onClick={() => onAddCart(entity.id)}>
           Sepete Ekle
         </Button>
       </div>
