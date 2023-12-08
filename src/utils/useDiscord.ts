@@ -79,6 +79,8 @@ export const useGetVoteEventsWithMembers = (q: In["role"]["getVotes"]) => {
   });
 };
 
+export type VoteEventsWithMembers = NonNullable<ReturnType<typeof useGetVoteEventsWithMembers>["data"]>[number]
+
 export const useGetCEOVoteEventWithMembers = () => {
   const roles = useGetAbdullezizRoles();
   const members = useGetAbdullezizUsersSorted();

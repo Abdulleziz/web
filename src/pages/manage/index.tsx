@@ -52,9 +52,10 @@ export type VoteEventWithMember = NonNullable<
 const Manage: NextPage = () => {
   const { data, isLoading } = useGetAbdullezizUsersSorted();
   const members = data ?? [];
-  const events = useGetVoteEventsWithMembers();
+  const { data: events, isLoading: eventsLoading } =
+    useGetVoteEventsWithMembers();
 
-  if (isLoading) {
+  if (isLoading || eventsLoading) {
     return <LoadingDashboard />;
   }
 
@@ -122,7 +123,7 @@ const Manage: NextPage = () => {
               </ul>
             </CardContent>
           </Card>
-          {!!events.data && (
+          {!!events && (
             <Card className="rounded sm:col-span-1">
               <CardHeader>
                 <CardTitle>Oylama Etkinliği Mevcut!</CardTitle>
