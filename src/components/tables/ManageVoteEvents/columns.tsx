@@ -1,4 +1,3 @@
-import { AvatarImage } from "@radix-ui/react-avatar";
 import type { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -15,13 +14,8 @@ import {
   HoverCardContent,
 } from "~/components/ui/hover-card";
 import { getSeverity } from "~/pages/manage";
-import { getAvatarUrl } from "~/server/discord-api/utils";
 import { formatName } from "~/utils/abdulleziz";
-import {
-  useGetAbdullezizUser,
-  useVote,
-  type VoteEventsWithMembers,
-} from "~/utils/useDiscord";
+import { useVote, type VoteEventsWithMembers } from "~/utils/useDiscord";
 
 const ActionMenu = (Props: { target: string; role: string }) => {
   const vote = useVote();
@@ -83,7 +77,11 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
         original: { beforeRole },
       },
     }) => {
-      return <div>{beforeRole?.name}</div>;
+      return beforeRole ? (
+        <div>{beforeRole?.name}</div>
+      ) : (
+        <div>(Unemployeed 🤣)</div>
+      );
     },
   },
   {
@@ -94,7 +92,7 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
         original: { role },
       },
     }) => {
-      return <div>{role.name}</div>;
+      return role ? <div>{role.name}</div> : <div>(Unemployeed 🤣)</div>;
     },
   },
   {
