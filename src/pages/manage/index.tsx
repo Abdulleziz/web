@@ -57,7 +57,7 @@ const Manage: NextPage = () => {
 
   return (
     <Layout>
-      <div className="flex  flex-row items-center justify-center ">
+      <div className="inline-block w-full items-center justify-center gap-3">
         <div className="flex flex-col gap-3 sm:flex-row">
           <Card className="rounded-lg shadow">
             <CardHeader>
@@ -124,7 +124,7 @@ const Manage: NextPage = () => {
               <CardHeader>
                 <CardTitle>Oylama Etkinlikleri!</CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-col items-center px-6 py-5 font-semibold">
+              <CardContent className="flex max-h-screen flex-col items-center px-6 py-5 font-semibold">
                 <ManageVoteEvents />
               </CardContent>
             </Card>

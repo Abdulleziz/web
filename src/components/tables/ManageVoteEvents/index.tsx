@@ -29,11 +29,7 @@ const ManageVoteEvents = () => {
         />
         <Label htmlFor="unfinished-mode">Devam Eden</Label>
       </div>
-      {events.data.length ? (
-        <DataTable data={events.data} columns={columns} />
-      ) : (
-        <p>Devam eden oylama bulunamadı!</p>
-      )}
+      <DataTable data={events.data} columns={columns} />
     </div>
   );
 };

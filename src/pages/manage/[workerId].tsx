@@ -72,7 +72,7 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
       } - Abdulleziz Corp.`}
     >
       <div className="flex-grow">
-        <main className="space-y-6 p-6 sm:p-10">
+        <main className="flex flex-col space-y-6 p-6 sm:p-10">
           <div className="flex flex-row items-center ">
             {workerImage && (
               <Image
@@ -100,9 +100,8 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
               ))}
             </div>
           </div>
-          <div className="md-grid-cols-1 grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 ">
             <Card>
-              <div className="flex rounded-lg shadow"></div>
               {worker?.roles[0]?.name !== "CEO" ? (
                 <div className="flex flex-col gap-2 rounded-lg p-4 shadow lg:gap-4 lg:p-8">
                   {roles.map((role) => {
