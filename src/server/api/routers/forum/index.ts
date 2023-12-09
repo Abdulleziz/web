@@ -118,33 +118,33 @@ export const forumRouter = createTRPCRouter({
           },
           include: { notifications: true },
         });
-        const notifyUsers = await getForumNotificationListeners(
-          ctx.prisma,
-          mentions,
-          thread
-        );
-        if (notifyUsers.length > 0)
-          await ctx.pushNotification.publishToUsers(
-            notifyUsers.map((u) => u.id),
-            {
-              web: {
-                notification: {
-                  title: `Yeni Thread: ${title.slice(0, 50)}`,
-                  body: `${ctx.session.user.name ?? ""}: ${message.slice(
-                    0,
-                    100
-                  )}`,
-                  deep_link: `${getDomainUrl()}/forum/threads/${thread.id}`,
-                  hide_notification_if_site_has_focus: true,
-                  icon:
-                    ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
-                },
-                data: { tag: `new-thread-${thread.id}` },
-                time_to_live:
-                  env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
-              },
-            }
-          );
+        // const notifyUsers = await getForumNotificationListeners(
+        //   ctx.prisma,
+        //   mentions,
+        //   thread
+        // );
+        // if (notifyUsers.length > 0)
+        //   await ctx.pushNotification.publishToUsers(
+        //     notifyUsers.map((u) => u.id),
+        //     {
+        //       web: {
+        //         notification: {
+        //           title: `Yeni Thread: ${title.slice(0, 50)}`,
+        //           body: `${ctx.session.user.name ?? ""}: ${message.slice(
+        //             0,
+        //             100
+        //           )}`,
+        //           deep_link: `${getDomainUrl()}/forum/threads/${thread.id}`,
+        //           hide_notification_if_site_has_focus: true,
+        //           icon:
+        //             ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
+        //         },
+        //         data: { tag: `new-thread-${thread.id}` },
+        //         time_to_live:
+        //           env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
+        //       },
+        //     }
+        //   );
         return thread;
       }
     ),
@@ -169,47 +169,47 @@ export const forumRouter = createTRPCRouter({
       });
       const del = await ctx.prisma.forumThread.delete({ where: { id } });
 
-      const notifyUsers = await getForumNotificationListeners(
-        ctx.prisma,
-        [],
-        thread
-      );
+      // const notifyUsers = await getForumNotificationListeners(
+      //   ctx.prisma,
+      //   [],
+      //   thread
+      // );
 
-      if (notifyUsers.length > 0) {
-        // less than 28 days, clear notifications
-        if (new Date().getTime() - thread.createdAt.getTime() < _28DAYS) {
-          await ctx.pushNotification.publishToUsers(
-            notifyUsers.map((u) => u.id),
-            {
-              web: {
-                data: { tag: `new-thread-${id}`, delete: true },
-                time_to_live:
-                  env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
-              },
-            }
-          );
-        }
+      // if (notifyUsers.length > 0) {
+      //   // less than 28 days, clear notifications
+      //   if (new Date().getTime() - thread.createdAt.getTime() < _28DAYS) {
+      //     await ctx.pushNotification.publishToUsers(
+      //       notifyUsers.map((u) => u.id),
+      //       {
+      //         web: {
+      //           data: { tag: `new-thread-${id}`, delete: true },
+      //           time_to_live:
+      //             env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
+      //         },
+      //       }
+      //     );
+      //   }
 
-        const publish = thread.posts
-          .filter(
-            (post) => new Date().getTime() - post.createdAt.getTime() < _28DAYS
-          )
-          .map((post) =>
-            ctx.pushNotification.publishToUsers(
-              notifyUsers.map((u) => u.id),
-              {
-                web: {
-                  data: { tag: `new-thread-post-${post.id}`, delete: true },
-                  time_to_live:
-                    env.NEXT_PUBLIC_VERCEL_ENV !== "production"
-                      ? 300
-                      : undefined,
-                },
-              }
-            )
-          );
-        await Promise.all(publish);
-      }
+      //   const publish = thread.posts
+      //     .filter(
+      //       (post) => new Date().getTime() - post.createdAt.getTime() < _28DAYS
+      //     )
+      //     .map((post) =>
+      //       ctx.pushNotification.publishToUsers(
+      //         notifyUsers.map((u) => u.id),
+      //         {
+      //           web: {
+      //             data: { tag: `new-thread-post-${post.id}`, delete: true },
+      //             time_to_live:
+      //               env.NEXT_PUBLIC_VERCEL_ENV !== "production"
+      //                 ? 300
+      //                 : undefined,
+      //           },
+      //         }
+      //       )
+      //     );
+      //   await Promise.all(publish);
+      // }
 
       return del;
     }),
