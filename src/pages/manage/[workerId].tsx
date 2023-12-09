@@ -21,8 +21,9 @@ import {
 } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import { formatName } from "~/utils/abdulleziz";
-import { VoteEvent } from ".";
-import { Card } from "~/components/ui/card";
+import { Card, CardContent } from "~/components/ui/card";
+import { DataTable } from "~/components/ui/Tables/generic-table";
+import { columns } from "~/components/tables/ManageVoteEvents/columns";
 
 const Worker: NextPage = () => {
   const router = useRouter();
@@ -99,99 +100,101 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
               ))}
             </div>
           </div>
-          <Card>
-            <div className="flex rounded-lg shadow"></div>
-            {worker?.roles[0]?.name !== "CEO" ? (
-              <div className="flex flex-col gap-2 rounded-lg p-4 shadow lg:gap-4 lg:p-8">
-                {roles.map((role) => {
-                  if (role === "CEO") {
+          <div className="md-grid-cols-1 grid grid-cols-2 gap-3">
+            <Card>
+              <div className="flex rounded-lg shadow"></div>
+              {worker?.roles[0]?.name !== "CEO" ? (
+                <div className="flex flex-col gap-2 rounded-lg p-4 shadow lg:gap-4 lg:p-8">
+                  {roles.map((role) => {
+                    if (role === "CEO") {
+                      return (
+                        <div className="flex items-start gap-4" key={role}>
+                          <h1 className="md:text-2xl">{role}</h1>
+                          <button
+                            disabled={!!voteEventCEO.data?.sitUntil}
+                            onClick={() =>
+                              voteCEO.mutate(worker?.user.id ?? "")
+                            }
+                            className={classNames(
+                              "btn btn-xs bg-black text-zinc-300",
+                              { ["loading"]: voteCEO.isLoading }
+                            )}
+                          >
+                            {!voteEventCEO.data || !!voteEventCEO.data.endedAt
+                              ? "CEO oylaması başlat"
+                              : "CEO oyu ver"}
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    const userSelf = worker?.user.id === self.data?.user.id;
+                    const userRole = worker?.roles[0]?.name;
+                    const selfRole = self.data?.roles[0]?.name;
+                    const severity = abdullezizRoleSeverities[role];
+                    const quit = userRole === role;
+                    // prettier-ignore
+                    const userSeverity = userRole ? abdullezizRoleSeverities[userRole]: 1;
+                    // prettier-ignore
+                    const selfSeverity = selfRole ? abdullezizRoleSeverities[selfRole]: 1;
+                    const promote = severity >= userSeverity && !quit;
+                    const required = promote
+                      ? PROMOTE * severity
+                      : DEMOTE * userSeverity;
+
+                    const instant =
+                      (userSelf && quit) || required <= selfSeverity;
                     return (
                       <div className="flex items-start gap-4" key={role}>
                         <h1 className="md:text-2xl">{role}</h1>
                         <button
-                          disabled={!!voteEventCEO.data?.sitUntil}
-                          onClick={() => voteCEO.mutate(worker?.user.id ?? "")}
+                          onClick={() =>
+                            vote.mutate({ role, user: worker?.user.id ?? "" })
+                          }
                           className={classNames(
-                            "btn btn-xs bg-black text-zinc-300",
-                            { ["loading"]: voteCEO.isLoading }
+                            "btn btn-xs",
+                            quit
+                              ? "btn-error"
+                              : promote
+                              ? "btn-success"
+                              : "btn-primary"
                           )}
                         >
-                          {!voteEventCEO.data || !!voteEventCEO.data.endedAt
-                            ? "CEO oylaması başlat"
-                            : "CEO oyu ver"}
+                          {quit
+                            ? userSelf
+                              ? "Ayrıl"
+                              : instant
+                              ? "Kov"
+                              : `Kovma oylaması başlat n: ${required}`
+                            : promote
+                            ? instant
+                              ? "Yükselt"
+                              : `Yükseltme oylaması başlat n: ${required}`
+                            : instant
+                            ? "Düşür"
+                            : `Düşürme oylaması başlat n: ${required}`}
                         </button>
                       </div>
                     );
-                  }
-
-                  const userSelf = worker?.user.id === self.data?.user.id;
-                  const userRole = worker?.roles[0]?.name;
-                  const selfRole = self.data?.roles[0]?.name;
-                  const severity = abdullezizRoleSeverities[role];
-                  const quit = userRole === role;
-                  // prettier-ignore
-                  const userSeverity = userRole ? abdullezizRoleSeverities[userRole]: 1;
-                  // prettier-ignore
-                  const selfSeverity = selfRole ? abdullezizRoleSeverities[selfRole]: 1;
-                  const promote = severity >= userSeverity && !quit;
-                  const required = promote
-                    ? PROMOTE * severity
-                    : DEMOTE * userSeverity;
-
-                  const instant =
-                    (userSelf && quit) || required <= selfSeverity;
-                  return (
-                    <div className="flex items-start gap-4" key={role}>
-                      <h1 className="md:text-2xl">{role}</h1>
-                      <button
-                        onClick={() =>
-                          vote.mutate({ role, user: worker?.user.id ?? "" })
-                        }
-                        className={classNames(
-                          "btn btn-xs",
-                          quit
-                            ? "btn-error"
-                            : promote
-                            ? "btn-success"
-                            : "btn-primary"
-                        )}
-                      >
-                        {quit
-                          ? userSelf
-                            ? "Ayrıl"
-                            : instant
-                            ? "Kov"
-                            : `Kovma oylaması başlat n: ${required}`
-                          : promote
-                          ? instant
-                            ? "Yükselt"
-                            : `Yükseltme oylaması başlat n: ${required}`
-                          : instant
-                          ? "Düşür"
-                          : `Düşürme oylaması başlat n: ${required}`}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex flex-col items-start gap-4 rounded-lg p-8 shadow">
-                <p className="text-2xl">{"CEO'yu"} yönetemezsin</p>
-              </div>
-            )}
-          </Card>
-          <Card className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            {voteEvents
-              .filter((e) => e.target.user.id === worker?.user.id)
-              .map((event) => (
-                <div
-                  key={event.id}
-                  className="flex flex-col items-center rounded-lg p-8 shadow"
-                >
-                  <VoteEvent event={event} />
+                  })}
                 </div>
-              ))}
-          </Card>
+              ) : (
+                <div className="flex flex-col items-start gap-4 rounded-lg p-8 shadow">
+                  <p className="text-2xl">{"CEO'yu"} yönetemezsin</p>
+                </div>
+              )}
+            </Card>
+            <Card className="pt-5">
+              <CardContent>
+                <DataTable
+                  data={voteEvents.filter(
+                    (e) => e.target.user.id === worker?.user.id
+                  )}
+                  columns={columns}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </main>
       </div>
     </Layout>

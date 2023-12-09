@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, DotIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -13,7 +13,7 @@ import {
   HoverCard,
   HoverCardContent,
 } from "~/components/ui/hover-card";
-import { getSeverity } from "~/pages/manage";
+import { getRequiredSeverity, getSeverity } from "~/pages/manage";
 import { formatName } from "~/utils/abdulleziz";
 import { useVote, type VoteEventsWithMembers } from "~/utils/useDiscord";
 
@@ -112,12 +112,13 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
             <ul>
               {votes.map((vote) => (
                 <li
-                  className="flex flex-row items-center justify-center"
+                  className="flex flex-row items-center justify-center p-0 "
                   key={vote.id}
                 >
-                  <p>{`${formatName(vote.voter)} (+ ${getSeverity(
+                  <DotIcon width={100} />
+                  {`${formatName(vote.voter)} (+ ${getSeverity(
                     vote.voter.roles[0]?.name
-                  )} pts)`}</p>
+                  )} pts)`}
                 </li>
               ))}
             </ul>
@@ -139,6 +140,13 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
         0
       );
       return <div>{collected} pts</div>;
+    },
+  },
+  {
+    accessorKey: "votes",
+    header: "Gerekli",
+    cell: ({ row: { original } }) => {
+      return <div>{getRequiredSeverity(original)} pts</div>;
     },
   },
 ];

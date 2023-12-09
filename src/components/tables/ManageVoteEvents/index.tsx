@@ -21,14 +21,13 @@ const ManageVoteEvents = () => {
   return (
     <div className="flex flex-col items-center justify-center gap-3">
       <div className="flex items-center space-x-2">
+        <Label htmlFor="unfinished-mode">Hepsi</Label>
         <Switch
           id="unfinished-mode"
           checked={unfinished}
           onCheckedChange={setUnfinished}
         />
-        <Label htmlFor="unfinished-mode">
-          {unfinished ? "Devam Eden" : "Hepsi"}
-        </Label>
+        <Label htmlFor="unfinished-mode">Devam Eden</Label>
       </div>
       {events.data.length ? (
         <DataTable data={events.data} columns={columns} />
