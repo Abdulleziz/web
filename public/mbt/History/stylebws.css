@@ -1,0 +1,59 @@
+html{
+    height: 100%;
+}
+header{
+    font-size: large;
+    color: whitesmoke;
+    height: 50px;
+    width: 1080px;
+    background-color: brown;
+}
+h1{
+    text-align: center;
+    padding-bottom: 10px;
+    padding-top: 1px;
+}
+body{
+    background-color: darkslategrey;
+    background-image: url(photos/BackgroundPhoto4.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+.container{
+    margin-left: auto;
+    margin-right: auto;
+    width: 1080px;
+}
+main{
+    background-color: whitesmoke;
+    text-align: center;
+    padding-top: 10px;
+    padding-bottom: 40px;
+    height: 800px;
+    width: 1080px;
+}
+.p1{
+    text-align: left;
+    font-size: large;
+    padding-left: 10px;
+}
+.scroll-bg{
+    background: whitesmoke;
+    width: 1000px;
+    margin: 1% auto;
+}
+.scroll-div{
+    width: 1000px;
+    background: whitesmoke;
+    height: 800px;
+    overflow: hidden;
+    overflow-y: scroll;
+}
+h2{
+    text-align: left;
+    font-size: large;
+}
+.row1{
+    float: left;
+}
+

@@ -1,0 +1,126 @@
+html{
+    height: 100%;
+}
+body{
+    background-color: darkslategrey;
+    background-image: url(photos/USFlagBackground.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+    overflow: hidden;
+}
+header{
+    font-size: large;
+    color: whitesmoke;
+    height: 50px;
+    width: 1200px;
+    background-color: rgba(0, 0, 0, 0.630);
+}
+h1{
+    font-style: italic;
+    text-align: center;
+    padding-bottom: 10px;
+    padding-top: 1px;
+}
+.container{
+    margin-left: auto;
+    margin-right: auto;
+    width: 1200px;
+}
+main{
+    background-color: rgba(0, 0, 0, 0);
+    padding-top: 10px;
+    padding-bottom: 40px;
+    height: 800px;
+    width: 1200px;
+}
+.scroll-bg{
+    background: rgba(0, 0, 0, 0.630);
+    width: 1200px;
+    margin: 1% auto;
+    overflow: hidden;
+}
+.scroll-div{
+    width: 1200px;
+    background: rgba(0, 0, 0, 0.630);
+    height: 800px;
+    overflow: hidden;
+    overflow-y: scroll;
+}
+.p1{
+    font-size: x-large;
+    color:whitesmoke;
+    padding-top: 10px;
+}
+.row1{
+    float: left;
+    padding-left: 30px;
+    padding-top: 30px;
+}
+.scroll-object{
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+.box1{
+    display: flex;
+    gap: 30px;
+}
+.p2{
+    color: whitesmoke;
+    margin: auto;
+    font-size: large;
+}
+.frame1{
+    padding-left: 30px;
+}
+h2{
+    padding-left: 30px;
+    color: whitesmoke;
+    flex-direction: column;
+    padding-right: 30px;
+}
+.ul1{
+    padding-left: 30px;
+    color: whitesmoke;
+    justify-items: left;
+    -ms-flex-item-align: left;
+}
+.ul2{
+    color: whitesmoke;
+    -ms-flex-item-align: right;
+    justify-items: right;
+}
+.ul3{
+    color: whitesmoke;
+    -ms-flex-item-align: right;
+    justify-items: right;
+}
+.list1{
+    display: flex;
+    -ms-flex-item-align: right;
+}
+h3{
+    padding-left: 30px;
+    color: whitesmoke;
+    flex-direction: column;
+}
+.p2{
+    padding-left: 30px;
+    text-align: center;
+}
+.row2{
+    float: left;
+    color: whitesmoke;
+    text-align: center;
+    display: flex;
+    flex-direction: left;
+}
+.row3{
+    display: center;
+    color: whitesmoke;
+    text-align: center;
+}
+a{
+    text-decoration: none;
+    color: whitesmoke;
+}
