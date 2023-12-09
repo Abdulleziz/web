@@ -50,15 +50,31 @@ import { useGetAllCrons } from "~/utils/useCron";
 import { useMoneyDialog } from "./SendMoney";
 import { useGetWallet } from "~/utils/usePayments";
 import { CurrentAvatar } from "./CurrentAvatar";
+import { api } from "~/utils/api";
+import {
+  askForNotificationPermission,
+  createNotificationSubscription,
+} from "~/lib/pusher/notifications";
+import { PushSubscription } from "~/utils/shared";
 
 export const Navbar: React.FC = () => {
   const { data: session } = useSession();
+  const pushSync = api.notifications.syncSubscription.useMutation();
   const balance = useGetWallet().data?.balance ?? 0;
   const forumNotif = useGetUserNotification();
   const setForumNotif = useSetUserNotification();
   const openMoneyDialog = useMoneyDialog((s) => s.setOpen);
 
   const [ref] = useAutoAnimate();
+
+  async function subscribe() {
+    await askForNotificationPermission();
+    const subscription = await createNotificationSubscription();
+    if (!subscription) return;
+
+    const validated = PushSubscription.parse(subscription.toJSON());
+    await pushSync.mutateAsync(validated);
+  }
 
   return (
     <div
@@ -102,6 +118,19 @@ export const Navbar: React.FC = () => {
       <div className="inline-flex w-1/2 items-center justify-end gap-4">
         {session ? (
           <>
+            {typeof window !== "undefined" &&
+              "Notification" in window &&
+              !pushSync.isSuccess && (
+                <Button
+                  isLoading={pushSync.isLoading}
+                  disabled={pushSync.isLoading}
+                  onClick={() => void subscribe()}
+                  size={"sm"}
+                  variant={"outline"}
+                >
+                  <BellRing className="h-5 w-5" />
+                </Button>
+              )}
             <CommandMenu />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

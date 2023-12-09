@@ -1,120 +1,92 @@
-import { create } from "zustand";
-import { Client, RegistrationState } from "@pusher/push-notifications-web";
 import { env } from "~/env.mjs";
 import { useHydrated } from "~/pages/_app";
 import { useEffect, useRef } from "react";
 import { api } from "~/utils/api";
 import { useSession } from "next-auth/react";
+import { PushSubscription } from "~/utils/shared";
 
 export const getEnv = () => {
   const e = env.NEXT_PUBLIC_VERCEL_ENV;
   return e === "development" ? "debug" : e;
 };
 
-const createBeams = async (swr: ServiceWorkerRegistration) => {
-  const setStage = useBeams.setState;
-  if (Notification.permission === "default") setStage({ stage: "loading" });
-  const stage = await Notification.requestPermission();
-  setStage({ stage }); // reactive permission
+const registerServiceWorker = async () => {
+  if (!("serviceWorker" in navigator))
+    return console.error("[Main Worker] Service workers are not supported.");
 
-  console.info("[PSN] Creating beams");
-  const b = new Client({
-    instanceId: env.NEXT_PUBLIC_BEAMS,
-    serviceWorkerRegistration: swr,
+  try {
+    const registeration = await navigator.serviceWorker.register("/sw.js");
+    console.log("[Main Worker] SW registered (for PSN): ", registeration.scope);
+  } catch (error) {
+    console.error("[Main Worker] SW registration failed: ", error);
+  }
+};
+
+export const askForNotificationPermission = async () => {
+  if (!(typeof window !== "undefined" && "Notification" in window)) {
+    console.error("[PSN] Notifications are not supported");
+    return "unsupported";
+  }
+
+  console.info("[PSN] Asking for notification permission");
+  const permission = await Notification.requestPermission();
+  console.info(`[PSN] Notification permission: ${permission}`);
+  return permission;
+};
+
+export const createNotificationSubscription = async (optimistic = false) => {
+  console.info(`[PSN] Creating Notification Service`);
+  if (!(typeof window !== "undefined" && "Notification" in window)) {
+    console.error("[PSN] Notifications are not supported");
+    return;
+  }
+
+  if (Notification.permission !== "granted") {
+    if (!optimistic) console.error("[PSN] Notification permission not granted");
+    return;
+  }
+
+  console.info(`[PSN] Created PSN with permission: ${Notification.permission}`);
+
+  if (!("serviceWorker" in navigator)) {
+    console.error("[PSN] Service workers are not supported");
+    return;
+  }
+
+  const swr = await navigator.serviceWorker.ready;
+
+  return await swr.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: env.NEXT_PUBLIC_VAPID_KEY,
   });
-  setStage({ beams: b });
-  let state = await b.getRegistrationState();
-  console.info(`[PSN] Created beams with registration state: ${state}`);
-
-  if (
-    state === RegistrationState.PERMISSION_GRANTED_NOT_REGISTERED_WITH_BEAMS
-  ) {
-    await b.start();
-    state = await b.getRegistrationState();
-  }
-  // TOOD: addDeviceInterest via trpc 😁😅
-  if (state === RegistrationState.PERMISSION_GRANTED_REGISTERED_WITH_BEAMS) {
-    await b.addDeviceInterest(`${getEnv()}-all`);
-    console.info(
-      `[PSN] Subscribed to ${(await b.getDeviceInterests()).join(", ")}`
-    );
-  }
-  return b;
-};
-
-type BeamsState = {
-  beams?: Client;
-  stage: "loading" | NotificationPermission;
-  set: (beams: Client) => void;
-  setStage: (stage: NotificationPermission) => void;
-};
-
-const useBeams = create<BeamsState>(() => ({
-  stage: "default",
-  // Stage is the observable state of the notification permission
-  set: (beams) => ({ beams }),
-  setStage: (stage) => ({ stage }),
-}));
-
-export const useNotificationStage = () => useBeams((s) => s.stage);
-export const useGetBeams = () => {
-  const b = useBeams((s) => s.beams);
-  if (!b) throw new Error("Beams not initialized");
-  return b;
 };
 
 export const useRegisterSW = () => {
   const session = useSession();
-  const getTokenDone = useRef(false);
-  const getToken = api.notifications.getToken.useMutation({
+  const sync = api.notifications.syncSubscription.useMutation({
     onSuccess: () => {
       console.log("[PSN (internal)] Successfully fetched token");
-      getTokenDone.current = true;
+      done.current = true;
     },
   });
-
+  const done = useRef(false);
   const hydrated = useHydrated();
-  const beams = useBeams((s) => s.beams);
-  const setBeams = useBeams((s) => s.set);
+
   useEffect(() => {
-    if (hydrated && "serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((registration) => {
-          console.log(
-            "[Main Worker] SW registered (for PSN): ",
-            registration.scope
-          );
-          createBeams(registration).catch((e) =>
-            console.error("[PSN] Failed to create beams", e)
-          );
-        })
-        .catch((registrationError) => {
-          console.error(
-            "[Main Worker] SW registration failed: ",
-            registrationError
-          );
-        });
-    }
-  }, [hydrated, setBeams]);
-  useEffect(() => {
-    if (getTokenDone.current || getToken.isLoading) return;
-    if (beams && session.data) {
-      console.log("[PSN] Setting user id");
-      beams
-        .setUserId(session.data.user.id, {
-          fetchToken: () => getToken.mutateAsync(),
-        })
-        .catch((e) => {
-          console.error("[PSN] Failed to set user id", e);
-        });
-    }
-  }, [
-    beams,
-    getToken.isLoading,
-    getToken.data,
-    getTokenDone,
-    session.data,
-    getToken,
-  ]);
+    if (!hydrated || done.current || session.status !== "authenticated") return;
+    void (async () => {
+      try {
+        done.current = true;
+        await registerServiceWorker();
+        const subscription = await createNotificationSubscription(true);
+        if (!subscription) return;
+
+        const validated = PushSubscription.parse(subscription.toJSON());
+        await sync.mutateAsync(validated);
+      } catch (error) {
+        console.error("[PSN] Failed to optimisticly sync: ", error);
+        done.current = true;
+      }
+    })();
+  }, [hydrated, session.status, sync, done]);
 };

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Layout } from "~/components/Layout";
 import Threads from "./threads/index";
 import { Button } from "~/components/ui/button";
+import { api } from "~/utils/api";
 
 const Forum: NextPage = () => {
   return (
@@ -17,6 +18,7 @@ const Forum: NextPage = () => {
 };
 
 const ForumWelcome: React.FC = () => {
+  const sync = api.notifications.testSubscriptions.useMutation();
   return (
     <>
       <div className="navbar flex flex-col pt-8 sm:flex-row">
@@ -31,7 +33,17 @@ const ForumWelcome: React.FC = () => {
             href="/forum/threads/new"
             className="mr-7 p-2 font-semibold transition-all hover:scale-110"
           >
-            <Button size="relative-lg">Yeni Thread</Button>
+            <div className="flex gap-4">
+              <Button size="relative-lg">Yeni Thread</Button>
+              <Button
+                onClick={() => {
+                  sync.mutate();
+                }}
+                size="relative-lg"
+              >
+                Notification Test
+              </Button>
+            </div>
           </Link>
         </div>
       </div>

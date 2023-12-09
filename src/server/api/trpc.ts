@@ -20,11 +20,17 @@ import { env } from "~/env.mjs";
 
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "~/server/db";
-import { pushNotification } from "../notifications";
+import webPush from "web-push";
 
 type CreateContextOptions = {
   session: Session | null;
 };
+
+webPush.setVapidDetails(
+  "mailto:contact@abdulleziz.com",
+  env.NEXT_PUBLIC_VAPID_KEY,
+  env.VAPID_SECRET_KEY
+);
 
 /**
  * This helper generates the "internals" for a tRPC context. If you need to use it, you can export
@@ -40,7 +46,7 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
     prisma,
-    pushNotification,
+    webPush,
   };
 };
 

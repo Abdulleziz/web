@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export const waitFor = <TValue = undefined, TReason = undefined>(
   delay: number,
   value?: TValue
@@ -22,3 +24,11 @@ export const waitFor = <TValue = undefined, TReason = undefined>(
     },
   };
 };
+
+export const PushSubscription = z.object({
+  endpoint: z.string().url(),
+  keys: z.object({
+    auth: z.string(),
+    p256dh: z.string(),
+  }),
+});
