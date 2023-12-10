@@ -193,22 +193,22 @@ function checkVoteCEO(
   return { finisherId, voteChanged, required };
 }
 
-const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
-const THREE_DAYS = 1000 * 60 * 60 * 24 * 3;
-const ONE_DAY = 1000 * 60 * 60 * 24;
-const THREE_HOURS = 1000 * 60 * 60 * 3;
-const FIVE_MINUTES = 1000 * 60 * 5;
+export const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
+export const THREE_DAYS = 1000 * 60 * 60 * 24 * 3;
+export const ONE_DAY = 1000 * 60 * 60 * 24;
+export const THREE_HOURS = 1000 * 60 * 60 * 3;
+export const FIVE_MINUTES = 1000 * 60 * 5;
 
-const FIVE_MINUTES_OR_FIVE_SECONDS =
+export const FIVE_MINUTES_OR_FIVE_SECONDS =
   env.NEXT_PUBLIC_VERCEL_ENV === "production" ? FIVE_MINUTES : 1000 * 5;
 
-const THREE_DAYS_OR_THREE_HOURS =
+export const THREE_DAYS_OR_THREE_HOURS =
   env.NEXT_PUBLIC_VERCEL_ENV === "production" ? THREE_DAYS : THREE_HOURS;
 
-const ONE_WEEK_OR_ONE_DAY =
+export const ONE_WEEK_OR_ONE_DAY =
   env.NEXT_PUBLIC_VERCEL_ENV === "production" ? ONE_WEEK : ONE_DAY;
 
-const CEO_VOTE_PERCENTAGE =
+export const CEO_VOTE_PERCENTAGE =
   env.NEXT_PUBLIC_VERCEL_ENV === "production" ? (0.5 as const) : (0.5 as const); // change here for testing in dev [2, 0.5]
 
 export const rolesRouter = createTRPCRouter({

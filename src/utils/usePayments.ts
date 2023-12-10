@@ -19,12 +19,12 @@ export const CreateEntities = z
 
 export const CreateSalary = z.object({
   multiplier: z.number().min(1).max(20).default(10),
-  delay: z
-    .number()
-    .min(0)
-    .max(60 * 60 * 24 * 7)
-    .default(0)
-    .describe("in seconds"),
+  // delay: z
+  //   .number()
+  //   .min(0)
+  //   .max(60 * 60 * 24 * 7)
+  //   .default(0)
+  //   .describe("in seconds"),
 });
 
 export type CreateEntities = z.infer<typeof CreateEntities>;
@@ -83,10 +83,11 @@ export const useBuyEntities = () => {
 
 // extradan maaş dağıt (özel eventlerde falan, yeni MEGAN sevinci 🤣😭)
 // normalde maaşlar 12 saatte bir otomatik olarak dağıtılıyor (şimdilik)
-export const useCreateSalary = () => api.payments.createSalary.useMutation();
-// mutate { delay: number, multiplier: number }
-// delay -> yarın, 2 saat sonra, 1 hafta sonra
+export const useDistributeSalary = () =>
+  api.payments.distributeSalary.useMutation();
+// mutate { multiplier: number }
 // multiplier -> abdulleziz role severity * multiplier
+// default 10
 // örn: CTO=90 multiplier=20 = 1800
 
 export const useNextSalaryDate = () =>
