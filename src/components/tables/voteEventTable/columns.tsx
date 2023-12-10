@@ -122,9 +122,12 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
     header: "Yeni Rol",
     cell: ({
       row: {
-        original: { role },
+        original: { role, beforeRole },
       },
     }) => {
+      if (role.name === beforeRole?.name) {
+        return <div>(Unemployeed 🤣)</div>;
+      }
       return role ? <div>{role.name}</div> : <div>(Unemployeed 🤣)</div>;
     },
   },
