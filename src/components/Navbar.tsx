@@ -62,7 +62,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <div
-      className="min-h-16 sticky top-0 z-50 flex w-full items-center bg-white p-2 dark:bg-zinc-950"
+      className="min-h-16 sticky top-0 z-50 w-full items-center bg-white p-2 dark:bg-zinc-950"
       ref={ref}
     >
       <div className="inline-flex w-1/2 items-center justify-start">

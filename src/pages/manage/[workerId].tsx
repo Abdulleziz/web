@@ -23,7 +23,7 @@ import { getAvatarUrl } from "~/server/discord-api/utils";
 import { formatName } from "~/utils/abdulleziz";
 import { Card, CardContent } from "~/components/ui/card";
 import { DataTable } from "~/components/ui/Tables/generic-table";
-import { columns } from "~/components/tables/ManageVoteEvents/columns";
+import { columns } from "~/pages/manage/columns";
 
 const Worker: NextPage = () => {
   const router = useRouter();
@@ -71,8 +71,8 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
         worker ? formatName(worker) : "Worker"
       } - Abdulleziz Corp.`}
     >
-      <div className="flex-grow">
-        <main className="flex flex-col space-y-6 p-6 sm:p-10">
+      <div className=" flex-grow">
+        <main className="flex flex-col  space-y-6 p-6 sm:p-10">
           <div className="flex flex-row items-center ">
             {workerImage && (
               <Image
@@ -183,14 +183,16 @@ const ManageWorker: React.FC<{ profileId: string }> = ({ profileId }) => {
                 </div>
               )}
             </Card>
-            <Card className="pt-5">
-              <CardContent>
-                <DataTable
-                  data={voteEvents.filter(
-                    (e) => e.target.user.id === worker?.user.id
-                  )}
-                  columns={columns}
-                />
+            <Card className="flex flex-col rounded sm:col-span-1">
+              <CardContent className=" max-h-screen overflow-x-scroll px-6 py-5 font-semibold sm:overflow-x-hidden">
+                <div className="flex flex-col gap-3">
+                  <DataTable
+                    data={voteEvents.filter(
+                      (e) => e.target.user.id === worker?.user.id
+                    )}
+                    columns={columns}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
