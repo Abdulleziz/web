@@ -41,16 +41,18 @@ const ActionMenu = (Props: {
           <DialogTrigger asChild>
             <DropdownMenuItem>Oyları Göster</DropdownMenuItem>
           </DialogTrigger>
-          <DropdownMenuItem
-            onClick={() => {
-              vote.mutate({
-                user: Props.target,
-                role: Props.role,
-              });
-            }}
-          >
-            Oyla
-          </DropdownMenuItem>
+          {Props.isEnded && (
+            <DropdownMenuItem
+              onClick={() => {
+                vote.mutate({
+                  user: Props.target,
+                  role: Props.role,
+                });
+              }}
+            >
+              Oyla
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       <DialogContent>
