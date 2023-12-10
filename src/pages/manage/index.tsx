@@ -21,10 +21,10 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { DataTable } from "~/components/ui/Tables/generic-table";
+import { DataTable } from "~/components/tables/generic-table";
 import { Switch } from "~/components/ui/switch";
 import { Label } from "~/components/ui/label";
-import { columns } from "~/pages/manage/columns";
+import { columns } from "~/components/tables/voteEventTable/columns";
 import { useState } from "react";
 
 export function colorMapping(targetColor: string) {

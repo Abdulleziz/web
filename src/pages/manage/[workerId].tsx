@@ -22,8 +22,8 @@ import {
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import { formatName } from "~/utils/abdulleziz";
 import { Card, CardContent } from "~/components/ui/card";
-import { DataTable } from "~/components/ui/Tables/generic-table";
-import { columns } from "~/pages/manage/columns";
+import { DataTable } from "~/components/tables/generic-table";
+import { columns } from "~/components/tables/voteEventTable/columns";
 
 const Worker: NextPage = () => {
   const router = useRouter();
