@@ -101,7 +101,7 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
     },
   },
   {
-    accessorKey: "target",
+    accessorKey: "beforeRole",
     header: "Eski Rol",
     cell: ({
       row: {
@@ -142,7 +142,7 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
     },
   },
   {
-    accessorKey: "votes",
+    accessorKey: "need",
     header: "Gerekli",
     cell: ({ row: { original } }) => {
       return <div>{getRequiredSeverity(original)} pts</div>;
