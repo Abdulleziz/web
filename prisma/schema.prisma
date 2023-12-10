@@ -253,7 +253,7 @@ model VerificationToken {
 }
 
 model PushSubscription {
-    endpoint  String   @id
+    endpoint  String   @id @db.VarChar(500)
     p256dh    String
     auth      String
     createdAt DateTime @default(now())
