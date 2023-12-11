@@ -1,0 +1,31 @@
+html {
+    height: 100%;
+}
+
+body {
+    background-color: darkslategrey;
+    background-image: url(photos/GermanFlagBackground.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+    overflow: hidden;
+}
+header {
+    font-size: large;
+    color: whitesmoke;
+    height: 50px;
+    width: 1200px;
+    background-color: rgba(0, 0, 0, 0.630);
+}
+
+h1 {
+    font-style: italic;
+    text-align: center;
+    padding-bottom: 10px;
+    padding-top: 1px;
+}
+
+.container {
+    margin-left: auto;
+    margin-right: auto;
+    width: 1200px;
+}
