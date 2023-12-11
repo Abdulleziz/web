@@ -20,7 +20,7 @@ import { env } from "~/env.mjs";
 
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "~/server/db";
-import webPush from "web-push";
+import webPush, { WebPushError } from "web-push";
 
 type CreateContextOptions = {
   session: Session | null;
@@ -56,6 +56,15 @@ export const sendNotification = async <Sub extends PushSubscription>(
         return res;
       } catch (error) {
         console.error(error);
+        if (error instanceof WebPushError) {
+          if (error.statusCode === 410) {
+            // subscription has unsubscribed or expired
+            await prisma.pushSubscription.delete({
+              where: { endpoint: sub.endpoint },
+            });
+            return "expired";
+          }
+        }
       }
     })
   );
