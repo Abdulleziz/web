@@ -15,6 +15,7 @@ import { getSalaryTakers } from "~/server/discord-api/trpc";
 import { getDomainUrl } from "~/utils/api";
 import { Client } from "@upstash/qstash";
 import { Vote } from "~/server/api/routers/discord/roles";
+import { sendNotification } from "~/server/api/trpc";
 
 // const CronHeader = z.object({
 //   "upstash-message-id": z.string(),
@@ -25,6 +26,9 @@ export const CronBody = z.discriminatedUnion("type", [
     type: z.undefined(),
     cron: z.string(),
     debug: z.boolean().default(false),
+  }),
+  z.object({
+    type: z.literal("push"),
   }),
   CreateSalary.extend({
     type: z.literal("salary"),
@@ -44,6 +48,24 @@ type MessageBody = RESTPostAPIChannelMessageJSONBody;
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const parsed = CronBody.parse(req.body);
+
+    if (parsed.type === "push") {
+      const subs = await prisma.pushSubscription.findMany({
+        include: { user: true },
+      });
+
+      const notif = await sendNotification(subs, ({ user }) => ({
+        title: "Debug Notification",
+        body: `Bu bildirim bir test bildirimidir. Katkıların için teşekkürler ${
+          user?.name ?? "kullanıcı"
+        }!`,
+        actions: [{ action: "/", title: "Teşekkürler!" }],
+      }));
+
+      console.log("push notif result in cron", { notif });
+      res.status(200).send("OK - push");
+      return;
+    }
 
     if (parsed.type === "vote") {
       const { role, user } = parsed;

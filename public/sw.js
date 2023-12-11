@@ -3,13 +3,14 @@
 /// <reference lib="WebWorker" />
 
 self.addEventListener("push", (event) => {
-  const data = event.data.json();
+  const notif = event.data.json();
 
   event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      tag: data.tag,
-      icon: data.icon,
+    self.registration.showNotification(notif.title, {
+      body: notif.body,
+      tag: notif.tag,
+      icon: notif.icon,
+      actions: notif.actions,
     })
   );
 });

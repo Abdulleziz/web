@@ -32,6 +32,35 @@ webPush.setVapidDetails(
   env.VAPID_SECRET_KEY
 );
 
+export const sendNotification = async <Sub extends PushSubscription>(
+  subs: Sub[],
+  body: NotificationOptions | ((sub: Sub) => NotificationOptions),
+  options?: webPush.RequestOptions
+) => {
+  return await Promise.all(
+    subs.map(async (sub) => {
+      try {
+        const jsonBody = typeof body === "function" ? body(sub) : body;
+        const res = await webPush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: { auth: sub.auth, p256dh: sub.p256dh },
+          },
+          JSON.stringify({
+            ...jsonBody,
+            icon: jsonBody.icon || "/android-chrome-192x192.png",
+          }),
+          options
+        );
+        console.log("push notification send", res);
+        return res;
+      } catch (error) {
+        console.error(error);
+      }
+    })
+  );
+};
+
 /**
  * This helper generates the "internals" for a tRPC context. If you need to use it, you can export
  * it from here.
@@ -46,7 +75,7 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
     prisma,
-    webPush,
+    sendNotification,
   };
 };
 
@@ -186,6 +215,7 @@ export const protectedProcedure = internalProcedure.use(enforceUserIsAuthed);
 import { type AbdullezizPerm, permissionDecider } from "~/utils/abdulleziz";
 import { getAbdullezizRoles } from "../discord-api/utils";
 import { getGuildMemberWithRoles } from "../discord-api/trpc";
+import { type PushSubscription } from "@prisma/client";
 
 export const createPermissionProcedure = (requiredPerms: AbdullezizPerm[]) =>
   t.procedure.use(

@@ -15,31 +15,13 @@ export const notificationsRouter = createTRPCRouter({
       where: { userId: ctx.session.user.id },
     });
 
-    await Promise.all(
-      subs.map(async (sub) => {
-        try {
-          const res = await ctx.webPush.sendNotification(
-            {
-              endpoint: sub.endpoint,
-              keys: {
-                auth: sub.auth,
-                p256dh: sub.p256dh,
-              },
-            },
-            JSON.stringify({
-              title: "Triggered Notification",
-              body: `This notification was triggered by the test subscription from ${
-                ctx.session.user.name || "Admin"
-              }`,
-              icon: "/android-chrome-192x192.png",
-            })
-          );
-          console.log(res);
-        } catch (error) {
-          console.error(error);
-        }
-      })
-    );
+    await ctx.sendNotification(subs, {
+      title: "Triggered Notification",
+      body: `This notification was triggered by the test subscription from ${
+        ctx.session.user.name || "Admin"
+      }`,
+      icon: "/android-chrome-192x192.png",
+    } as NotificationOptions);
   }),
   syncSubscription: protectedProcedure
     .input(PushSubscription)
