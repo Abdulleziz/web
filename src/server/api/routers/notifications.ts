@@ -17,11 +17,13 @@ export const notificationsRouter = createTRPCRouter({
 
     await ctx.sendNotification(subs, {
       title: "Triggered Notification",
+      tag: "test-subscription",
       body: `This notification was triggered by the test subscription from ${
         ctx.session.user.name || "Admin"
       }`,
-      icon: "/android-chrome-192x192.png",
-    } as NotificationOptions);
+      actions: [{ action: "/forum", title: "Go to forum" }],
+      silent: true,
+    });
   }),
   syncSubscription: protectedProcedure
     .input(PushSubscription)

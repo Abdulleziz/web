@@ -240,7 +240,7 @@ model User {
     paymentsRecieved    Payment[]          @relation("paymentReciever")
     teaConsumer         ConsumeTea[]
     threadNotify        ForumNotify[]
-    defaultThreadNotify ForumNotification  @default(all)
+    defaultThreadNotify ForumNotification  @default(mentions)
     pushSubscriptions   PushSubscription[]
 }
 

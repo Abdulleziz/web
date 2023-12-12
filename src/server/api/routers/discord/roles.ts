@@ -32,7 +32,10 @@ import { env } from "~/env.mjs";
 import { getDomainUrl } from "~/utils/api";
 import { type CronBody } from "~/pages/api/cron";
 import { type Prisma } from "@prisma/client";
-import { getAbdullezizRoles } from "~/server/discord-api/utils";
+import {
+  connectMembersWithIds,
+  getAbdullezizRoles,
+} from "~/server/discord-api/utils";
 import {
   createGuildEvent,
   getGuildEvents,
@@ -429,6 +432,23 @@ export const rolesRouter = createTRPCRouter({
         const roleId = abdullezizRoles[role];
         if (!quit) await modifyMemberRole(target, roleId, "PUT");
         if (ongoing?.jobId) await c.messages.delete(ongoing.jobId);
+
+        if (quit) {
+          const notify = await ctx.prisma.pushSubscription.findMany();
+          const targetId = (
+            await connectMembersWithIds(ctx.prisma, [target])
+          )[0]?.id;
+
+          await ctx.sendNotification(
+            notify.map((u) => ({ ...u, isSelf: u.userId === targetId })),
+            ({ isSelf }) => ({
+              title: isSelf
+                ? "KOVULDUN 🤣"
+                : `${target.nick ?? target.user.username} kovuldu! 🤣`,
+            }),
+            ({ isSelf }) => ({ urgency: isSelf ? "high" : "normal" })
+          );
+        }
       }
 
       if (!ongoing) {
@@ -543,6 +563,14 @@ export const rolesRouter = createTRPCRouter({
             votes: { create: { voter: voter.user.id, target: user } },
           },
         });
+        const notify = await ctx.prisma.pushSubscription.findMany({});
+        await ctx.sendNotification(notify, {
+          title: "👑 CEO oylaması başladı 🔥",
+          body: `CEO oylaması başladı! Oy vermek için tıkla`,
+          tag: "ceo-vote",
+          actions: [{ action: "/", title: "Oy ver" }],
+          badge: "/mbt/photos/Abrams.jpg",
+        });
         const event = await createGuildEvent(
           "CEO oylaması",
           "Abdulleziz büyük CEO oylaması! #oylarbana",
@@ -591,6 +619,21 @@ export const rolesRouter = createTRPCRouter({
           const newCEO = users.find((u) => u.user.id === finisher);
           if (!newCEO) throw new Error("newCEO should be in users");
           const CEO = abdullezizRoles["CEO"];
+          await Promise.all(beforeCEO.map(removeAllRoles));
+          await removeAllRoles(newCEO);
+
+          await modifyMemberRole(newCEO, CEO, "PUT");
+
+          if (latest.jobId) await c.messages.delete(latest.jobId);
+
+          const notify = await ctx.prisma.pushSubscription.findMany({});
+          await ctx.sendNotification(notify, {
+            title: `👑 Yeni CEO ${newCEO.nick ?? newCEO.user.username} 🔥`,
+            tag: "new-ceo",
+            actions: [{ action: "/", title: "Görüntüle" }],
+            badge: "/mbt/photos/Abrams.jpg",
+          });
+
           const events = await getGuildEvents();
           const event = events.find(
             (e) =>
@@ -600,12 +643,7 @@ export const rolesRouter = createTRPCRouter({
                 GuildScheduledEventStatus.Canceled,
               ].includes(e.status)
           );
-          await Promise.all(beforeCEO.map(removeAllRoles));
-          await removeAllRoles(newCEO);
 
-          await modifyMemberRole(newCEO, CEO, "PUT");
-
-          if (latest.jobId) await c.messages.delete(latest.jobId);
           if (event)
             await modifyGuildEvent(
               event.id,

@@ -31,16 +31,17 @@ webPush.setVapidDetails(
   env.NEXT_PUBLIC_VAPID_KEY,
   env.VAPID_SECRET_KEY
 );
-
+type Options = NotificationOptions & { title: string };
 export const sendNotification = async <Sub extends PushSubscription>(
   subs: Sub[],
-  body: NotificationOptions | ((sub: Sub) => NotificationOptions),
-  options?: webPush.RequestOptions
+  body: Options | ((sub: Sub) => Options),
+  options?: webPush.RequestOptions | ((sub: Sub) => webPush.RequestOptions)
 ) => {
   return await Promise.all(
     subs.map(async (sub) => {
       try {
         const jsonBody = typeof body === "function" ? body(sub) : body;
+        const option = typeof options === "function" ? options(sub) : options;
         const res = await webPush.sendNotification(
           {
             endpoint: sub.endpoint,
@@ -50,7 +51,7 @@ export const sendNotification = async <Sub extends PushSubscription>(
             ...jsonBody,
             icon: jsonBody.icon || "/android-chrome-192x192.png",
           }),
-          options
+          option
         );
         console.log("push notification send", res);
         return res;

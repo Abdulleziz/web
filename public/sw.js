@@ -5,17 +5,11 @@
 self.addEventListener("push", (event) => {
   const notif = event.data.json();
 
-  event.waitUntil(
-    self.registration.showNotification(notif.title, {
-      body: notif.body,
-      tag: notif.tag,
-      icon: notif.icon,
-      actions: notif.actions,
-    })
-  );
+  event.waitUntil(self.registration.showNotification(notif.title, notif));
 });
 
 self.addEventListener("notificationclick", (event) => {
+  // event.notification.tag
   event?.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
@@ -29,7 +23,7 @@ self.addEventListener("notificationclick", (event) => {
           }
           return client.focus();
         }
-        return self.clients.openWindow("/");
+        return self.clients.openWindow(event.action ?? "/");
       })
   );
 });

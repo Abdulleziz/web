@@ -29,6 +29,9 @@ export const CronBody = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("push"),
+    title: z.string(),
+    body: z.string().optional(),
+    silent: z.boolean().optional(),
   }),
   CreateSalary.extend({
     type: z.literal("salary"),
@@ -50,17 +53,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const parsed = CronBody.parse(req.body);
 
     if (parsed.type === "push") {
-      const subs = await prisma.pushSubscription.findMany({
-        include: { user: true },
-      });
-
-      const notif = await sendNotification(subs, ({ user }) => ({
-        title: "Debug Notification",
-        body: `Bu bildirim bir test bildirimidir. Katkıların için teşekkürler ${
-          user?.name ?? "kullanıcı"
-        }!`,
-        actions: [{ action: "/", title: "Teşekkürler!" }],
-      }));
+      const subs = await prisma.pushSubscription.findMany();
+      const notif = await sendNotification(subs, parsed);
 
       console.log("push notif result in cron", { notif });
       res.status(200).send("OK - push");
@@ -82,15 +76,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         res.status(404).send("Vote event not found");
       } else {
         const data = { where: { id: event.id }, data: { endedAt: new Date() } };
-        role === "CEO"
-          ? await prisma.voteEventCEO.update(data)
-          : await prisma.voteEvent.update(data);
+        if (role === "CEO") {
+          await prisma.voteEventCEO.update(data);
+          const notfiy = await prisma.pushSubscription.findMany({});
+          await sendNotification(
+            notfiy,
+            {
+              title: "CEO seçimi zaman aşımına uğradı",
+              body: "Yeterli oy çıkmadığı için CEO seçimi zaman aşımına uğradı.",
+              silent: true,
+            },
+            { urgency: "low" }
+          );
+        } else await prisma.voteEvent.update(data);
+
         res.status(200).send("OK - vote");
       }
       return;
     }
 
     if (parsed.type === "salary") {
+      // TODO: deprecated...
       // connect to trpc
       const salaryTakers = await getSalaryTakers();
       const result = await prisma.payment.createMany({

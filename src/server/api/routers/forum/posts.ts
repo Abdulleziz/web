@@ -7,7 +7,6 @@ import {
   permissionProcedure,
   protectedProcedure,
 } from "~/server/api/trpc";
-import { getDomainUrl } from "~/utils/api";
 import { UserId } from "~/utils/zod-utils";
 import { getForumNotificationListeners } from "./trpc";
 import { PostId, ThreadId, ThreadMessage } from "./types";
@@ -75,32 +74,22 @@ export const forumPostsRouter = createTRPCRouter({
           },
         });
       });
-      // const notifyUsers = await getForumNotificationListeners(
-      //   ctx.prisma,
-      //   mentions,
-      //   post.thread
-      // );
-      // if (notifyUsers.length > 0)
-      //   await ctx.pushNotification.publishToUsers(
-      //     notifyUsers.map((u) => u.id),
-      //     {
-      //       web: {
-      //         notification: {
-      //           title: `Yeni Mesaj: ${post.thread.title.slice(0, 50)}`,
-      //           body: `${ctx.session.user.name ?? ""}: ${message.slice(
-      //             0,
-      //             100
-      //           )}`,
-      //           deep_link: `${getDomainUrl()}/forum/threads/${threadId}`,
-      //           hide_notification_if_site_has_focus: true,
-      //           icon: ctx.session.user.image || `${getDomainUrl()}/favicon.ico`,
-      //         },
-      //         data: { tag: `new-thread-post-${post.id}` },
-      //         time_to_live:
-      //           env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
-      //       },
-      //     }
-      //   );
+      const notifyUsers = await getForumNotificationListeners(
+        ctx.prisma,
+        mentions,
+        post.thread
+      );
+      await ctx.sendNotification(
+        notifyUsers,
+        {
+          title: `Yeni Mesaj: ${post.thread.title.slice(0, 50)}`,
+          body: `${ctx.session.user.name ?? ""}: ${message.slice(0, 100)}`,
+          tag: `new-thread-post-${post.id}`,
+          icon: ctx.session.user.image ?? undefined,
+          actions: [{ action: `/forum/threads/${threadId}`, title: "Git" }],
+        },
+        { TTL: env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined }
+      );
       return post;
     }),
   deleteAttachments: protectedProcedure
@@ -132,31 +121,6 @@ export const forumPostsRouter = createTRPCRouter({
           message: "Post'un sahibi değilsin!",
         });
 
-      const del = await ctx.prisma.forumPost.delete({ where: { id } });
-
-      // less than 28 days, clear notifications
-      if (
-        new Date().getTime() - post.createdAt.getTime() <
-        1000 * 60 * 60 * 24 * 28
-      ) {
-        // const notifyUsers = await getForumNotificationListeners(
-        //   ctx.prisma,
-        //   [],
-        //   post.thread
-        // );
-        // if (notifyUsers.length > 0)
-        //   await ctx.pushNotification.publishToUsers(
-        //     notifyUsers.map((u) => u.id),
-        //     {
-        //       web: {
-        //         data: { tag: `new-thread-post-${id}`, delete: true },
-        //         time_to_live:
-        //           env.NEXT_PUBLIC_VERCEL_ENV !== "production" ? 300 : undefined,
-        //       },
-        //     }
-        //   );
-      }
-
-      return del;
+      return await ctx.prisma.forumPost.delete({ where: { id } });
     }),
 });
