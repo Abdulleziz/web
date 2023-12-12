@@ -62,8 +62,8 @@ const Manage: NextPage = () => {
 
   return (
     <Layout>
-      <div className="flex flex-col gap-3 p-2 sm:flex-row">
-        <Card className="rounded-lg shadow">
+      <div className="flex flex-col gap-4 p-3 sm:flex-row">
+        <Card className=" flex flex-col rounded-lg shadow">
           <CardHeader>
             <CardTitle>Abdulleziz Çalışanları</CardTitle>
             <CardDescription>
@@ -124,7 +124,7 @@ const Manage: NextPage = () => {
           </CardContent>
         </Card>
         {!!events && (
-          <Card className="flex flex-col rounded sm:col-span-1">
+          <Card className="flex flex-col rounded-lg sm:col-span-1">
             <CardHeader>
               <CardTitle>Oylama Etkinlikleri!</CardTitle>
             </CardHeader>
@@ -139,7 +139,7 @@ const Manage: NextPage = () => {
                   />
                   <Label htmlFor="unfinished-mode">Devam Eden</Label>
                 </div>
-                <DataTable data={events} columns={columns} />
+                <DataTable data={events} columns={columns} pagination />
               </div>
             </CardContent>
           </Card>
