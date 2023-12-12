@@ -1,8 +1,11 @@
 import { toast } from "react-hot-toast";
-import { type RouterInputs, api } from "./api";
+import { type RouterInputs, api, type RouterOutputs } from "./api";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 type In = RouterInputs["discord"];
+type Out = RouterOutputs["discord"];
+
+export type User = Out["getAbdullezizUser"];
 
 export const memberFinder = <
   T extends { user: { id: string; username: string }; roles: unknown[] }
@@ -79,7 +82,9 @@ export const useGetVoteEventsWithMembers = (q: In["role"]["getVotes"]) => {
   });
 };
 
-export type VoteEventsWithMembers = NonNullable<ReturnType<typeof useGetVoteEventsWithMembers>["data"]>[number]
+export type VoteEventsWithMembers = NonNullable<
+  ReturnType<typeof useGetVoteEventsWithMembers>["data"]
+>[number];
 
 export const useGetCEOVoteEventWithMembers = () => {
   const roles = useGetAbdullezizRoles();

@@ -24,7 +24,7 @@ import {
 import { DataTable } from "~/components/tables/generic-table";
 import { Switch } from "~/components/ui/switch";
 import { Label } from "~/components/ui/label";
-import { columns } from "~/components/tables/voteEventTable/columns";
+import { columns } from "~/components/manageWorkerComponents/TableCard/columns";
 import { useState } from "react";
 
 export function colorMapping(targetColor: string) {
