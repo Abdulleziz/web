@@ -61,7 +61,7 @@ export function DataTable<TData, TValue>({
   };
 
   return (
-    <div className=" rounded-md border">
+    <div className="min-w-max rounded-md border">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -119,7 +119,7 @@ export function DataTable<TData, TValue>({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="2">5</SelectItem>
                 <SelectItem value="10">10</SelectItem>
                 <SelectItem value="15">15</SelectItem>
                 <SelectItem value="20">20</SelectItem>

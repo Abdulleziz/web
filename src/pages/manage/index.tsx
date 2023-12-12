@@ -62,8 +62,8 @@ const Manage: NextPage = () => {
 
   return (
     <Layout>
-      <div className="flex flex-col gap-4 p-3 sm:flex-row">
-        <Card className=" flex flex-col rounded-lg shadow">
+      <div className="grid grid-cols-1 gap-3 p-2 md:grid-cols-5">
+        <Card className="col-span-1 rounded-lg shadow md:col-span-2">
           <CardHeader>
             <CardTitle>Abdulleziz Çalışanları</CardTitle>
             <CardDescription>
@@ -124,11 +124,11 @@ const Manage: NextPage = () => {
           </CardContent>
         </Card>
         {!!events && (
-          <Card className="flex flex-col rounded-lg sm:col-span-1">
+          <Card className="cols-span-1 rounded-lg sm:col-span-3">
             <CardHeader>
               <CardTitle>Oylama Etkinlikleri!</CardTitle>
             </CardHeader>
-            <CardContent className=" max-h-screen overflow-x-scroll px-6 py-5 font-semibold md:overflow-x-hidden">
+            <CardContent className=" max-h-screen overflow-x-scroll px-6 py-5 font-semibold 2xl:overflow-x-hidden">
               <div className="flex flex-col gap-3">
                 <div className="flex items-center space-x-2">
                   <Label htmlFor="unfinished-mode">Hepsi</Label>
