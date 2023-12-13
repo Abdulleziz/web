@@ -39,7 +39,6 @@ export function DataTable<TData, TValue>({
   data,
   pagination = false,
 }: DataTableProps<TData, TValue>) {
-  const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const table = useReactTable({
     data,
@@ -47,17 +46,17 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
+  const pageIndex = table.getState().pagination.pageIndex;
   const pages: number[] = useMemo(
     () => new Array<number>(Math.ceil(data.length / pageSize)).fill(0),
     [data.length, pageSize]
   );
+
   const onPageUp = () => {
-    table.setPageIndex(currentPage + 1);
-    setCurrentPage(currentPage + 1);
+    table.setPageIndex(pageIndex + 1);
   };
   const onPageDown = () => {
-    table.setPageIndex(currentPage - 1);
-    setCurrentPage(currentPage - 1);
+    table.setPageIndex(pageIndex - 1);
   };
 
   return (
@@ -130,20 +129,19 @@ export function DataTable<TData, TValue>({
           </div>
           <div>
             <Label>{`${
-              Math.min(currentPage + 1, currentPage) * pageSize + 1
+              Math.min(pageIndex + 1, pageIndex) * pageSize + 1
             }-${Math.min(
-              Math.min(currentPage + 1, currentPage) * pageSize + pageSize,
+              Math.min(pageIndex + 1, pageIndex) * pageSize + pageSize,
               data.length
             )} of ${data.length} items`}</Label>
           </div>
           <div className="flex flex-row items-center justify-center gap-1">
             <Select
               onValueChange={(value: string) => {
-                setCurrentPage(Number(value));
-                table.setPageIndex(Number(value) - 1);
+                table.setPageIndex(Number(value));
               }}
               defaultValue="1"
-              value={String(currentPage + 1)}
+              value={String(pageIndex)}
             >
               <SelectTrigger className="max-w-min">
                 <SelectValue />
@@ -151,7 +149,7 @@ export function DataTable<TData, TValue>({
               <SelectContent>
                 {pages.map((_, i) => {
                   return (
-                    <SelectItem key={i} value={String(i + 1)}>
+                    <SelectItem key={i} value={String(i)}>
                       {i + 1}
                     </SelectItem>
                   );

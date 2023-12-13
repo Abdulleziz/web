@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import { DotIcon, MoreHorizontal } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -82,12 +82,15 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
       },
     }) => {
       return (
-        <ActionMenu
-          target={target.user.id}
-          role={role.name}
-          isEnded={!endedAt}
-          votes={votes}
-        />
+        <div className="flex flex-row items-center justify-center">
+          <DotIcon color={!endedAt ? "green" : "red"} />
+          <ActionMenu
+            target={target.user.id}
+            role={role.name}
+            isEnded={!endedAt}
+            votes={votes}
+          />
+        </div>
       );
     },
   },
@@ -111,7 +114,13 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
       },
     }) => {
       return beforeRole ? (
-        <div>{beforeRole?.name}</div>
+        <div
+          style={{
+            color: `#${beforeRole.color.toString(16).padStart(6, "0")}`,
+          }}
+        >
+          {beforeRole?.name}
+        </div>
       ) : (
         <div>(Unemployeed 🤣)</div>
       );
@@ -128,7 +137,17 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
       if (role.name === beforeRole?.name) {
         return <div>(Unemployeed 🤣)</div>;
       }
-      return role ? <div>{role.name}</div> : <div>(Unemployeed 🤣)</div>;
+      return role ? (
+        <div
+          style={{
+            color: `#${role.color.toString(16).padStart(6, "0")}`,
+          }}
+        >
+          {role.name}
+        </div>
+      ) : (
+        <div>(Unemployeed 🤣)</div>
+      );
     },
   },
   {
