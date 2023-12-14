@@ -31,7 +31,9 @@ const ForumWelcome: React.FC = () => {
             href="/forum/threads/new"
             className="mr-7 p-2 font-semibold transition-all hover:scale-110"
           >
-            <Button size="relative-lg">Yeni Thread</Button>
+            <div className="flex gap-4">
+              <Button size="relative-lg">Yeni Thread</Button>
+            </div>
           </Link>
         </div>
       </div>

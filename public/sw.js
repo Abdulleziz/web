@@ -1,44 +1,32 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
-// https://github.com/shadowwalker/next-pwa/blob/master/examples/custom-ts-worker/worker/index.ts
+/// <reference lib="WebWorker" />
 
-importScripts("https://js.pusher.com/beams/service-worker.js");
+self.addEventListener("push", (event) => {
+  const notif = event.data.json();
 
-PusherPushNotifications.onNotificationReceived = ({ pushEvent, payload }) => {
-  const handleNotification = async () => {
-    const siteHasFocus = await PusherPushNotifications._hasFocusedClient();
-    if (
-      siteHasFocus &&
-      payload.notification.hide_notification_if_site_has_focus === true
-    )
-      return;
+  event.waitUntil(self.registration.showNotification(notif.title, notif));
+});
 
-    const title = payload.notification.title || "";
-    const body = payload.notification.body || "";
-    const icon = payload.notification.icon;
-    await self.registration.showNotification(title, {
-      body,
-      icon,
-      data: {
-        pusher: {
-          customerPayload: payload,
-          pusherMetadata: payload.data.pusher,
-        },
-      },
-      actions: payload.data.actions,
-      tag: payload.data.tag,
-      silent: payload.data.delete,
-    });
-
-    const notifs = await self.registration.getNotifications();
-    notifs.forEach((notif) => {
-      const data = notif.data.pusher.customerPayload.data;
-      if (data.delete) notif.close();
-    });
-  };
-
-  pushEvent.waitUntil(handleNotification());
-};
+self.addEventListener("notificationclick", (event) => {
+  // event.notification.tag
+  event?.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then(function (clientList) {
+        if (clientList.length > 0) {
+          let client = clientList[0];
+          for (let i = 0; i < clientList.length; i++) {
+            if (clientList[i].focused) {
+              client = clientList[i];
+            }
+          }
+          return client.focus();
+        }
+        return self.clients.openWindow(event.action ?? "/");
+      })
+  );
+});
 
 self.addEventListener("install", function (_event) {
   // Perform install steps

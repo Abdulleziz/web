@@ -15,6 +15,7 @@ import { getSalaryTakers } from "~/server/discord-api/trpc";
 import { getDomainUrl } from "~/utils/api";
 import { Client } from "@upstash/qstash";
 import { Vote } from "~/server/api/routers/discord/roles";
+import { sendNotification } from "~/server/api/trpc";
 
 // const CronHeader = z.object({
 //   "upstash-message-id": z.string(),
@@ -25,6 +26,12 @@ export const CronBody = z.discriminatedUnion("type", [
     type: z.undefined(),
     cron: z.string(),
     debug: z.boolean().default(false),
+  }),
+  z.object({
+    type: z.literal("push"),
+    title: z.string(),
+    body: z.string().optional(),
+    silent: z.boolean().optional(),
   }),
   CreateSalary.extend({
     type: z.literal("salary"),
@@ -45,6 +52,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const parsed = CronBody.parse(req.body);
 
+    if (parsed.type === "push") {
+      const subs = await prisma.pushSubscription.findMany();
+      const notif = await sendNotification(subs, parsed);
+
+      console.log("push notif result in cron", { notif });
+      res.status(200).send("OK - push");
+      return;
+    }
+
     if (parsed.type === "vote") {
       const { role, user } = parsed;
       const event = await (role === "CEO"
@@ -60,15 +76,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         res.status(404).send("Vote event not found");
       } else {
         const data = { where: { id: event.id }, data: { endedAt: new Date() } };
-        role === "CEO"
-          ? await prisma.voteEventCEO.update(data)
-          : await prisma.voteEvent.update(data);
+        if (role === "CEO") {
+          await prisma.voteEventCEO.update(data);
+          const notfiy = await prisma.pushSubscription.findMany({});
+          await sendNotification(
+            notfiy,
+            {
+              title: "CEO seçimi zaman aşımına uğradı",
+              body: "Yeterli oy çıkmadığı için CEO seçimi zaman aşımına uğradı.",
+              silent: true,
+            },
+            { urgency: "low" }
+          );
+        } else await prisma.voteEvent.update(data);
+
         res.status(200).send("OK - vote");
       }
       return;
     }
 
     if (parsed.type === "salary") {
+      // TODO: deprecated...
       // connect to trpc
       const salaryTakers = await getSalaryTakers();
       const result = await prisma.payment.createMany({

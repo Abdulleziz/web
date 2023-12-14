@@ -9,7 +9,7 @@ import {
 export const formatName = (user: {
   nick?: string | null;
   user: { username: string | "Deleted user" };
-}) => (user.nick ? user.nick + ` (${user.user.username})` : user.user.username);
+}) => (user.nick ? user.nick : user.user.username);
 
 type Range = Exclude<Severity, 1>; // Exclude everyone
 type Role = Exclude<AbdullezizRole, "@everyone">; // Exclude everyone
@@ -36,7 +36,7 @@ export const requiredSeverity = [
   { perm: "çay satın al", min: 20 }, // kendi maaşından alsın (80 >= şirketten ödeyebilr)
   { perm: "çaycıya kız", min: 21 }, // günde 5 kişi kızarsa kovulur
   { perm: "bonus iste", min: 31, max: 100, exclude: ["CEO"] }, // CEO'dan fazladan maaş iste
-  { perm: "araba sür", every: ["Driver"] }, // minigame?
+  { perm: "araba sür", some: ["Driver"] }, // minigame?
   { perm: "stajları yönet", min: 80, include: ["HR"] },
   { perm: "forum thread pinle", min: 80, include: ["Advertisement Lead"] },
   { perm: "arabaları yönet", min: 80 }, // MEGAN EKLE
@@ -44,6 +44,7 @@ export const requiredSeverity = [
   { perm: "forum thread sil", min: 80 },
   { perm: "forum thread kilitle", min: 80 },
   { perm: "forumu yönet", min: 80 }, // thread/post kilitleme vb. + forum bildirimleri yönetme
+  { perm: "vice president seç", some: ["CEO"] },
 ] as const satisfies readonly RequiredSeverity[];
 
 export type AbdullezizPerm =
@@ -96,5 +97,5 @@ export function permissionDecider(roles: Role[]) {
       boundPerms[p.perm]?.forEach((perm) => perms.add(perm));
     }
   }
-  return [...perms];
+  return [...perms] as readonly AbdullezizPerm[];
 }

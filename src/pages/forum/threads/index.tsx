@@ -15,7 +15,6 @@ import React, { useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardHeader } from "~/components/ui/card";
 import { Label } from "~/components/ui/label";
-import { useNotificationStage } from "~/lib/pusher/notifications";
 import type { RouterOutputs } from "~/utils/api";
 import { createModal } from "~/utils/modal";
 import { useGetAbdullezizUser } from "~/utils/useDiscord";
@@ -70,7 +69,7 @@ const Threads: NextPage = () => {
 
   const currentUser = useGetAbdullezizUser();
 
-  const canMute = useNotificationStage() === "granted";
+  const canMute = typeof window !== "undefined" && "Notification" in window;
   const canPin =
     currentUser.data?.perms.includes("forum thread pinle") ?? false;
   const canDelete =

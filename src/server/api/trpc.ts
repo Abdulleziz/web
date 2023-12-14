@@ -20,10 +20,55 @@ import { env } from "~/env.mjs";
 
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "~/server/db";
-import { pushNotification } from "../notifications";
+import webPush, { WebPushError } from "web-push";
 
 type CreateContextOptions = {
   session: Session | null;
+};
+
+webPush.setVapidDetails(
+  "mailto:contact@abdulleziz.com",
+  env.NEXT_PUBLIC_VAPID_KEY,
+  env.VAPID_SECRET_KEY
+);
+type Options = NotificationOptions & { title: string };
+export const sendNotification = async <Sub extends PushSubscription>(
+  subs: Sub[],
+  body: Options | ((sub: Sub) => Options),
+  options?: webPush.RequestOptions | ((sub: Sub) => webPush.RequestOptions)
+) => {
+  return await Promise.all(
+    subs.map(async (sub) => {
+      try {
+        const jsonBody = typeof body === "function" ? body(sub) : body;
+        const option = typeof options === "function" ? options(sub) : options;
+        const res = await webPush.sendNotification(
+          {
+            endpoint: sub.endpoint,
+            keys: { auth: sub.auth, p256dh: sub.p256dh },
+          },
+          JSON.stringify({
+            ...jsonBody,
+            icon: jsonBody.icon || "/android-chrome-192x192.png",
+          }),
+          option
+        );
+        console.log("push notification send", res);
+        return res;
+      } catch (error) {
+        console.error(error);
+        if (error instanceof WebPushError) {
+          if (error.statusCode === 410) {
+            // subscription has unsubscribed or expired
+            await prisma.pushSubscription.delete({
+              where: { endpoint: sub.endpoint },
+            });
+            return "expired";
+          }
+        }
+      }
+    })
+  );
 };
 
 /**
@@ -40,7 +85,7 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
     prisma,
-    pushNotification,
+    sendNotification,
   };
 };
 
@@ -180,6 +225,7 @@ export const protectedProcedure = internalProcedure.use(enforceUserIsAuthed);
 import { type AbdullezizPerm, permissionDecider } from "~/utils/abdulleziz";
 import { getAbdullezizRoles } from "../discord-api/utils";
 import { getGuildMemberWithRoles } from "../discord-api/trpc";
+import { type PushSubscription } from "@prisma/client";
 
 export const createPermissionProcedure = (requiredPerms: AbdullezizPerm[]) =>
   t.procedure.use(

@@ -20,7 +20,6 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
-  transpilePackages: ["@pusher/push-notifications-web"],
   experimental: {
     esmExternals: false,
   },
