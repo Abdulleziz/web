@@ -21,12 +21,12 @@ export function tokenize(content: string) {
     } else if (token.match(urlRegex)) {
       // external if url does not match https://uploadthing.com/f/1621a05b-23cc-4cc5-85cb-c5b7757facdf-wpvi0o.jpg
       const data = { type: "url" as const, content: token } as const;
-      const external = !token.match(/https:\/\/uploadthing.com\/f\/[a-z0-9-]+/);
-      if (!external) result.push({ ...data, external });
+      const cdn = !token.match(/https:\/\/uploadthing.com\/f\/[a-z0-9-]+/);
+      if (!cdn) result.push({ ...data, cdn });
       else {
         const fileKey = token.split("/").pop();
         if (!fileKey) throw new Error("no file key found in tokenize()!");
-        result.push({ ...data, external, fileKey });
+        result.push({ ...data, cdn, fileKey });
       }
     } else if (token.match(mentionsRegex)) {
       const matches = token.match(mentionsRegex);

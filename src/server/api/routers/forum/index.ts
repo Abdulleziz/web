@@ -12,6 +12,8 @@ import { forumNotificationsRouter } from "./notifications";
 import { forumPostsRouter } from "./posts";
 import { getForumNotificationListeners } from "./trpc";
 import { ThreadId, ThreadMessage, ThreadTag, ThreadTitle } from "./types";
+import { tokenize } from "~/utils/forumThread";
+import { utapi } from "uploadthing/server";
 
 const managePinsProcedure = createPermissionProcedure(["forum thread pinle"]);
 const deleteThreadsProcedure = createPermissionProcedure(["forum thread sil"]);
@@ -137,6 +139,26 @@ export const forumRouter = createTRPCRouter({
   deleteThreadById: deleteThreadsProcedure
     .input(ThreadId)
     .mutation(async ({ ctx, input: id }) => {
+      const thread = await ctx.prisma.forumThread.findUnique({
+        where: { id },
+        select: { posts: { select: { message: true } } },
+      });
+
+      const attachments =
+        thread?.posts.flatMap((post) =>
+          tokenize(post.message)
+            .filter((lexem) => lexem.type === "url" && lexem.cdn)
+            .map((lexem) => (lexem as { fileKey: string }).fileKey)
+        ) ?? [];
+
+      if (attachments.length > 0) {
+        const { success } = await utapi.deleteFiles(attachments);
+        if (!success)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to delete attachments",
+          });
+      }
       return await ctx.prisma.forumThread.delete({ where: { id } });
     }),
 });
