@@ -11,7 +11,7 @@ const EntityCard = ({ entity }: { entity?: SystemEntity }) => {
 
   const onAddCart = (entityId: number) => {
     //! bozuk :(
-    toast("Hello World");
+    toast("Allah Yok");
     addItems([entityId]);
   };
 
