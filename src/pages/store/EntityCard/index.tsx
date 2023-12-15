@@ -10,8 +10,7 @@ const EntityCard = ({ entity }: { entity?: SystemEntity }) => {
   const addItems = useCheckout((state) => state.addItems);
 
   const onAddCart = (entityId: number) => {
-    //! bozuk :(
-    toast("Allah Yok");
+    toast("Sepete Eklendi!");
     addItems([entityId]);
   };
 
@@ -49,6 +48,9 @@ export const EntityDetails = ({
 
     case "phone":
       return <p>{`${entity.phone.brand} ${entity.phone.model}`}</p>;
+
+    case "human":
+      return <p>{`${entity.human.name} ${entity.human.surname}`}</p>;
 
     case "car":
       return (

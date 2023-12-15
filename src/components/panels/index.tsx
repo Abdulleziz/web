@@ -295,7 +295,7 @@ export const ServantPanel = createPanel(undefined, () => {
 
   const canBuy = data.perms.includes("çay satın al");
   const canServe = data.perms.includes("çay koy");
-  const canShout = data.perms.includes("çaycıya kız");
+  const canShout = data.perms.includes("çaycıyı sinemle");
   const ummmmm = data.perms.includes("*i*n-t*i.h?a_r ½e(t=");
 
   return (
@@ -357,7 +357,7 @@ export const ServantPanel = createPanel(undefined, () => {
             variant="warning"
             disabled={!canShout || !remainingTea}
           >
-            Çaycıya kız (0/5)
+            çaycıyı sinemle (0/5)
           </Button>
         )}
         {ummmmm && <Button variant="destructive">İntihar et</Button>}

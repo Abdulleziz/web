@@ -133,6 +133,10 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
               case "car":
                 name = `${entity.car.brand} ${entity.car.model} ${entity.car.year}`;
                 break;
+
+              case "human":
+                name = `${entity.human.name} ${entity.human.surname}`;
+                break;
             }
 
             return (

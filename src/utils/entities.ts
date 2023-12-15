@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DiscordId } from "./zod-utils";
 
 const SystemEntityBase = z.object({
   id: z.number().positive().int().min(1),
@@ -29,11 +30,20 @@ export const SystemEntity = z.discriminatedUnion("type", [
       model: z.string(),
     }),
   }),
+  SystemEntityBase.extend({
+    type: z.literal("human"),
+    human: z.object({
+      discordId: DiscordId,
+      name: z.string(),
+      surname: z.string(),
+    }),
+  }),
 ]);
 export type SystemEntity = z.infer<typeof SystemEntity>;
 export type Tea = Extract<SystemEntity, { type: "tea" }>["tea"];
 export type Car = Extract<SystemEntity, { type: "car" }>["car"];
 export type Phone = Extract<SystemEntity, { type: "phone" }>["phone"];
+export type Human = Extract<SystemEntity, { type: "human" }>["human"];
 
 const SE = z.array(SystemEntity).transform((t) => {
   const ids = t.map((e) => e.id);
@@ -117,12 +127,13 @@ export const SystemEntities = SE.parse([
   },
   {
     id: 7,
-    type: "phone",
-    phone: {
-      brand: "Barkin",
-      model: "Balci",
+    type: "human",
+    human: {
+      discordId: "288397394465521664",
+      name: "Barkin",
+      surname: "Balci",
     },
-    price: 10000,
+    price: 9999.99,
     image:
       "https://uploadthing.com/f/5bf7445a-c410-4867-8e5e-43f0905a9d0a-n39zc3.jpg",
   },

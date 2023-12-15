@@ -46,6 +46,8 @@ nav a{
 }
 nav a:hover{
     opacity: 0.7;
+    background: #1abc;
+    border-radius: 8px;
 }
 main{
     text-align: center;
