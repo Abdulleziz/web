@@ -115,6 +115,17 @@ export const SystemEntities = SE.parse([
     image:
       "https://productimages.hepsiburada.net/s/66/375-375/110000007422583.jpg",
   },
+  {
+    id: 7,
+    type: "phone",
+    phone: {
+      brand: "Barkin",
+      model: "Balci",
+    },
+    price: 10000,
+    image:
+      "https://uploadthing.com/f/5bf7445a-c410-4867-8e5e-43f0905a9d0a-n39zc3.jpg",
+  },
 ] satisfies SE);
 
 export function getSystemEntityById(id: number): SystemEntity {
