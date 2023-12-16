@@ -133,7 +133,7 @@ export const SystemEntities = SE.parse([
       name: "Barkin",
       surname: "Balci",
     },
-    price: 9999.99,
+    price: 9999,
     image:
       "https://uploadthing.com/f/5bf7445a-c410-4867-8e5e-43f0905a9d0a-n39zc3.jpg",
   },

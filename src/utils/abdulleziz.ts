@@ -34,7 +34,7 @@ export const requiredSeverity = [
   { perm: "çay koy", every: ["Servant"] },
   { perm: "*i*n-t*i.h?a_r ½e(t=", every: ["Servant"] },
   { perm: "çay satın al", min: 20 }, // kendi maaşından alsın (80 >= şirketten ödeyebilr)
-  { perm: "çaycıya kız", min: 21 }, // günde 5 kişi kızarsa kovulur
+  { perm: "çaycıya kız", min: 21 }, // günde 5 kişi kızarsa kovulur //! Çaycıyı sinemle
   { perm: "bonus iste", min: 31, max: 100, exclude: ["CEO"] }, // CEO'dan fazladan maaş iste
   { perm: "araba sür", some: ["Driver"] }, // minigame?
   { perm: "stajları yönet", min: 80, include: ["HR"] },
