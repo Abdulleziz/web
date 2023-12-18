@@ -14,14 +14,12 @@ import {
 } from "~/components/ui/dialog";
 import { cronToDate } from "../utils/cronToLocaleDate";
 
-
 const ConfirmCron: FC<{
   cron: string;
 }> = ({ cron }) => {
   const [title, setTitle] = useState("");
-  const [isGlobal, setIsGlobal] = useState<boolean>(false);
+  const [isGlobal, setIsGlobal] = useState<boolean>(true);
   const create = useCreateOrJoinCron();
-
   const nextDates = cronToDate(cron);
   const nextDate = nextDates[0];
 
@@ -36,7 +34,7 @@ const ConfirmCron: FC<{
         />
       </div>
       <div className="items-top flex space-x-2">
-        <Checkbox id="isGlobal" onChange={() => setIsGlobal((a) => !a)} />
+        <Checkbox id="isGlobal" onClick={() => setIsGlobal((a) => !a)} />
         <div className="grid gap-1.5 leading-none">
           <label
             htmlFor="isGlobal"

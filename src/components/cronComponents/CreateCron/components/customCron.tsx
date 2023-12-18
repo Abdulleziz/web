@@ -20,7 +20,6 @@ const CreateCustomCron: FC = () => {
   const [error, setError] = useState<string | null>(null);
   const firstDate = cronToDate(input)[0] ?? new Date();
   const diff = Math.abs(new Date().getTime() - firstDate.getTime());
-  console.log(diff / (100 * 60 * 24));
 
   const handleSubmit = (cron: string) => {
     // manuel or predefined cron submit handler
