@@ -56,9 +56,10 @@ const CronPage: NextPage = () => {
   const validCron = parser ? parser.stringify() : "";
   const clone = () => cronParser.parseExpression(validCron, { utc: true });
   const nextDates = parser ? clone().iterate(5) : null;
-  const nextDateString = parser
-    ? clone().next().toDate().toLocaleString("tr-TR")
-    : null;
+  const nextDate = parser ? clone().next().toDate() : null;
+  const nextDateString = nextDate
+    ?.setHours(nextDate.getHours() - 3)
+    .toLocaleString("tr-TR");
 
   const handleSubmit = (cron: string) => {
     // manuel or predefined cron submit handler
@@ -278,7 +279,7 @@ const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
   }
 };
 
-const useWeeksDaySelect = () => {
+export const useWeeksDaySelect = () => {
   const WEEKDAYS = [
     { value: 1, label: "Pazartesi" },
     { value: 2, label: "Salı" },
@@ -326,7 +327,7 @@ const useWeeksDaySelect = () => {
   return { WeekDaySelection, weekDays };
 };
 
-const useHourSelect = () => {
+export const useHourSelect = () => {
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
   const Values = ({ length }: { length: number }) => (

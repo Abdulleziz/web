@@ -1,7 +1,10 @@
 import { toast } from "react-hot-toast";
-import { api } from "./api";
+import { type RouterOutputs, api } from "./api";
 
 export const useGetAllCrons = () => api.cron.getAll.useQuery();
+export type Crons = RouterOutputs["cron"]["getAll"];
+export type Listeners = RouterOutputs["cron"]["getAll"][number]["listeners"];
+
 export const useCreateOrJoinCron = () => {
   const utils = api.useContext();
   return api.cron.createOrJoin.useMutation({
