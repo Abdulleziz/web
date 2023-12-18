@@ -5,11 +5,46 @@ import {
   getGuildMembers,
   getGuildRoles,
   STAFF_ROLE_ID,
+  modifyGuildMemberRole,
+  UNEMPLOYED_ROLE_ID,
 } from "./guild";
 import { connectMembersWithIds, getAbdullezizRoles } from "./utils";
-import { type AtLeastOne, abdullezizRoleSeverities } from "~/utils/zod-utils";
+import {
+  type AtLeastOne,
+  abdullezizRoleSeverities,
+  type DiscordId,
+} from "~/utils/zod-utils";
 import { permissionDecider } from "~/utils/abdulleziz";
 import { prisma } from "../db";
+
+export async function modifyMemberRole(
+  member: Member,
+  roleId: DiscordId,
+  mode: "PUT" | "DELETE",
+  rolesLength = member.roles.length
+) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
+  try {
+    if (mode === "PUT" && rolesLength === 0)
+      await modifyGuildMemberRole(member.user.id, UNEMPLOYED_ROLE_ID, "DELETE");
+    else if (rolesLength === 1)
+      await modifyGuildMemberRole(member.user.id, UNEMPLOYED_ROLE_ID, "PUT");
+  } catch (error) {}
+
+  return await modifyGuildMemberRole(member.user.id, roleId, mode);
+}
+
+export async function removeAllRoles(
+  member: Member & { roles: { id: string }[] }
+) {
+  let roleCount = member.roles.length;
+  return await Promise.all(
+    member.roles.map((r: { id: string }) =>
+      modifyMemberRole(member, r.id, "DELETE", roleCount--)
+    )
+  );
+}
 
 export async function fetchMembersWithRoles<M extends Member>(
   members: AtLeastOne<M>

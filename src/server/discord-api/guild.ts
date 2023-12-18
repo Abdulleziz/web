@@ -16,6 +16,7 @@ export type Member = RESTGetAPIGuildMemberResult & {
 
 export const ABDULLEZIZ_SERVER_ID = "918833527389315092";
 export const STAFF_ROLE_ID = "918834668751704124";
+export const UNEMPLOYED_ROLE_ID = "1180815262149251172";
 
 export async function getGuildMember(
   userId: string,

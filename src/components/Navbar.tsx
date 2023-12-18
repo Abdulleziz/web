@@ -34,6 +34,7 @@ import { Button } from "./ui/button";
 import {
   AlarmClock,
   Bell,
+  BellOff,
   BellRing,
   Github,
   LifeBuoy,
@@ -66,15 +67,49 @@ import {
   NavigationMenuTrigger,
 } from "./ui/navigation-menu";
 import { NavbarRoutes } from "~/config/routes";
+import { api } from "~/utils/api";
+import {
+  askForNotificationPermission,
+  createNotificationSubscription,
+  deleteNotificationSubscription,
+  notificationSettingsStore,
+  notificationSyncStore,
+} from "~/lib/pusher/notifications";
+import { PushSubscription } from "~/utils/shared";
+import { useHydrated } from "~/pages/_app";
+import toast from "react-hot-toast";
 
 export const Navbar: React.FC = () => {
   const { data: session } = useSession();
+  const hydrated = useHydrated();
+  const pushSync = api.notifications.syncSubscription.useMutation();
   const balance = useGetWallet().data?.balance ?? 0;
   const forumNotif = useGetUserNotification();
   const setForumNotif = useSetUserNotification();
+  const pushSyncStore = notificationSyncStore();
+  const pushSettingsStore = notificationSettingsStore();
   const openMoneyDialog = useMoneyDialog((s) => s.setOpen);
 
   const [ref] = useAutoAnimate();
+
+  async function subscribe() {
+    await askForNotificationPermission();
+    const subscription = await createNotificationSubscription();
+    if (!subscription) return;
+
+    const validated = PushSubscription.parse(subscription.toJSON());
+    await pushSync.mutateAsync(validated);
+    pushSettingsStore.setDeleted(false);
+    pushSyncStore.setSync(true);
+    toast.success("Cihaz bildirimleri açıldı.");
+  }
+
+  async function unsubscribe() {
+    await deleteNotificationSubscription();
+    pushSettingsStore.setDeleted(true);
+    pushSyncStore.setSync(false);
+    toast.success("Cihaz bildirimleri kapatıldı.");
+  }
 
   return (
     <div
@@ -109,6 +144,22 @@ export const Navbar: React.FC = () => {
       <div className="inline-flex w-1/2 items-center justify-end gap-4">
         {session ? (
           <>
+            {typeof window !== "undefined" &&
+              "Notification" in window &&
+              (pushSyncStore.isSync === false || pushSettingsStore.deleted) && (
+                <Button
+                  isLoading={pushSync.isLoading}
+                  disabled={pushSync.isLoading}
+                  onClick={() => void subscribe()}
+                  size={"sm"}
+                  variant={
+                    pushSettingsStore.deleted ? "destructive" : "default"
+                  }
+                >
+                  {/* this button will request notification perm */}
+                  <BellRing className="h-5 w-5" />
+                </Button>
+              )}
             <CommandMenu />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -143,6 +194,25 @@ export const Navbar: React.FC = () => {
                       Ayarlar
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent>
+                      {hydrated && (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            if (!pushSettingsStore.deleted) void unsubscribe();
+                            else void subscribe();
+                          }}
+                        >
+                          {pushSettingsStore.deleted ? (
+                            <BellRing className="mr-2 h-4 w-4" />
+                          ) : (
+                            <BellOff className="mr-2 h-4 w-4" />
+                          )}
+                          <span>
+                            {pushSettingsStore.deleted
+                              ? "Bu cihaz için bildirimleri aç"
+                              : "Bu cihaz için bildirimleri kapat"}
+                          </span>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSub>
                         <DropdownMenuSubTrigger>
                           <Bell className="mr-2 h-4 w-4" />

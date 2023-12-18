@@ -4,10 +4,7 @@ import {
   createTRPCRouter,
   protectedProcedure,
 } from "~/server/api/trpc";
-import { env } from "~/env.mjs";
-import { Client } from "@upstash/qstash";
 import { parseExpression } from "cron-parser";
-import type { CronBody } from "~/pages/api/cron";
 import { getSalaryTakers } from "~/server/discord-api/trpc";
 import {
   calculateEntitiesPrice,
@@ -15,13 +12,13 @@ import {
   ensurePayment,
   poolPayments,
 } from "./utils";
-import { getDomainUrl } from "~/utils/api";
 import {
   CreateEntities,
   CreateSalary,
   SendMoneySchema,
 } from "~/utils/usePayments";
-import type { z } from "zod";
+// TODO: utils import
+import { ONE_WEEK_OR_ONE_DAY } from "../discord/roles";
 
 const takeSalaryProcedure = createPermissionProcedure(["maaş al"]);
 const manageEmployeesProcedure = createPermissionProcedure([
@@ -97,51 +94,47 @@ export const paymentsRouter = createTRPCRouter({
         });
       });
     }),
-  createSalary: manageEmployeesProcedure
+  distributeSalary: manageEmployeesProcedure
     .input(CreateSalary)
-    .mutation(({ ctx, input: { delay, multiplier } }) => {
-      throw new TRPCError({
-        code: "PRECONDITION_FAILED",
-        message:
-          "Due to migration of the message broker, this feature is disabled",
+    .mutation(async ({ ctx, input: { multiplier } }) => {
+      const lastSalary = await ctx.prisma.payment.findMany({
+        where: {
+          type: "salary",
+          createdAt: { gt: new Date(Date.now() - ONE_WEEK_OR_ONE_DAY) },
+        },
+        orderBy: { createdAt: "desc" },
       });
-      // if (env.NODE_ENV !== "development") {
-      //   const c = new Client({ token: env.QSTASH_TOKEN });
-      //   // TODO: since we cannot list messages, we need to create scheduled job for salary and destroy it
-      //   // or we store the message id in the db, that way, we could create ui that is mutable by the user at any time
-      //   const messages = await c.messages.list();
-      //   const salaryMessages = messages.filter((m) =>
-      //     m.body.includes("salary")
-      //   );
-      //   if (salaryMessages.length > 0)
-      //     throw new TRPCError({ code: "PRECONDITION_FAILED" });
 
-      //   const url = getDomainUrl() + "/api/cron";
-      //   return await c.publishJSON({
-      //     url,
-      //     delay,
-      //     body: {
-      //       type: "salary",
-      //       delay,
-      //       multiplier,
-      //       fromId: ctx.session.user.id,
-      //     } as z.input<typeof CronBody>,
-      //   });
-      // } else {
-      //   // currently in dev, we don't have a cron job
-      //   const salaryTakers = await getSalaryTakers();
+      if (lastSalary.length > 2)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "1 haftada 2 maaş dağıtımı yapılamaz",
+        });
 
-      //   await ctx.prisma.payment.createMany({
-      //     data: salaryTakers.map((u) => {
-      //       return {
-      //         type: "salary",
-      //         toId: u.id,
-      //         amount:
-      //           // highest_role.severity x multiplier (90 * 10 = 900)
-      //           u.severity * multiplier,
-      //       };
-      //     }),
-      //   });
-      // }
+      if (lastSalary.length)
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Maaş zaten bu hafta içerisinde dağıtıldı",
+        });
+
+      const salaryTakers = await getSalaryTakers();
+
+      const result = await ctx.prisma.payment.createMany({
+        data: salaryTakers.map((u) => {
+          return {
+            type: "salary",
+            toId: u.id,
+            amount:
+              // highest_role.severity x multiplier (90 * 10 = 900)
+              u.severity * multiplier,
+          };
+        }),
+      });
+
+      if (result.count < 1)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Maaş dağıtımı başarısız",
+        });
     }),
 });

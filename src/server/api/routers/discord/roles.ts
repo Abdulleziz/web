@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   createTRPCRouter,
   internalProcedure,
+  permissionProcedure,
   protectedProcedure,
 } from "../../trpc";
 import { TRPCError } from "@trpc/server";
@@ -12,39 +13,68 @@ import {
   PROMOTE,
   DEMOTE,
   DiscordId,
+  abdullezizUnvotableRoles,
+  type AbdullezizUnvotableRole,
 } from "~/utils/zod-utils";
 import {
   getGuildMember,
   getGuildRole,
   getGuildRoles,
-  modifyGuildMemberRole,
 } from "~/server/discord-api/guild";
 import {
   fetchMembersWithRoles,
   getGuildMembersWithRoles,
+  modifyMemberRole,
+  removeAllRoles,
 } from "~/server/discord-api/trpc";
 import { Client } from "@upstash/qstash";
 import { env } from "~/env.mjs";
 import { getDomainUrl } from "~/utils/api";
 import { type CronBody } from "~/pages/api/cron";
 import { type Prisma } from "@prisma/client";
-import { getAbdullezizRoles } from "~/server/discord-api/utils";
+import {
+  connectMembersWithIds,
+  getAbdullezizRoles,
+} from "~/server/discord-api/utils";
 import {
   createGuildEvent,
   getGuildEvents,
   modifyGuildEvent,
 } from "~/server/discord-api/event";
+import { GuildScheduledEventStatus } from "discord-api-types/v10";
 
-const AbdullezizRole = z
+const abdullezizRole = z
   .string()
   .refine((role) => abdullezizRoles[role as AbdullezizRole] !== undefined)
   .transform((r) => r as AbdullezizRole);
 
+const abdullezizVotableRole = abdullezizRole
+  .refine(
+    (role) =>
+      !abdullezizUnvotableRoles.includes(role as AbdullezizUnvotableRole),
+    "Bu role oy verilemez"
+  )
+  .transform((r) => r as Exclude<AbdullezizRole, AbdullezizUnvotableRole>);
+
+const abdullezizUnvotableRole = abdullezizRole
+  .refine(
+    (role) =>
+      abdullezizUnvotableRoles.includes(role as AbdullezizUnvotableRole),
+    "Bu rol atanamaz"
+  )
+  .transform((r) => r as AbdullezizUnvotableRole);
+
 export const Vote = z.object({
   user: DiscordId,
-  role: AbdullezizRole,
+  role: abdullezizVotableRole,
 });
 export type Vote = z.infer<typeof Vote>;
+
+export const Assign = z.object({
+  user: DiscordId,
+  role: abdullezizUnvotableRole,
+});
+export type Assign = z.infer<typeof Assign>;
 
 function getSeverity<Role extends { name: AbdullezizRole }>(
   role: Role | undefined
@@ -139,7 +169,7 @@ function checkVoteCEO(
     });
 
   if (voteChanged && voter && target) {
-    if (isVoted.createdAt.getTime() + FIVE_MINUTES > Date.now())
+    if (isVoted.createdAt.getTime() + FIVE_MINUTES_OR_FIVE_SECONDS > Date.now())
       throw new TRPCError({
         code: "TOO_MANY_REQUESTS",
         message: "5 dakikada bir oy değiştirebilirsin",
@@ -166,19 +196,22 @@ function checkVoteCEO(
   return { finisherId, voteChanged, required };
 }
 
-const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
-const THREE_DAYS = 1000 * 60 * 60 * 24 * 3;
-const ONE_DAY = 1000 * 60 * 60 * 24;
-const THREE_HOURS = 1000 * 60 * 60 * 3;
-const FIVE_MINUTES = 1000 * 60 * 5;
+export const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
+export const THREE_DAYS = 1000 * 60 * 60 * 24 * 3;
+export const ONE_DAY = 1000 * 60 * 60 * 24;
+export const THREE_HOURS = 1000 * 60 * 60 * 3;
+export const FIVE_MINUTES = 1000 * 60 * 5;
 
-const THREE_DAYS_OR_THREE_HOURS =
+export const FIVE_MINUTES_OR_FIVE_SECONDS =
+  env.NEXT_PUBLIC_VERCEL_ENV === "production" ? FIVE_MINUTES : 1000 * 5;
+
+export const THREE_DAYS_OR_THREE_HOURS =
   env.NEXT_PUBLIC_VERCEL_ENV === "production" ? THREE_DAYS : THREE_HOURS;
 
-const ONE_WEEK_OR_ONE_DAY =
+export const ONE_WEEK_OR_ONE_DAY =
   env.NEXT_PUBLIC_VERCEL_ENV === "production" ? ONE_WEEK : ONE_DAY;
 
-const CEO_VOTE_PERCENTAGE =
+export const CEO_VOTE_PERCENTAGE =
   env.NEXT_PUBLIC_VERCEL_ENV === "production" ? (0.5 as const) : (0.5 as const); // change here for testing in dev [2, 0.5]
 
 export const rolesRouter = createTRPCRouter({
@@ -243,6 +276,58 @@ export const rolesRouter = createTRPCRouter({
         : new Date(event.createdAt.getTime() + THREE_DAYS_OR_THREE_HOURS),
     };
   }),
+  assign: permissionProcedure
+    .input(Assign)
+    .mutation(async ({ ctx, input: { user, role } }) => {
+      if (["development"].includes(env.NEXT_PUBLIC_VERCEL_ENV))
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Development ortamında oy veremezsin",
+        });
+
+      if (ctx.session.user.discordId === user)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Kendine rol atayamazsın",
+        });
+
+      const users = await getGuildMembersWithRoles();
+      const voter = users.find((u) => u.user.id === ctx.session.user.discordId);
+      const target = users.find((u) => u.user.id === user);
+
+      if (!voter || !target)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Kullanıcı bulunamadı",
+        });
+
+      if (!ctx.verifiedPerms.includes("vice president seç"))
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Yetersiz yetki",
+        });
+
+      const anyOneHasRole = users.some(
+        (u) =>
+          u.user.id !== user &&
+          u.roles.some((r: { name: AbdullezizRole }) => r.name === role)
+      );
+
+      if (anyOneHasRole)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Bu role sahip biri zaten var",
+        });
+
+      const hasRole = target.roles.some(
+        (r: { name: AbdullezizRole }) => r.name === role
+      );
+
+      const roleId = abdullezizRoles[role];
+      if (!hasRole) return await modifyMemberRole(target, roleId, "PUT");
+
+      return await modifyMemberRole(target, roleId, "DELETE");
+    }),
   vote: protectedProcedure
     .input(Vote)
     .mutation(async ({ ctx, input: { user, role } }) => {
@@ -343,11 +428,27 @@ export const rolesRouter = createTRPCRouter({
 
       if (finished) {
         const before = target.roles[0]?.id;
-        if (before)
-          await modifyGuildMemberRole(target.user.id, before, "DELETE");
+        if (before) await modifyMemberRole(target, before, "DELETE");
         const roleId = abdullezizRoles[role];
-        if (!quit) await modifyGuildMemberRole(target.user.id, roleId, "PUT");
+        if (!quit) await modifyMemberRole(target, roleId, "PUT");
         if (ongoing?.jobId) await c.messages.delete(ongoing.jobId);
+
+        if (quit) {
+          const notify = await ctx.prisma.pushSubscription.findMany();
+          const targetId = (
+            await connectMembersWithIds(ctx.prisma, [target])
+          )[0]?.id;
+
+          await ctx.sendNotification(
+            notify.map((u) => ({ ...u, isSelf: u.userId === targetId })),
+            ({ isSelf }) => ({
+              title: isSelf
+                ? "KOVULDUN 🤣"
+                : `${target.nick ?? target.user.username} kovuldu! 🤣`,
+            }),
+            ({ isSelf }) => ({ urgency: isSelf ? "high" : "normal" })
+          );
+        }
       }
 
       if (!ongoing) {
@@ -401,7 +502,11 @@ export const rolesRouter = createTRPCRouter({
         });
 
       const users = await getGuildMembersWithRoles();
-      const required = users.filter((u) => !u.user.bot && u.isStaff).length;
+      const required =
+        env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
+        ctx.session.user.discordId === "223071656510357504"
+          ? 1
+          : users.filter((u) => !u.user.bot && u.isStaff).length;
       const voter = users.find((u) => u.user.id === ctx.session.user.discordId);
       const target = users.find((u) => u.user.id === user);
 
@@ -458,6 +563,14 @@ export const rolesRouter = createTRPCRouter({
             votes: { create: { voter: voter.user.id, target: user } },
           },
         });
+        const notify = await ctx.prisma.pushSubscription.findMany({});
+        await ctx.sendNotification(notify, {
+          title: "👑 CEO oylaması başladı 🔥",
+          body: `CEO oylaması başladı! Oy vermek için tıkla`,
+          tag: "ceo-vote",
+          actions: [{ action: "/", title: "Oy ver" }],
+          badge: "/mbt/photos/Abrams.jpg",
+        });
         const event = await createGuildEvent(
           "CEO oylaması",
           "Abdulleziz büyük CEO oylaması! #oylarbana",
@@ -503,23 +616,40 @@ export const rolesRouter = createTRPCRouter({
         });
         if (finisher) {
           const beforeCEO = users.filter((u) => u.roles[0]?.name === "CEO");
+          const newCEO = users.find((u) => u.user.id === finisher);
+          if (!newCEO) throw new Error("newCEO should be in users");
           const CEO = abdullezizRoles["CEO"];
+          await Promise.all(beforeCEO.map(removeAllRoles));
+          await removeAllRoles(newCEO);
+
+          await modifyMemberRole(newCEO, CEO, "PUT");
+
+          if (latest.jobId) await c.messages.delete(latest.jobId);
+
+          const notify = await ctx.prisma.pushSubscription.findMany({});
+          await ctx.sendNotification(notify, {
+            title: `👑 Yeni CEO ${newCEO.nick ?? newCEO.user.username} 🔥`,
+            tag: "new-ceo",
+            actions: [{ action: "/", title: "Görüntüle" }],
+            badge: "/mbt/photos/Abrams.jpg",
+          });
+
           const events = await getGuildEvents();
           const event = events.find(
-            (e) => e.name.includes("CEO") && ![3, 4].includes(e.status)
-          );
-          await Promise.all(
-            beforeCEO.map((u) =>
-              modifyGuildMemberRole(u.user.id, CEO, "DELETE")
-            )
+            (e) =>
+              e.name.includes("CEO") &&
+              ![
+                GuildScheduledEventStatus.Completed,
+                GuildScheduledEventStatus.Canceled,
+              ].includes(e.status)
           );
 
-          await modifyGuildMemberRole(finisher, CEO, "PUT");
-          if (latest.jobId) await c.messages.delete(latest.jobId);
           if (event)
             await modifyGuildEvent(
               event.id,
-              event.status == 2 ? "Completed" : "Canceled"
+              event.status == GuildScheduledEventStatus.Active
+                ? "Completed"
+                : "Canceled"
             );
 
           return true;
@@ -561,7 +691,7 @@ export const rolesRouter = createTRPCRouter({
       const voter = r[0];
       const target = r[1] as (typeof r)[0];
 
-      const parsed = AbdullezizRole.safeParse(input.role);
+      const parsed = abdullezizVotableRole.safeParse(input.role);
 
       if (!parsed.success)
         // not verified role, no need to check

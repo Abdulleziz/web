@@ -1,9 +1,8 @@
 import Head from "next/head";
 import { createModal } from "~/utils/modal";
-import { useNotificationStage } from "~/lib/pusher/notifications";
 import { Navbar } from "./Navbar";
 import { SendMoneyDialog } from "./SendMoney";
-import { useSession } from "next-auth/react";
+// import { useSession } from "next-auth/react";
 
 type Props = {
   children?: React.ReactNode;
@@ -16,13 +15,9 @@ export const Layout: React.FC<Props> = ({
   title = "Abdulleziz Corp.",
   location = "",
 }) => {
-  const { data: session } = useSession();
-  const notifStage = useNotificationStage();
-  const { Modal } = createModal(
-    "notif",
-    "unreachable",
-    notifStage === "loading" && session !== null
-  );
+  // const { data: session } = useSession();
+
+  const { Modal } = createModal("notif", "unreachable", false);
 
   return (
     <>

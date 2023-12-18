@@ -25,7 +25,7 @@ const server = z.object({
   QSTASH_TOKEN: z.string().min(1),
   QSTASH_CURRENT_SIGNING_KEY: z.string().min(1),
   QSTASH_NEXT_SIGNING_KEY: z.string().min(1),
-  BEAMS_SECRET: z.string().min(1),
+  VAPID_SECRET_KEY: z.string().min(1),
 });
 
 /**
@@ -33,7 +33,7 @@ const server = z.object({
  * built with invalid env vars. To expose them to the client, prefix them with `NEXT_PUBLIC_`.
  */
 const client = z.object({
-  NEXT_PUBLIC_BEAMS: z.string().min(1),
+  NEXT_PUBLIC_VAPID_KEY: z.string().min(1),
   NEXT_PUBLIC_VERCEL_ENV: z
     .enum(["production", "preview", "development"])
     .default("development"),
@@ -57,8 +57,8 @@ const processEnv = {
   QSTASH_TOKEN: process.env.QSTASH_TOKEN,
   QSTASH_CURRENT_SIGNING_KEY: process.env.QSTASH_CURRENT_SIGNING_KEY,
   QSTASH_NEXT_SIGNING_KEY: process.env.QSTASH_NEXT_SIGNING_KEY,
-  NEXT_PUBLIC_BEAMS: process.env.NEXT_PUBLIC_BEAMS,
-  BEAMS_SECRET: process.env.BEAMS_SECRET,
+  NEXT_PUBLIC_VAPID_KEY: process.env.NEXT_PUBLIC_VAPID_KEY,
+  VAPID_SECRET_KEY: process.env.VAPID_SECRET_KEY,
 };
 
 // Don't touch the part below
