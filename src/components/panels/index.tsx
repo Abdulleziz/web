@@ -73,7 +73,7 @@ export const GlobalPanel = createPanel(undefined, () => {
         </Link>
         <Link href="/projects/mbt">
           <Button variant={"warning"} size="sm">
-            MBT projesine git
+            MBT Project v1.3 //TODO Projeler için ayrı bir panel açılmalı.
           </Button>
         </Link>
       </CardContent>
@@ -172,7 +172,7 @@ export const DriveablePabel = createPanel(undefined, () => {
       <CardHeader>
         <CardTitle>Araç İşlemleri</CardTitle>
         <CardDescription>
-          Megan sürmek veya araba yönetmek için kullanılan işlemler.
+          Megan sürmek veya araba yönetmek için kullanılan işlemler. //TODO Driver rolü için bir şeyler yapılmalı
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
@@ -295,7 +295,7 @@ export const ServantPanel = createPanel(undefined, () => {
 
   const canBuy = data.perms.includes("çay satın al");
   const canServe = data.perms.includes("çay koy");
-  const canShout = data.perms.includes("çaycıya kız");
+  const canShout = data.perms.includes("çaycıyı sinemle");
   const ummmmm = data.perms.includes("*i*n-t*i.h?a_r ½e(t=");
 
   return (
@@ -357,7 +357,7 @@ export const ServantPanel = createPanel(undefined, () => {
             variant="warning"
             disabled={!canShout || !remainingTea}
           >
-            Çaycıya kız (0/5)
+            Çaycıyı sinemle! (0/5)
           </Button>
         )}
         {ummmmm && <Button variant="destructive">İntihar et</Button>}

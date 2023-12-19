@@ -1,7 +1,14 @@
 import { signOut, signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
+import {
+  type FC,
+  type PropsWithChildren,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import {
   useGetForumThreads,
@@ -51,6 +58,15 @@ import { useGetAllCrons } from "~/utils/useCron";
 import { useMoneyDialog } from "./SendMoney";
 import { useGetWallet } from "~/utils/usePayments";
 import { CurrentAvatar } from "./CurrentAvatar";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "./ui/navigation-menu";
+import { NavbarRoutes } from "~/config/routes";
 import { api } from "~/utils/api";
 import {
   askForNotificationPermission,
@@ -97,43 +113,34 @@ export const Navbar: React.FC = () => {
 
   return (
     <div
-      className="min-h-16 sticky top-0 z-50 w-full items-center bg-white p-2 dark:bg-zinc-950"
+      className="min-h-16 sticky top-0 z-50 flex w-full items-center justify-between bg-white p-2 dark:bg-zinc-950"
       ref={ref}
     >
-      <div className="inline-flex w-1/2 items-center justify-start">
-        <DropdownMenu>
-          <DropdownMenuTrigger disabled={!session} asChild>
-            <Link href="/">
-              <Button
-                variant={"brand"}
-                disabled={!session}
-                size={"relative-lg"}
-              >
-                Abdulleziz Corp.
-              </Button>
-            </Link>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <Link href="/dashboard">
-              <DropdownMenuLabel>Anasayfa</DropdownMenuLabel>
-            </Link>
-            <DropdownMenuSeparator />
-            <Link href="/forum">
-              <DropdownMenuItem>Forum</DropdownMenuItem>
-            </Link>
-            <Link href="/cron">
-              <DropdownMenuItem>Hatırlatıcı</DropdownMenuItem>
-            </Link>
-            <Link href="/manage">
-              <DropdownMenuItem>Kullanıcıları Yönet</DropdownMenuItem>
-            </Link>
-            <Link href="/store">
-              <DropdownMenuItem>Mağaza</DropdownMenuItem>
-            </Link>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="inline-flex flex-shrink-0 items-center"></div>
+      <NavigationMenu>
+        <NavigationMenuList>
+          <NavigationMenuItem>
+            <NavigationMenuTrigger disabled={!session}>
+              Abdulleziz Corp.
+            </NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <ul className="grid w-[300px] gap-4 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
+                {NavbarRoutes.map((component) => {
+                  return (
+                    <Item
+                      key={component.title}
+                      title={component.title}
+                      href={component.href}
+                      Icon={component.Icon}
+                    >
+                      {component.description}
+                    </Item>
+                  );
+                })}
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
       <div className="inline-flex w-1/2 items-center justify-end gap-4">
         {session ? (
           <>
@@ -268,6 +275,35 @@ export const Navbar: React.FC = () => {
         )}
       </div>
     </div>
+  );
+};
+
+type ItemProps = PropsWithChildren<{
+  title: string;
+  href: string;
+  Icon?: ReactNode;
+}>;
+
+const Item: FC<ItemProps> = ({ children, title, Icon, href }) => {
+  return (
+    <li>
+      <NavigationMenuItem asChild>
+        <Link
+          className="hover:text-accent-foreground focus:text-accent-foreground block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-zinc-600 focus:bg-accent"
+          href={href}
+          legacyBehavior
+          passHref
+        >
+          <NavigationMenuLink>
+            {Icon}
+            <div className="text-sm font-medium leading-none">{title}</div>
+            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+              {children}
+            </p>
+          </NavigationMenuLink>
+        </Link>
+      </NavigationMenuItem>
+    </li>
   );
 };
 

@@ -7,7 +7,7 @@
 - çay koy
 - *i*n-t*i.h?a_r ½et=
 - çay satın al
-- çaycıya kız
+- çaycıyı sinemle
 - bonus iste
 - araba sür
 - stajları yönet
@@ -107,7 +107,7 @@ Hatırlatıcı Bildirim Seçenekleri:
 
 - [ ] Rol Değişikliği
 - [ ] Yeni Oy
-- [ ] 6 Kere çaycıya kızma -> atılma
+- [ ] 6 Kere çaycıyı sinemleme -> atılma
 - [ ] Maaş* (haftada bir)
 
 ## Banka

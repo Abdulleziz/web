@@ -8,6 +8,56 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="style.css" rel="stylesheet">
+    <script>
+        function AbramsPointerDown() {
+            document.getElementsByClassName('static_abrams')[0].src = 'photos/AbramsGIF.gif'
+        }
+        function AbramsPointerLeave() {
+                document.getElementsByClassName('static_abrams')[0].src = 'photos/Abrams.jpg'
+            }
+        function T90PointerDown() {
+                    document.getElementsByClassName('static_t90')[0].src = 'photos/T90GIF.gif'
+                }
+        function T90PointerLeave() {
+                    document.getElementsByClassName('static_t90')[0].src = 'photos/t-90ma.jpg'
+                }
+        function LeopardPointerDown() {
+                document.getElementsByClassName('static_leopard')[0].src = 'photos/LeopardGIF.gif'
+            }
+        function LeopardPointerLeave() {
+                document.getElementsByClassName('static_leopard')[0].src = 'photos/Leopard.jpg'
+            }
+        function T80PointerDown() {
+                document.getElementsByClassName('static_t80')[0].src = 'photos/T80GIF.gif'
+            }
+        function T80PointerLeave() {
+                document.getElementsByClassName('static_t80')[0].src = 'photos/T-80BVM.jpg'
+            }
+        function ChallengerPointerDown() {
+                document.getElementsByClassName('static_challenger')[0].src = 'photos/ChallengerGIF.gif'
+            }
+        function ChallengerPointerLeave() {
+                document.getElementsByClassName('static_challenger')[0].src = 'photos/Challenger2.jpg'
+            }
+        function T72PointerDown() {
+                document.getElementsByClassName('static_t72')[0].src = 'photos/T72GIF.gif'
+            }
+        function T72PointerLeave() {
+                document.getElementsByClassName('static_t72')[0].src = 'photos/T72B3.jpg'
+            }
+        function LeclercPointerDown() {
+                document.getElementsByClassName('static_leclerc')[0].src = 'photos/LeclercGIF.gif'
+            }
+        function LeclercPointerLeave() {
+                document.getElementsByClassName('static_leclerc')[0].src = 'photos/Leclerc.jpg'
+            }
+        function ZTZPointerDown() {
+                document.getElementsByClassName('static_ztz')[0].src = 'photos/ZTZ99GIF.gif'
+            }
+        function ZTZPointerLeave() {
+                document.getElementsByClassName('static_ztz')[0].src = 'photos/ZTZ99.jpg'
+            }
+    </script>
 </head>
 
 <body>
@@ -16,6 +66,7 @@
     </header>
 
     <nav>
+        <a href="index.html">HOME</a>
         <a href="about.html">ABOUT</a>
         <a href="History/beforewestart.html">HISTORY</a>
         <a href="Fundamentals/generalknowledge.html">FUNDAMENTALS</a>
@@ -35,7 +86,8 @@
                         <div class="box1"></div>
                         <div class="card-content">
                             <div class="image">
-                                <img src="photos/Abrams.jpg" alt="" height="350px" width="400px">
+                                <a href="Abrams/Abrams.html"><img class="static_abrams" src="photos/Abrams.jpg" alt=""
+                                        onpointerenter="AbramsPointerDown()" onpointerleave="AbramsPointerLeave()" height="350px" width="400px"></a>
                             </div>
                             <div class="flags">
                                 <img src="photos/USARound.webp" alt="" height="45px" width="45px">
@@ -57,7 +109,8 @@
                         <div class="box2"></div>
                         <div class="card-content">
                             <div class="image">
-                                <img src="photos/t-90ma.jpg" alt="" height="350px" width="400px">
+                                <a href="RussianMBT/T90M.html"><img class="static_t90" src="photos/t-90ma.jpg" alt="" onpointerenter="T90PointerDown()"
+                                    onpointerleave="T90PointerLeave()" height="350px" width="400px"></a>
                             </div>
                             <div class="flags">
                                 <img src="photos/RussiaRound1.webp" alt="" height="45px" width="45px">
@@ -67,8 +120,7 @@
                                 <span class="origin">Russia</span>
                             </div>
                             <div class="about">
-                                <p>The T-90 is a third-generation Russian main battle tank developed to replace the
-                                    T-72.</p>
+                                <p>The T-90 is a third-generation Russian main battle tank developed to replace the T-72.</p>
                             </div>
                             <div class="button b2">
                                 <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
@@ -80,7 +132,9 @@
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <img src="photos/Leopard.jpg" alt="" height="350px" width="400px">
+                                <a href="Leopard/Leopard.html"><img class="static_leopard" src="photos/Leopard.jpg" alt="" onpointerenter="LeopardPointerDown()"
+                                    onpointerleave="LeopardPointerLeave()"
+                                    height="350px" width="400px"></a>
                             </div>
                             <div class="flags">
                                 <img src="photos/GermanyRound.webp" alt="" height="45px" width="45px">
@@ -90,7 +144,8 @@
                                 <span class="origin">Germany</span>
                             </div>
                             <div class="about">
-                                <p>The Leopard 2 is a third generation German main battle tank developed by Krauss-Maffei in the 1970s.</p>
+                                <p>The Leopard 2 is a third generation German main battle tank developed by
+                                    Krauss-Maffei in the 1970s.</p>
                             </div>
                             <div class="button b3">
                                 <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
@@ -102,7 +157,9 @@
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <img src="photos/T-80BVM.jpg" alt="" height="350px" width="400px">
+                               <a href="RussianMBT/T80BVM.html">  <img class="static_t80" src="photos/T-80BVM.jpg" alt=""
+                                onpointerenter="T80PointerDown()"
+                                onpointerleave="T80PointerLeave()" height="350px" width="400px"></a>
                             </div>
                             <div class="flags">
                                 <img src="photos/RussiaRound1.webp" alt="" height="45px" width="45px">
@@ -112,7 +169,8 @@
                                 <span class="origin">Russia</span>
                             </div>
                             <div class="about">
-                                <p>The T-80 is a main battle tank that was designed and manufactured in the Soviet Union.</p>
+                                <p>The T-80 is a main battle tank that was designed and manufactured in the Soviet
+                                    Union.</p>
                             </div>
                             <div class="button b3">
                                 <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
@@ -124,7 +182,9 @@
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <img src="photos/Challenger2.jpg" alt="" height="350px" width="400px">
+                                <img class="static_challenger" src="photos/Challenger2.jpg" alt="" 
+                                onpointerenter="ChallengerPointerDown()"
+                                onpointerleave="ChallengerPointerLeave()"  height="350px" width="400px">
                             </div>
                             <div class="flags">
                                 <img src="photos/UKRound2.webp" alt="" height="45px" width="45px">
@@ -134,7 +194,8 @@
                                 <span class="origin">United Kingdom</span>
                             </div>
                             <div class="about">
-                                <p>The FV4034 Challenger 2 (MoD designation "CR2") is a third generation British main battle tank.</p>
+                                <p>The FV4034 Challenger 2 (MoD designation "CR2") is a third generation British main
+                                    battle tank.</p>
                             </div>
                             <div class="button b3">
                                 <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
@@ -146,10 +207,13 @@
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <img src="photos/T72B3.jpg" alt="" height="350px" width="400px">
+                                <img class="static_t72" src="photos/T72B3.jpg" alt="" onpointerenter="T72PointerDown()"
+                                onpointerleave="T72PointerLeave()"height="350px" width="400px">
                             </div>
                             <div class="flags">
-                                <img src="photos/RussiaRound1.webp" alt="" height="45px" width="45px">
+                                <img src="photos/RussiaRound1.webp" alt="" 
+                                
+                                 height="45px" width="45px">
                             </div>
                             <div class="name-tank">
                                 <span class="name">T-72B3</span>
@@ -168,7 +232,9 @@
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <img src="photos/Leclerc.jpg" alt="" height="350px" width="400px">
+                                <img class="static_leclerc" src="photos/Leclerc.jpg" alt="" height="350px" 
+                                onpointerenter="LeclercPointerDown()"
+                                onpointerleave="LeclercPointerLeave()" width="400px">
                             </div>
                             <div class="flags">
                                 <img src="photos/franceround.webp" alt="" height="45px" width="45px">
@@ -178,7 +244,8 @@
                                 <span class="origin">France</span>
                             </div>
                             <div class="about">
-                                <p>The Leclerc is a third-generation French main battle tank developed and manufactured by Nexter Systems.</p>
+                                <p>The Leclerc is a third-generation French main battle tank developed and manufactured
+                                    by Nexter Systems.</p>
                             </div>
                             <div class="button b3">
                                 <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
@@ -190,7 +257,9 @@
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <img src="photos/ZTZ99.jpg" alt="" height="350px" width="400px">
+                                <img class="static_ztz" src="photos/ZTZ99.jpg" alt=""
+                                onpointerenter="ZTZPointerDown()"
+                                onpointerleave="ZTZPointerLeave()" height="350px" width="400px">
                             </div>
                             <div class="flags">
                                 <img src="photos/chinaround.webp" alt="" height="45px" width="45px">
@@ -200,7 +269,8 @@
                                 <span class="origin">China</span>
                             </div>
                             <div class="about">
-                                <p>The Type 99 (Chinese: Jiǔjiǔshì Zhǔzhàn Tǎnkè) or ZTZ-99 is a Chinese third generation main battle tank.</p>
+                                <p>The Type 99 (Chinese: Jiǔjiǔshì Zhǔzhàn Tǎnkè) or ZTZ-99 is a Chinese third
+                                    generation main battle tank.</p>
                             </div>
                             <div class="button b3">
                                 <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
@@ -223,7 +293,7 @@
                             </div>
                             <div class="about">
                                 <p>The VT-4 (Chinese: VT-4 zhǔzhàn tǎnkè) is a Chinese third generation
-                                mbt built by Norinco for overseas export.</p>
+                                    mbt built by Norinco for overseas export.</p>
                             </div>
                             <div class="button b3">
                                 <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
@@ -246,7 +316,7 @@
                             </div>
                             <div class="about">
                                 <p>K2 Black Panther (Korean: K-2 흑표) is a South Korean main battle tank, designed by
-                                the Agency for Defense Development.</p>
+                                    the Agency for Defense Development.</p>
                             </div>
                             <div class="button b3">
                                 <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
@@ -264,11 +334,12 @@
                                 <img src="photos/TurkeyRound.webp" alt="" height="45px" width="45px">
                             </div>
                             <div class="name-tank">
-                                <span class="name">M-60T Sabra</span>
+                                <span class="name">M60T Sabra</span>
                                 <span class="origin">Turkey</span>
                             </div>
                             <div class="about">
-                                <p>The Sabra is an extensively upgraded M60 tank developed by Israel.The Sabra is known as the M60T in Turkish service.</p>
+                                <p>The Sabra is an extensively upgraded M60 tank developed by Israel.The Sabra is known
+                                    as the M60T in Turkish service.</p>
                             </div>
                             <div class="button b3">
                                 <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
@@ -286,11 +357,12 @@
                                 <img src="photos/israelround.webp" alt="" height="45px" width="45px">
                             </div>
                             <div class="name-tank">
-                                <span class="name">Merkava MkIV</span>
+                                <span class="name">Merkava Mk IV</span>
                                 <span class="origin">Israel</span>
                             </div>
                             <div class="about">
-                                <p>The Merkava (Hebrew: מרכבה) is a main battle tanks used by the Israel Defense Forces.</p>
+                                <p>The Merkava (Hebrew: מרכבה) is a main battle tanks used by the Israel Defense Forces.
+                                </p>
                             </div>
                             <div class="button b3">
                                 <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
@@ -312,7 +384,8 @@
                                 <span class="origin">Japan</span>
                             </div>
                             <div class="about">
-                                <p>The Type 10 (10式戦車, Hitomaru-shiki sensha) is a fourth generation main battle tank of JSDF.</p>
+                                <p>The Type 10 (10式戦車, Hitomaru-shiki sensha) is a fourth generation main battle tank of
+                                    JSDF.</p>
                             </div>
                             <div class="button b3">
                                 <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
@@ -334,7 +407,8 @@
                                 <span class="origin">Italy</span>
                             </div>
                             <div class="about">
-                                <p>The C1 Ariete (English: battering ram) is a 3rd generation main battle tank of the Italian Army.</p>
+                                <p>The C1 Ariete (English: battering ram) is a 3rd generation main battle tank of the
+                                    Italian Army.</p>
                             </div>
                             <div class="button b3">
                                 <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
@@ -356,7 +430,149 @@
                                 <span class="origin">Ukraine</span>
                             </div>
                             <div class="about">
-                                <p>The T-84 is a Ukrainian main battle tank based on the Soviet T-80 MBT introduced in 1976.</p>
+                                <p>The T-84 is a Ukrainian main battle tank based on the Soviet T-80 MBT introduced in
+                                    1976.</p>
+                            </div>
+                            <div class="button b3">
+                                <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide card">
+                        <div class="box3"></div>
+                        <div class="card-content">
+                            <div class="image">
+                                <img src="photos/Karrar.jpg" alt="" height="350px" width="400px">
+                            </div>
+                            <div class="flags">
+                                <img src="photos/iranround.webp" alt="" height="45px" width="45px">
+                            </div>
+                            <div class="name-tank">
+                                <span class="name">Karrar</span>
+                                <span class="origin">Iran</span>
+                            </div>
+                            <div class="about">
+                                <p>The Karrar (Persian كرار Striker or "Attacker") is an Iranian MBT that was announced
+                                    in 2016.</p>
+                            </div>
+                            <div class="button b3">
+                                <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide card">
+                        <div class="box3"></div>
+                        <div class="card-content">
+                            <div class="image">
+                                <img src="photos/Altay.jpg" alt="" height="350px" width="400px">
+                            </div>
+                            <div class="flags">
+                                <img src="photos/TurkeyRound.webp" alt="" height="45px" width="45px">
+                            </div>
+                            <div class="name-tank">
+                                <span class="name">Altay</span>
+                                <span class="origin">Turkey</span>
+                            </div>
+                            <div class="about">
+                                <p>Altay is a Turkish fourth generation MBT designed by Otokar based on Korean K2 to be
+                                    produced by BMC.</p>
+                            </div>
+                            <div class="button b3">
+                                <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide card">
+                        <div class="box3"></div>
+                        <div class="card-content">
+                            <div class="image">
+                                <img src="photos/Armata.jpg" alt="" height="350px" width="400px">
+                            </div>
+                            <div class="flags">
+                                <img src="photos/RussiaRound1.webp" alt="" height="45px" width="45px">
+                            </div>
+                            <div class="name-tank">
+                                <span class="name">T-14 Armata</span>
+                                <span class="origin">Russia</span>
+                            </div>
+                            <div class="about">
+                                <p>The T-14 Armata (Russian: Т-14 Армата) is a Russian MBT based on the Armata Universal
+                                    Combat Platform.</p>
+                            </div>
+                            <div class="button b3">
+                                <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide card">
+                        <div class="box3"></div>
+                        <div class="card-content">
+                            <div class="image">
+                                <img src="photos/STRV122.jpg" alt="" height="350px" width="400px">
+                            </div>
+                            <div class="flags">
+                                <img src="photos/swedenround.png" alt="" height="45px" width="45px">
+                            </div>
+                            <div class="name-tank">
+                                <span class="name">Stridsvagn 122</span>
+                                <span class="origin">Sweden</span>
+                            </div>
+                            <div class="about">
+                                <p>Stridsvagn 122 is a Swedish MBT that like the German Leopard 2A5, is based on the
+                                    German Leopard 2.
+                                </p>
+                            </div>
+                            <div class="button b3">
+                                <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide card">
+                        <div class="box3"></div>
+                        <div class="card-content">
+                            <div class="image">
+                                <img src="photos/Arjun.jpg" alt="" height="350px" width="400px">
+                            </div>
+                            <div class="flags">
+                                <img src="photos/indiaround.webp" alt="" height="45px" width="45px">
+                            </div>
+                            <div class="name-tank">
+                                <span class="name">Arjun</span>
+                                <span class="origin">India</span>
+                            </div>
+                            <div class="about">
+                                <p>The Arjun is a third generation Indian MBT and entered service with the Indian Army
+                                    in 2004.
+                                </p>
+                            </div>
+                            <div class="button b3">
+                                <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swiper-slide card">
+                        <div class="box3"></div>
+                        <div class="card-content">
+                            <div class="image">
+                                <img src="photos/PT91.jpg" alt="" height="350px" width="400px">
+                            </div>
+                            <div class="flags">
+                                <img src="photos/polandround.webp" alt="" height="45px" width="45px">
+                            </div>
+                            <div class="name-tank">
+                                <span class="name">PT-91 Twardy</span>
+                                <span class="origin">Poland</span>
+                            </div>
+                            <div class="about">
+                                <p>The PT-91 Twardy is a Polish main battle tank. A development of the
+                                    T-72M1, it entered service in 1995.
+                                </p>
                             </div>
                             <div class="button b3">
                                 <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
@@ -381,7 +597,7 @@
                 spaceBetween: 35,
                 grabCursor: true,
                 autoplay: {
-                    delay: 2500,
+                    delay: 25000,
                     disableOnInteraction: true,
                     pauseOnMouseEnter: true,
                 },
