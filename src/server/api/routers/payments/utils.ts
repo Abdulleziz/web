@@ -1,60 +1,7 @@
-import type { Prisma } from "@prisma/client";
-import { TRPCError } from "@trpc/server";
+import { type Prisma } from "@prisma/client";
 import { type Transaction, prisma } from "~/server/db";
-import { type SystemEntity, getSystemEntityById } from "~/utils/entities";
+import { getSystemEntityById } from "~/utils/entities";
 import type { CreateEntities } from "~/utils/usePayments";
-
-export const ensurePayment = <
-  P extends Prisma.PaymentGetPayload<{ include: { from: true; to: true } }>
->(
-  p: P
-) => {
-  if (p.type === "invoice") {
-    if (!p.entityId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    // const entity = getSystemEntityById(p.entityId);
-    return { ...p, type: "invoice" as const, entityId: p.entityId };
-  } else if (p.type === "transfer") {
-    if (!p.fromId || !p.from)
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message:
-          "Bir transfer işlemindeki `gönderen` kullanıcı kayıtlardan silinmiş!",
-      });
-
-    return { ...p, type: p.type, fromId: p.fromId, from: p.from };
-  } else if (p.type === "salary") {
-    return { ...p, type: p.type };
-  }
-  throw new TRPCError({
-    code: "INTERNAL_SERVER_ERROR",
-    message: "Unknown payment type",
-  });
-};
-
-export const calculateInvoice = (
-  payment: Prisma.PaymentGetPayload<{
-    select: { type: true; entityId: true; amount: true };
-  }>
-) => {
-  if (payment.type !== "invoice" || !payment.entityId)
-    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-  const entity = getSystemEntityById(payment.entityId);
-  return payment.amount * entity.price;
-};
-
-export const calculateInvoices = (
-  payments: Parameters<typeof calculateInvoice>[number][],
-  entityFilter?: SystemEntity["type"][]
-) => {
-  const p = payments.filter((p) => {
-    if (!p.entityId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    if (!entityFilter) return true;
-    const entity = getSystemEntityById(p.entityId);
-    return entityFilter.includes(entity.type);
-  });
-  return p.reduce((acc, p) => acc + calculateInvoice(p), 0);
-};
 
 export const calculateEntitiesPrice = (entities: CreateEntities) => {
   let totalPrice = 0;
@@ -69,102 +16,99 @@ export const calculateEntitiesPrice = (entities: CreateEntities) => {
   return totalPrice;
 };
 
+export const calculateBankSalary = <
+  BankSalary extends Prisma.BankSalaryGetPayload<{
+    select: { multiplier: true; salaries: { select: { severity: true } } };
+  }>
+>(
+  salary: BankSalary
+) => {
+  // could be optimized by using a single query
+
+  return (
+    salary.multiplier * salary.salaries.reduce((acc, s) => acc + s.severity, 0)
+  );
+};
+
 export const calculateWallet = async (
   userId: string,
   db: Transaction = prisma
 ) => {
   const wallet = { balance: 0 };
 
-  const payments = await db.payment.findMany({
+  const salaries = await db.salary.findMany({
+    where: { toId: userId, bankSalary: { paidAt: { not: null } } },
+    select: { severity: true, bankSalary: { select: { multiplier: true } } },
+  });
+
+  const invoices = await db.invoice.findMany({
+    where: { toId: userId, entities: { every: { refundedAt: null } } },
+    select: { entities: true },
+  });
+
+  const transfers = await db.transfer.findMany({
     where: { OR: [{ toId: userId }, { fromId: userId }] },
   });
 
-  for (const payment of payments) {
-    switch (payment.type) {
-      case "salary":
-        if (payment.toId === userId) wallet.balance += payment.amount;
-        break;
+  const bankTransfers = await db.bankTransaction.findMany({
+    where: { referenceId: userId },
+    select: { amount: true, operation: true },
+  });
 
-      case "invoice":
-        wallet.balance -= calculateInvoice(payment);
-        break;
-
-      case "transfer":
-        if (payment.toId === userId) wallet.balance += payment.amount;
-        else wallet.balance -= payment.amount;
-        break;
-
-      default:
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Unknown payment type",
-        });
-    }
+  for (const salary of salaries) {
+    wallet.balance += salary.bankSalary.multiplier * salary.severity;
   }
+
+  for (const invoice of invoices) {
+    wallet.balance += invoice.entities.reduce(
+      (acc, e) => acc + getSystemEntityById(e.entityId).price,
+      0
+    );
+  }
+
+  for (const transfer of transfers) {
+    if (transfer.toId === userId) wallet.balance += transfer.amount;
+    else wallet.balance -= transfer.amount;
+  }
+
+  for (const transfer of bankTransfers) {
+    if (transfer.operation === "deposit") wallet.balance -= transfer.amount;
+    else wallet.balance += transfer.amount;
+  }
+
   return wallet;
 };
 
-export const poolPayments = (payments: PaymentData[]) => {
-  const pool = payments.map((b) => {
-    const others = payments.filter(
-      (h) => h.createdAt.getTime() === b.createdAt.getTime()
-    );
-    if (b.type === "invoice") {
-      const o = others as I[];
-      return {
-        type: "invoice",
-        to: b.to,
-        createdAt: b.createdAt,
-        pool: o.map((i) => ({
-          amount: i.amount,
-          entityId: i.entityId,
-          id: i.id,
-        })),
-      } satisfies InvoicePollData;
-    } else if (b.type === "salary") {
-      const o = others as S[];
-      return {
-        type: "salary",
-        createdAt: b.createdAt,
-        pool: o.map((i) => ({
-          to: b.to,
-          amount: i.amount,
-          id: i.id,
-        })),
-      } satisfies SalaryPollData;
-    }
-    return b as TransferPollData;
+export const calculateBank = async (db: Transaction = prisma) => {
+  const bank = { balance: 0 };
+
+  const salaries = await db.bankSalary.findMany({
+    where: { paidAt: { not: null } },
+    select: { multiplier: true, salaries: { select: { severity: true } } },
   });
-  const noDuplicates = pool.filter(
-    (p, i) =>
-      i ===
-      pool.findIndex((h) => h.createdAt.getTime() === p.createdAt.getTime())
-  );
 
-  return noDuplicates;
-};
+  const invoices = await db.bankInvoice.findMany({
+    where: { entities: { every: { refundedAt: null } } },
+    select: { entities: true },
+  });
 
-type PaymentData = ReturnType<typeof ensurePayment>;
+  const transfers = await db.bankTransaction.findMany({});
 
-// pooling
-type I = PaymentData & { type: "invoice" };
-type S = PaymentData & { type: "salary" };
-type T = PaymentData & { type: "transfer" };
+  for (const salary of salaries) {
+    bank.balance += calculateBankSalary(salary);
+  }
 
-// transfer is usually not pooled
-type TransferPollData = T;
+  for (const invoice of invoices) {
+    bank.balance += invoice.entities.reduce(
+      (acc, e) => acc + getSystemEntityById(e.entityId).price,
+      0
+    );
+  }
 
-// pool the items that are bought at the same time
-type InvoicePollData = {
-  type: "invoice";
-  pool: Pick<I, "entityId" | "amount" | "id">[];
-  to: I["to"];
-  createdAt: I["createdAt"];
-};
+  for (const transfer of transfers) {
+    if (transfer.operation === "deposit") bank.balance += transfer.amount;
+    else bank.balance -= transfer.amount;
+  }
 
-// pool the users that are paid at the same time
-type SalaryPollData = {
-  type: "salary";
-  pool: Pick<S, "to" | "amount" | "id">[];
-  createdAt: S["createdAt"];
+  return {...bank, salaries, invoices, transfers};
 };

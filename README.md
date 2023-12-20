@@ -116,7 +116,8 @@ Abdülleziz bankası, sadece CEO ve muhasebe yönetiminde olup şirketin gelir v
 
 - Her hafta maaş dağıtılmak zorundadır, 2 kere dağıtılmazsa otomatik olarak OHAL ilan edilir.
 - Bütün şirket sorumluluğu CEO'ya aittir
-- OHAL anında banka kitlenir, CEO düşer. Yeni CEO atanıncaya kadar böyle kalır.
+- OHAL anında banka kitlenir, CEO ve CFO düşer. Yeni CEO atanıncaya kadar böyle kalır.
+- OHAL anında Vice President geçici görev alır. Yok ise şirketteki CSO dışında en yüksek çalışan görevi devralır.
 - CSO haricinde OHAL ilan edilirse, CSO da düşer.
 
 ### Gelir/Gider

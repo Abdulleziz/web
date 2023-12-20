@@ -15,9 +15,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { getRequiredSeverity, getSeverity } from "~/pages/manage";
+import { getRequiredSeverity } from "~/pages/manage";
 import { formatName } from "~/utils/abdulleziz";
 import { useVote, type VoteEventsWithMembers } from "~/utils/useDiscord";
+import { getSeverity } from "~/utils/zod-utils";
 
 const ActionMenu = (Props: {
   target: string;

@@ -6,7 +6,6 @@ import {
   DriveablePabel,
   MemberPanel,
   VoteChart,
-  HistoryPanel,
   CEOVotePanel,
 } from "~/components/panels";
 import type { NextPage } from "next";
@@ -89,7 +88,7 @@ const Dashboard: NextPage = () => {
                 <VoteChart />
               </div>
             </Card>
-            <HistoryPanel />
+            {/* <HistoryPanel /> */}
           </section>
         </main>
       </div>

@@ -15,6 +15,7 @@ import {
   DiscordId,
   abdullezizUnvotableRoles,
   type AbdullezizUnvotableRole,
+  getSeverity,
 } from "~/utils/zod-utils";
 import {
   getGuildMember,
@@ -24,8 +25,8 @@ import {
 import {
   fetchMembersWithRoles,
   getGuildMembersWithRoles,
+  makeCEO,
   modifyMemberRole,
-  removeAllRoles,
 } from "~/server/discord-api/trpc";
 import { Client } from "@upstash/qstash";
 import { env } from "~/env.mjs";
@@ -76,12 +77,6 @@ export const Assign = z.object({
 });
 export type Assign = z.infer<typeof Assign>;
 
-function getSeverity<Role extends { name: AbdullezizRole }>(
-  role: Role | undefined
-) {
-  return role ? abdullezizRoleSeverities[role.name] : 1;
-}
-
 const getRoleFromId = (id: DiscordId | null) => {
   if (!id) return;
   for (const [role, roleId] of Object.entries(abdullezizRoles))
@@ -100,10 +95,10 @@ function checkVote<Voter extends MiniUser, User extends MiniUser>(
   beforeHighest?: DiscordId | null
 ) {
   const voterRole = voter.roles[0];
-  const voterSeverity = getSeverity(voterRole);
+  const voterSeverity = getSeverity(voterRole?.name);
   const userRole =
     beforeHighest !== undefined ? getRoleFromId(beforeHighest) : user.roles[0];
-  const userSeverity = getSeverity(userRole);
+  const userSeverity = getSeverity(userRole?.name);
   const targetSeverity = abdullezizRoleSeverities[targetRole]; // or 1 if no role
   const quit = targetRole === userRole?.name || targetRole === null;
 
@@ -331,7 +326,7 @@ export const rolesRouter = createTRPCRouter({
   vote: protectedProcedure
     .input(Vote)
     .mutation(async ({ ctx, input: { user, role } }) => {
-     /*  if (["development"].includes(env.NEXT_PUBLIC_VERCEL_ENV))
+      /*  if (["development"].includes(env.NEXT_PUBLIC_VERCEL_ENV))
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Development ortamında oy veremezsin",
@@ -615,14 +610,7 @@ export const rolesRouter = createTRPCRouter({
           },
         });
         if (finisher) {
-          const beforeCEO = users.filter((u) => u.roles[0]?.name === "CEO");
-          const newCEO = users.find((u) => u.user.id === finisher);
-          if (!newCEO) throw new Error("newCEO should be in users");
-          const CEO = abdullezizRoles["CEO"];
-          await Promise.all(beforeCEO.map(removeAllRoles));
-          await removeAllRoles(newCEO);
-
-          await modifyMemberRole(newCEO, CEO, "PUT");
+          const newCEO = await makeCEO(users, finisher);
 
           if (latest.jobId) await c.messages.delete(latest.jobId);
 

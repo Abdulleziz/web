@@ -10,8 +10,7 @@ import type {
 import { Routes } from "discord-api-types/v10";
 import { env } from "~/env.mjs";
 import { REST } from "@discordjs/rest";
-import { CreateSalary } from "~/utils/usePayments";
-import { getSalaryTakers } from "~/server/discord-api/trpc";
+import { getSalaryTakers, informEmergency } from "~/server/discord-api/trpc";
 import { getDomainUrl } from "~/utils/api";
 import { Client } from "@upstash/qstash";
 import { Vote } from "~/server/api/routers/discord/roles";
@@ -33,9 +32,13 @@ export const CronBody = z.discriminatedUnion("type", [
     body: z.string().optional(),
     silent: z.boolean().optional(),
   }),
-  CreateSalary.extend({
-    type: z.literal("salary"),
+  z.object({
+    type: z.literal("salary.check"),
+  }),
+  z.object({
+    type: z.literal("salary.create"),
     fromId: z.string().cuid().optional(),
+    multiplier: z.number().min(10).max(20).default(10),
   }),
   Vote.extend({
     type: z.literal("vote"),
@@ -95,28 +98,45 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return;
     }
 
-    if (parsed.type === "salary") {
-      // TODO: deprecated...
-      // connect to trpc
+    if (parsed.type === "salary.create") {
       const salaryTakers = await getSalaryTakers();
-      const result = await prisma.payment.createMany({
-        data: salaryTakers.map((u) => ({
-          type: "salary",
-          toId: u.id,
-          fromId: parsed.fromId,
-          amount:
-            // highest_role.severity x multiplier (90 * 10 = 900)
-            u.severity * parsed.multiplier,
-        })),
+      // highest_role.severity x multiplier (90 * 10 = 900)
+      const result = await prisma.bankSalary.create({
+        data: {
+          multiplier: parsed.multiplier,
+          salaries: {
+            createMany: {
+              data: salaryTakers.map((u) => ({
+                toId: u.id,
+                severity: u.severity,
+              })),
+            },
+          },
+        },
       });
-      console.log({ result });
 
-      if (result.count < 1) {
-        res.status(500).send("Failed to create any payment");
+      console.log("salary creation result", { result });
+      res.status(200).send("OK - salary.create");
+      return;
+    }
+
+    if (parsed.type === "salary.check") {
+      const unpaidSalaries = await prisma.bankSalary.findMany({
+        where: { paidAt: null },
+      });
+
+      if (unpaidSalaries.length > 3) {
+        console.log("3'ten fazla ödenmemiş maaş var");
+      }
+
+      if (unpaidSalaries.length === 0) {
+        res.status(200).send("OK - salary.check");
         return;
       }
 
-      res.status(200).send("OK - salary");
+      await informEmergency(unpaidSalaries.length);
+
+      res.status(201).send("ACTION TAKEN - salary.check");
       return;
     }
 
