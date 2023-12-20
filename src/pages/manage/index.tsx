@@ -139,7 +139,12 @@ const Manage: NextPage = () => {
                   />
                   <Label htmlFor="unfinished-mode">Devam Eden</Label>
                 </div>
-                <DataTable data={events} columns={columns} pagination />
+                <DataTable
+                  data={events}
+                  columns={columns}
+                  pagination
+                  inputFilter="role"
+                />
               </div>
             </CardContent>
           </Card>

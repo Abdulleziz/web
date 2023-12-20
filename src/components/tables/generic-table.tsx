@@ -2,10 +2,17 @@
 
 import {
   type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
   flexRender,
   getCoreRowModel,
-  useReactTable,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
 } from "@tanstack/react-table";
 
 import {
@@ -27,24 +34,56 @@ import {
 import { useMemo, useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   pagination?: boolean;
+  inputFilter?: string;
+  columnFilter?: [
+    {
+      columnToFilter: string;
+      options: {
+        label: string;
+        value: string;
+      }[];
+    }
+  ];
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   pagination = false,
+  inputFilter,
+  columnFilter,
 }: DataTableProps<TData, TValue>) {
   const [pageSize, setPageSize] = useState(10);
+  const [rowSelection, setRowSelection] = useState({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
   const table = useReactTable({
     data,
     columns,
+    state: {
+      sorting,
+      columnVisibility,
+      rowSelection,
+      columnFilters,
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
   const pageIndex = table.getState().pagination.pageIndex;
   const pages: number[] = useMemo(
@@ -61,6 +100,20 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="min-w-max rounded-md border">
+      <div className=" flex flex-row items-start justify-start gap-3 p-3">
+        {inputFilter && (
+          <Input
+            placeholder={`Filter for ${inputFilter}`}
+            value={
+              (table.getColumn(inputFilter)?.getFilterValue() as string) ?? ""
+            }
+            onChange={(event) => {
+              table.getColumn(inputFilter)?.setFilterValue(event.target.value);
+            }}
+            className="h-8 w-[150px] lg:w-[250px]"
+          />
+        )}
+      </div>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (

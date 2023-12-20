@@ -95,7 +95,11 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
     },
   },
   {
+    id: "target",
     accessorKey: "target",
+    accessorFn: (row) => {
+      `${row.target.user.username}`;
+    },
     header: "Oylanan",
     cell: ({
       row: {
@@ -106,7 +110,9 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
     },
   },
   {
+    id: "role",
     accessorKey: "beforeRole",
+    accessorFn: (row) => `${row.role.name}`,
     header: "Eski Rol",
     cell: ({
       row: {
@@ -127,7 +133,9 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
     },
   },
   {
+    id: "role",
     accessorKey: "role",
+    accessorFn: (row) => `${row.role.name}`,
     header: "Yeni Rol",
     cell: ({
       row: {
@@ -151,6 +159,7 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
     },
   },
   {
+    id: "votes",
     accessorKey: "votes",
     header: "Toplanan",
     cell: ({
@@ -166,6 +175,7 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
     },
   },
   {
+    id: "need",
     accessorKey: "need",
     header: "Gerekli",
     cell: ({ row: { original } }) => {

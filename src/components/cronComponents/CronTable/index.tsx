@@ -13,7 +13,7 @@ const CronTable: FC<{ data: Crons }> = ({ data }) => {
           <CardTitle>Hatırlatıcı Listesi</CardTitle>
         </CardHeader>
         <CardContent className=" max-h-screen overflow-x-scroll px-6 py-5 font-semibold 2xl:overflow-x-hidden">
-          <DataTable columns={columns} data={data} pagination/>
+          <DataTable columns={columns} data={data} pagination inputFilter="title"/>
         </CardContent>
       </Card>
     </div>
