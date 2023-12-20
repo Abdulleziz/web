@@ -34,8 +34,8 @@ const Dashboard: NextPage = () => {
           DriveablePabel,
           MemberPanel,
           GlobalPanel,
-          CEOVotePanel,
           ProjectPanel,
+          CEOVotePanel,
         ].filter(
           // if any of the visibleBy permissions are not in the user's perms,
           // don't show the panel

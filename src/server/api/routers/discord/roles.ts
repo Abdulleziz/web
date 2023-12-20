@@ -331,11 +331,11 @@ export const rolesRouter = createTRPCRouter({
   vote: protectedProcedure
     .input(Vote)
     .mutation(async ({ ctx, input: { user, role } }) => {
-     /*  if (["development"].includes(env.NEXT_PUBLIC_VERCEL_ENV))
+      if (["development"].includes(env.NEXT_PUBLIC_VERCEL_ENV))
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Development ortamında oy veremezsin",
-        }); */
+        });
 
       const users = await getGuildMembersWithRoles();
       const voter = users.find((u) => u.user.id === ctx.session.user.discordId);

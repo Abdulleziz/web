@@ -192,7 +192,7 @@ export const CEOVotePanel = createPanel(undefined, () => {
   if (!data) return null;
 
   return (
-    <div className="menu flex items-center overflow-x-auto overflow-y-auto rounded-lg bg-black p-4 text-zinc-400 lg:w-max">
+    <div className="menu md:col-span-2 flex items-center overflow-x-auto overflow-y-auto rounded-lg bg-black p-4 text-zinc-400 lg:w-max">
       <div className="menu-title">CEO Oylaması</div>
       <div className="menu-item flex">
         <div className="menu-item flex flex-col items-center p-2">
