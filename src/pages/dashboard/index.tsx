@@ -9,6 +9,7 @@ import {
   HistoryPanel,
   CEOVotePanel,
 } from "~/components/panels";
+import { ProjectPanel } from "~/components/panels/ProjectPanel";
 import type { NextPage } from "next";
 import {
   useGetAbdullezizUser,
@@ -34,6 +35,7 @@ const Dashboard: NextPage = () => {
           MemberPanel,
           GlobalPanel,
           CEOVotePanel,
+          ProjectPanel,
         ].filter(
           // if any of the visibleBy permissions are not in the user's perms,
           // don't show the panel
