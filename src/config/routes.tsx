@@ -43,4 +43,10 @@ export const NavbarRoutes: {
     description: "Kazandığın parayı harca.",
     Icon: <ShoppingCartIcon />,
   },
+  {
+    title: "Banka",
+    href: "/bank",
+    description: "Banka işlemlerini gör.",
+    Icon: <ShoppingCartIcon />,
+  },
 ];

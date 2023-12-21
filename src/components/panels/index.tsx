@@ -136,6 +136,7 @@ export const AdminPanel = createPanel(undefined, () => {
 
   const manageForum = data.perms.includes("forumu yönet");
   const manageForumPins = data.perms.includes("forum thread pinle");
+  const seeBank = data.perms.includes("banka geçmişini gör");
 
   return (
     <Card>
@@ -152,6 +153,11 @@ export const AdminPanel = createPanel(undefined, () => {
         <Link href="/forum">
           <Button size="sm" disabled={!manageForum && !manageForumPins}>
             {manageForumPins && !manageForum ? "Thread Pinle" : "Forumu yönet"}
+          </Button>
+        </Link>
+        <Link href="/bank">
+          <Button size="sm" disabled={!seeBank}>
+            Bankayı yönet
           </Button>
         </Link>
       </CardContent>
@@ -172,7 +178,8 @@ export const DriveablePabel = createPanel(undefined, () => {
       <CardHeader>
         <CardTitle>Araç İşlemleri</CardTitle>
         <CardDescription>
-          Megan sürmek veya araba yönetmek için kullanılan işlemler. //TODO Driver rolü için bir şeyler yapılmalı
+          Megan sürmek veya araba yönetmek için kullanılan işlemler. //TODO
+          Driver rolü için bir şeyler yapılmalı
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
@@ -457,4 +464,4 @@ export const VoteChart = createPanel(undefined, () => {
   );
 });
 
-export { HistoryPanel } from "./HistoryPanel";
+// export { HistoryPanel } from "./HistoryPanel";
