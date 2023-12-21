@@ -18,7 +18,7 @@ export const ProjectPanel = createPanel(undefined, () => {
         <CardContent>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Link href="/projects/mbt">
-              <Button>MBT Project v1.3</Button>
+              <Button>MBT Project</Button>
             </Link>
           </div>
         </CardContent>

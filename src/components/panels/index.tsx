@@ -167,8 +167,7 @@ export const DriveablePabel = createPanel(undefined, () => {
       <CardHeader>
         <CardTitle>Araç İşlemleri</CardTitle>
         <CardDescription>
-          Megan sürmek veya araba yönetmek için kullanılan işlemler. //TODO
-          Driver rolü için bir şeyler yapılmalı
+          Megan sürmek veya araba yönetmek için kullanılan işlemler.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
