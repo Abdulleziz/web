@@ -60,7 +60,7 @@ export const calculateWallet = async (
   }
 
   for (const invoice of invoices) {
-    wallet.balance += invoice.entities.reduce(
+    wallet.balance -= invoice.entities.reduce(
       (acc, e) => acc + getSystemEntityById(e.entityId).price,
       0
     );
@@ -95,11 +95,11 @@ export const calculateBank = async (db: Transaction = prisma) => {
   const transfers = await db.bankTransaction.findMany({});
 
   for (const salary of salaries) {
-    bank.balance += calculateBankSalary(salary);
+    bank.balance -= calculateBankSalary(salary);
   }
 
   for (const invoice of invoices) {
-    bank.balance += invoice.entities.reduce(
+    bank.balance -= invoice.entities.reduce(
       (acc, e) => acc + getSystemEntityById(e.entityId).price,
       0
     );
@@ -110,5 +110,5 @@ export const calculateBank = async (db: Transaction = prisma) => {
     else bank.balance -= transfer.amount;
   }
 
-  return {...bank, salaries, invoices, transfers};
+  return { ...bank, salaries, invoices, transfers };
 };

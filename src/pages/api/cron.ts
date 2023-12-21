@@ -37,7 +37,7 @@ export const CronBody = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("salary.create"),
-    fromId: z.string().cuid().optional(),
+    income: z.number().min(1_000).max(10_000).optional(),
     multiplier: z.number().min(10).max(20).default(10),
   }),
   Vote.extend({
@@ -99,6 +99,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     if (parsed.type === "salary.create") {
+      const income =
+        parsed.income ??
+        1_000 *
+          // 3 dice, pick the highest
+          Math.ceil(
+            Math.max(Math.random() * 10, Math.random() * 10, Math.random() * 10)
+          );
+
+      // TODO: bankIncome
+      await prisma.bankTransaction.create({
+        data: { amount: income, operation: "deposit" },
+      });
+
       const salaryTakers = await getSalaryTakers();
       // highest_role.severity x multiplier (90 * 10 = 900)
       const result = await prisma.bankSalary.create({
@@ -113,6 +126,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             },
           },
         },
+      });
+
+      const notfiy = await prisma.pushSubscription.findMany({});
+      await sendNotification(notfiy, {
+        title: "ŞİRKET GELİRLERİ AÇIKLANDI 🤠",
+        body: `Şirket gelirleri açıklandı, maaşlar dağıtılmaya hazır @CFO!`,
       });
 
       console.log("salary creation result", { result });

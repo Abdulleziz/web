@@ -19,7 +19,15 @@ const manageBankProcedure = createPermissionProcedure(["bankayı yönet"]);
 
 export const bankRouter = createTRPCRouter({
   history: seeHistoryProcedure.query(async ({ ctx }) => {
-    return await calculateBank(ctx.prisma);
+    const transfers = await ctx.prisma.bankTransaction.findMany();
+    const salaries = await ctx.prisma.bankSalary.findMany({
+      include: { salaries: true },
+    });
+    const invoices = await ctx.prisma.bankInvoice.findMany({
+      include: { entities: true },
+    });
+    const balance = (await calculateBank(ctx.prisma)).balance;
+    return { transfers, salaries, invoices, balance };
   }),
   transaction: manageBankProcedure
     .input(createTransactionSchema)
