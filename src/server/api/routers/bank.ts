@@ -33,6 +33,15 @@ export const bankRouter = createTRPCRouter({
     .input(createTransactionSchema)
     .mutation(async ({ ctx, input: { amount, operation } }) => {
       return await ctx.prisma.$transaction(async (prisma) => {
+        const emergency = await prisma.stateOfEmergency.findFirst({
+          where: { endedAt: { not: null } },
+        });
+        if (emergency)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR", // since there is no CEO, its 5xx unreachable
+            message: "OHAL durumunda banka işlemleri yapılamaz!",
+          });
+
         const bank = await calculateBank(prisma);
         const wallet = await calculateWallet(ctx.session.user.id, prisma);
 

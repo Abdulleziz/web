@@ -8,6 +8,7 @@ import {
   useCreateBankTransaction,
   useDistributeSalary,
   useGetBankHistory,
+  useTriggerEmergency,
 } from "~/utils/useBank";
 import { useGetAbdullezizUser } from "~/utils/useDiscord";
 import { useGetWallet } from "~/utils/usePayments";
@@ -17,6 +18,7 @@ const BankPage: NextPage = () => {
   const user = useGetAbdullezizUser();
   const transaction = useCreateBankTransaction();
   const paySalary = useDistributeSalary();
+  const triggerOhal = useTriggerEmergency();
   const history = useGetBankHistory(undefined, {
     select({ balance, invoices, salaries, transfers }) {
       return {
@@ -31,6 +33,13 @@ const BankPage: NextPage = () => {
   });
   const [amount, setAmount] = useState(0);
 
+  const canTriggerOhal = history.data?.events.find(
+    (e) =>
+      e.type === "salary" &&
+      !e.paidAt &&
+      e.createdAt.getTime() > Date.now() - 1000 * 60 * 60 * 24
+  );
+
   if (user.isLoading) return <div>Loading...</div>;
   if (!user.data) return <div>Not logged in</div>;
   return (
@@ -38,6 +47,17 @@ const BankPage: NextPage = () => {
       <main className="text-zinc-50">
         <div className="flex flex-col items-center justify-center gap-4">
           <h1 className="text-4xl">Abdulleziz Bankası</h1>
+          {user.data.perms.includes("ohal başlat") && (
+            <Button
+              size={"relative-lg"}
+              variant={"destructive"}
+              disabled={!canTriggerOhal}
+              isLoading={triggerOhal.isLoading}
+              onClick={() => triggerOhal.mutate()}
+            >
+              OHAL Başlat
+            </Button>
+          )}
           {user.data.perms.includes("banka geçmişini gör") ? (
             <>
               <Input
@@ -57,6 +77,7 @@ const BankPage: NextPage = () => {
               <div className="flex gap-2">
                 <Button
                   isLoading={transaction.isLoading}
+                  disabled={transaction.isLoading || amount <= 0}
                   onClick={() =>
                     transaction.mutate({
                       amount,
@@ -68,6 +89,7 @@ const BankPage: NextPage = () => {
                 </Button>
                 <Button
                   isLoading={transaction.isLoading}
+                  disabled={transaction.isLoading || amount <= 0}
                   onClick={() =>
                     transaction.mutate({
                       amount,
@@ -106,11 +128,11 @@ const BankPage: NextPage = () => {
                                 e.salaries.reduce((p, c) => p + c.severity, 0)}
                             </p>
                             <Button
-                              disabled={!!e.paidAt}
+                              disabled={!!e.paidAt || !user.data.perms.includes("bankayı işlet")}
                               isLoading={paySalary.isLoading}
                               onClick={() => paySalary.mutate()}
                             >
-                              {e.paidAt ? "Paid" : "Pay now!"}
+                              {e.paidAt ? "Ödenmiş" : "Maaşları öde!"}
                             </Button>
                           </div>
                         </div>

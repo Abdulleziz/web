@@ -39,3 +39,23 @@ export const useDistributeSalary = () => {
     },
   });
 };
+
+export const useTriggerEmergency = () => {
+  const utils = api.useContext();
+  return api.emergency.triggerEmergency.useMutation({
+    onSuccess: () => {
+      toast.success("Acil durum tetiklendi!", { id: "bank.triggerEmergency" });
+      void utils.bank.history.invalidate();
+      void utils.payments.invalidate();
+    },
+    onMutate: () =>
+      toast.loading("Acil durum tetikleniyor...", {
+        id: "bank.triggerEmergency",
+      }),
+    onError: (error) => {
+      toast.error(error.data?.zodError || error.message, {
+        id: "bank.triggerEmergency",
+      });
+    },
+  });
+};
