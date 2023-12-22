@@ -37,7 +37,7 @@ const BankPage: NextPage = () => {
     (e) =>
       e.type === "salary" &&
       !e.paidAt &&
-      e.createdAt.getTime() > Date.now() - 1000 * 60 * 60 * 24
+      e.createdAt.getTime() + 1000 * 60 * 60 * 24 < Date.now()
   );
 
   if (user.isLoading) return <div>Loading...</div>;
@@ -128,7 +128,10 @@ const BankPage: NextPage = () => {
                                 e.salaries.reduce((p, c) => p + c.severity, 0)}
                             </p>
                             <Button
-                              disabled={!!e.paidAt || !user.data.perms.includes("bankayı işlet")}
+                              disabled={
+                                !!e.paidAt ||
+                                !user.data.perms.includes("bankayı işlet")
+                              }
                               isLoading={paySalary.isLoading}
                               onClick={() => paySalary.mutate()}
                             >
