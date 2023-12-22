@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { useMemo, useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon,XIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { DataTableFacetedFilter } from "./components/generic-table-option";
@@ -95,14 +95,13 @@ export function DataTable<TData, TValue>({
     () => new Array<number>(Math.ceil(data.length / pageSize)).fill(0),
     [data.length, pageSize]
   );
-
+const isFiltered = table.getState().columnFilters.length > 0;
   const onPageUp = () => {
     table.setPageIndex(pageIndex + 1);
   };
   const onPageDown = () => {
     table.setPageIndex(pageIndex - 1);
   };
-  //TODO: make a date picker component that takes table and sets filter for wanted accessorKey!!!
   return (
     <div className="min-w-max rounded-md border">
       <div className=" flex flex-row items-start justify-start gap-3 p-3">
@@ -138,6 +137,16 @@ export function DataTable<TData, TValue>({
             column={table.getColumn(datePicker.columnToFilter)}
             title={datePicker.title}
           />
+        )}
+        {isFiltered && (
+          <Button
+            variant="ghost"
+            onClick={() => table.resetColumnFilters()}
+            className="px-2 lg:px-3"
+          >
+            Reset
+            <XIcon />
+          </Button>
         )}
       </div>
       <Table>
