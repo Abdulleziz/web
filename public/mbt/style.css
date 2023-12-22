@@ -216,3 +216,18 @@ section{
     color: black;
 }
 
+.p1{
+    text-align: center;
+    font-size: xx-large;
+    font-weight: 900;
+    color: whitesmoke;
+    background-color: rgba(0, 0, 0, 0.550);
+}
+
+.about{
+    gap: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+

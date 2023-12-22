@@ -14,8 +14,6 @@ body {
     background-color: darkslategrey;
     background-image: url(photos/GermanFlagBackground.jpg);
     background-size: cover;
-    background-repeat: no-repeat;
-    overflow: hidden;
 }
 header {
     font-size: large;
@@ -139,16 +137,22 @@ h1 {
 }
 h2 {
     color: whitesmoke;
-    flex-direction: column;
     padding-left: 20px;
     padding-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: xx-large;
 }
 
 h3 {
     padding-left: 20px;
     color: whitesmoke;
-    flex-direction: column;
     padding-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: x-large;
 }
 
 .p2 {
