@@ -2,10 +2,17 @@
 
 import {
   type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
   flexRender,
   getCoreRowModel,
-  useReactTable,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
 } from "@tanstack/react-table";
 
 import {
@@ -27,24 +34,61 @@ import {
 import { useMemo, useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { DataTableFacetedFilter } from "./components/generic-table-option";
+import { DataTableFilter } from "./components/table-date-selector";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   pagination?: boolean;
+  inputFilter?: { columnToFilter: string; title: string };
+  columnFilter?: [
+    {
+      title: string;
+      columnToFilter: string;
+      options: {
+        label: string;
+        value: string;
+      }[];
+    }
+  ];
+  datePicker?: { columnToFilter: string; title: string };
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   pagination = false,
+  inputFilter,
+  columnFilter,
+  datePicker,
 }: DataTableProps<TData, TValue>) {
   const [pageSize, setPageSize] = useState(10);
+  const [rowSelection, setRowSelection] = useState({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
   const table = useReactTable({
     data,
     columns,
+    state: {
+      sorting,
+      columnVisibility,
+      rowSelection,
+      columnFilters,
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
   const pageIndex = table.getState().pagination.pageIndex;
   const pages: number[] = useMemo(
@@ -58,9 +102,44 @@ export function DataTable<TData, TValue>({
   const onPageDown = () => {
     table.setPageIndex(pageIndex - 1);
   };
-
+  //TODO: make a date picker component that takes table and sets filter for wanted accessorKey!!!
   return (
     <div className="min-w-max rounded-md border">
+      <div className=" flex flex-row items-start justify-start gap-3 p-3">
+        {inputFilter && (
+          <Input
+            placeholder={`${inputFilter.title} için arama yap`}
+            value={
+              (table
+                .getColumn(inputFilter.columnToFilter)
+                ?.getFilterValue() as string) ?? ""
+            }
+            onChange={(event) => {
+              table
+                .getColumn(inputFilter.columnToFilter)
+                ?.setFilterValue(event.target.value);
+            }}
+            className=" w-[150px] lg:w-[250px]"
+          />
+        )}
+        {columnFilter &&
+          columnFilter.map((a) => {
+            return (
+              <DataTableFacetedFilter
+                options={a.options}
+                title={a.title}
+                column={table.getColumn(a.columnToFilter)}
+                key={a.columnToFilter}
+              />
+            );
+          })}
+        {datePicker && (
+          <DataTableFilter
+            column={table.getColumn(datePicker.columnToFilter)}
+            title={datePicker.title}
+          />
+        )}
+      </div>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (

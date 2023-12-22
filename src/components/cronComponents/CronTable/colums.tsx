@@ -141,6 +141,17 @@ export const columns: ColumnDef<Crons[number]>[] = [
   },
   {
     accessorKey: "cron",
+    filterFn: (row, id, value: Array<string>) => {
+      const todaysDate = new Date();
+      const diff =
+        Math.abs(
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          todaysDate.getTime() - cronToDate(row.original.cron)[0]!.getTime()
+        ) / 3600000;
+
+      const hours = Math.max(...value.map(Number));
+      return diff < hours;
+    },
     header: "Cron",
     cell: ({
       row: {
@@ -158,6 +169,19 @@ export const columns: ColumnDef<Crons[number]>[] = [
   {
     accessorKey: "jobId",
     header: "Sonraki Tarih",
+    filterFn: (row, id, value: Array<Date>) => {
+      console.log(row);
+      console.log(id);
+      console.log(value);
+
+      const fromDate = value[0]?.getTime();
+      const toDate = value[1]?.getTime();
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const cronDate = cronToDate(row.original.cron)[0]!.getTime();
+      if (toDate && fromDate) {
+        return cronDate < toDate && cronDate > fromDate;
+      } else return true;
+    },
     cell: ({
       row: {
         original: { cron },

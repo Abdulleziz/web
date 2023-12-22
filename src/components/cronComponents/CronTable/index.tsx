@@ -12,8 +12,35 @@ const CronTable: FC<{ data: Crons }> = ({ data }) => {
         <CardHeader>
           <CardTitle>Hatırlatıcı Listesi</CardTitle>
         </CardHeader>
-        <CardContent className=" max-h-screen overflow-x-scroll px-6 py-5 font-semibold 2xl:overflow-x-hidden">
-          <DataTable columns={columns} data={data} pagination/>
+        <CardContent className=" overflow-x-scroll px-6 py-5 font-semibold 2xl:overflow-x-hidden">
+          <DataTable
+            columns={columns}
+            data={data}
+            pagination
+            inputFilter={{ columnToFilter: "title", title: "Başlık" }}
+            columnFilter={[
+              {
+                title: "Kalan Zaman",
+                columnToFilter: "cron",
+                options: [
+                  {
+                    label: "1 Saat kalan",
+                    value: "1", //?in hours
+                  },
+                  { label: "12 saat kalan", value: "12" },
+                  {
+                    label: "1 Gün kalan",
+                    value: "24",
+                  },
+                  {
+                    label: "1 Hafta kalan",
+                    value: "168",
+                  },
+                ],
+              },
+            ]}
+            datePicker={{columnToFilter:"jobId",title:"Cron"}}
+          />
         </CardContent>
       </Card>
     </div>
