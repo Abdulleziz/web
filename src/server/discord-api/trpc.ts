@@ -238,7 +238,7 @@ export const getOrDrawRole = (
     user: users.find((u) => u.roles[0]?.name === role),
   };
 
-  if (!result)
+  if (!result.user)
     result = {
       query: "new",
       user: users
