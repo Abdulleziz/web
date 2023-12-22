@@ -190,7 +190,7 @@ export const triggerEmergency = async (issuer: "USER" | "SYSTEM") => {
   if (query === "new")
     await modifyMemberRole(VP, abdullezizRoles["Vice President"], "PUT");
 
-  const result = await prisma.stateOfEmergency.create({});
+  const result = await prisma.stateOfEmergency.create({ data: {} });
   const dateFmt = result.createdAt.toLocaleString("tr-TR", {
     month: "long",
     day: "numeric",
