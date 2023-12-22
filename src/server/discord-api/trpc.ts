@@ -156,6 +156,8 @@ export const informEmergency = async (unpaid: number) => {
 
 export const triggerEmergency = async (issuer: "USER" | "SYSTEM") => {
   let users = await getGuildMembersWithRoles();
+  const notify = await prisma.pushSubscription.findMany({});
+
   const emergencies = await prisma.stateOfEmergency.findMany({
     where: { endedAt: { equals: null } },
   });
@@ -176,6 +178,19 @@ export const triggerEmergency = async (issuer: "USER" | "SYSTEM") => {
     // VP yeni CEO olur ve OHAL kalkar
     const { user: VP } = getOrDrawRole("Vice President", users, ["CFO", "CSO"]);
     await makeCEO(users, VP.user.id);
+
+    const dateFmt = ohal.createdAt.toLocaleString("tr-TR", {
+      month: "long",
+      day: "numeric",
+    });
+    await sendNotification(
+      notify,
+      {
+        title: "⏳ OHAL zaman aşımı! ⏲",
+        body: `${dateFmt} itibariyle oluşan OHAL, CEO seçilmediği için zaman aşımına uğradı. 2. maaş yatmadığı için VP yeni CEO oldu.`,
+      },
+      { urgency: "high" }
+    );
     return;
   }
 
@@ -195,7 +210,6 @@ export const triggerEmergency = async (issuer: "USER" | "SYSTEM") => {
     month: "long",
     day: "numeric",
   });
-  const notify = await prisma.pushSubscription.findMany({});
 
   await sendNotification(
     notify,
