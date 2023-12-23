@@ -9,4 +9,9 @@ export const PROJECTS = [
     name: "Aktuelim",
     title: "Aktuelim Project",
   },
+  {
+    url: "/world-battle/world-battle.html",
+    name: "world-battle",
+    title: "World Battle Project",
+  },
 ];
