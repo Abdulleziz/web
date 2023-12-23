@@ -44,7 +44,6 @@
     "cmdk": "^0.2.0",
     "cron-parser": "^4.8.1",
     "daisyui": "^2.51.4",
-    "date-fns": "^3.0.6",
     "lucide-react": "^0.266.0",
     "next": "^13.2.1",
     "next-auth": "^4.22.1",
