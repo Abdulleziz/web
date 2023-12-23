@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "../ui/card";
 import { createPanel } from "./utils";
+import { PROJECTS } from "~/utils/projects";
 
 export const ProjectPanel = createPanel(undefined, () => {
   return (
@@ -17,9 +18,11 @@ export const ProjectPanel = createPanel(undefined, () => {
         <CardDescription>Abdulleziz çalışanlarının projeleri</CardDescription>
         <CardContent>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <Link href="/projects/mbt">
-              <Button>MBT Project</Button>
-            </Link>
+            {PROJECTS.map((project) => (
+              <Link key={project.name} href={`/projects/${project.name}`}>
+                <Button>{project.title}</Button>
+              </Link>
+            ))}
           </div>
         </CardContent>
       </CardHeader>
