@@ -26,7 +26,7 @@ const ProjectPage: NextPage = () => {
   }
 
   return (
-    <Layout title="User Profile - Abdulleziz Corp.">
+    <Layout title={project.title + " - Abdulleziz Corp."}>
       <Project url={project.url} />
     </Layout>
   );
