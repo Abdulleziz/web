@@ -1,6 +1,5 @@
 import { type Column } from "@tanstack/react-table";
 import * as React from "react";
-import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { type DateRange } from "react-day-picker";
 
@@ -17,6 +16,13 @@ export function DataTableFilter<TData, TValue>({
   title,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const [date, setDate] = React.useState<DateRange | undefined>();
+
+  const format = (date: Date) => date.toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+
+  });
 
   React.useEffect(() => {
     if (date) {
@@ -38,11 +44,10 @@ export function DataTableFilter<TData, TValue>({
             {date?.from ? (
               date.to ? (
                 <>
-                  {format(date.from, "LLL dd, y")} -{" "}
-                  {format(date.to, "LLL dd, y")}
+                  {format(date.from)} - {format(date.to)}
                 </>
               ) : (
-                format(date.from, "LLL dd, y")
+                format(date.from)
               )
             ) : (
               <span>{`${title} filtesi için tarih seçin `}</span>
