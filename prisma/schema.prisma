@@ -110,10 +110,10 @@ model CronListener {
 }
 
 model EntityPurchase {
-    id         String    @id @default(cuid())
-    entityId   Int
-    createdAt  DateTime  @default(now())
-    refundedAt DateTime?
+    id        String   @id @default(cuid())
+    entityId  Int
+    quantity  Int
+    createdAt DateTime @default(now())
 
     invoice   Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
     invoiceId String?
@@ -121,6 +121,8 @@ model EntityPurchase {
     bankInvoice   BankInvoice? @relation(fields: [bankInvoiceId], references: [id], onDelete: Cascade)
     bankInvoiceId String?
 
+    @@unique([entityId, invoiceId])
+    @@unique([entityId, bankInvoiceId])
     @@index([invoiceId])
     @@index([bankInvoiceId])
 }

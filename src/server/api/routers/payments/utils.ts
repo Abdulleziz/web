@@ -42,7 +42,7 @@ export const calculateWallet = async (
   });
 
   const invoices = await db.invoice.findMany({
-    where: { toId: userId, entities: { every: { refundedAt: null } } },
+    where: { toId: userId },
     select: { entities: true },
   });
 
@@ -88,7 +88,6 @@ export const calculateBank = async (db: Transaction = prisma) => {
   });
 
   const invoices = await db.bankInvoice.findMany({
-    where: { entities: { every: { refundedAt: null } } },
     select: { entities: true },
   });
 

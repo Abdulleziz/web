@@ -5,10 +5,7 @@ import {
   protectedProcedure,
 } from "~/server/api/trpc";
 import { parseExpression } from "cron-parser";
-import {
-  calculateEntitiesPrice,
-  calculateWallet,
-} from "./utils";
+import { calculateEntitiesPrice, calculateWallet } from "./utils";
 import { CreateEntities, SendMoneySchema } from "~/utils/usePayments";
 // TODO: utils import
 
@@ -76,13 +73,10 @@ export const paymentsRouter = createTRPCRouter({
             toId: ctx.session.user.id,
             entities: {
               createMany: {
-                data: input
-                  .map(({ id: entityId, amount }) =>
-                    Array<{ entityId: number }>(amount).fill({
-                      entityId,
-                    })
-                  )
-                  .flat(),
+                data: input.map(({ id: entityId, amount: quantity }) => ({
+                  entityId,
+                  quantity,
+                })),
               },
             },
           },
