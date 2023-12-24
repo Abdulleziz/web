@@ -3,7 +3,7 @@ import { DiscordId } from "./zod-utils";
 import { TransferMoney } from "./shared";
 
 const SystemEntityBase = z.object({
-  id: z.number().positive().int().min(1),
+  id: z.number().positive().int(),
   price: z.union([
     TransferMoney,
     z.array(z.object({ until: z.date(), value: TransferMoney })).min(1),

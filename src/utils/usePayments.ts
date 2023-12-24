@@ -12,8 +12,8 @@ export const SendMoneySchema = z.object({
 
 export const CreateEntities = z
   .object({
-    id: z.number().positive().int().min(1),
-    amount: z.number().min(1).default(1),
+    id: z.number().positive().int(),
+    amount: z.number().positive().int().default(1),
   })
   .array()
   .min(1);
