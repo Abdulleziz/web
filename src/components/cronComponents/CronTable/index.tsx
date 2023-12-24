@@ -3,6 +3,7 @@ import { DataTable } from "~/components/tables/generic-table";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { type Crons } from "~/utils/useCron";
 import { columns } from "./colums";
+import { BellRingIcon } from "lucide-react";
 
 const CronTable: FC<{ data: Crons }> = ({ data }) => {
   //! TÜRKİYEM
@@ -21,11 +22,12 @@ const CronTable: FC<{ data: Crons }> = ({ data }) => {
             columnFilter={[
               {
                 title: "Kalan Zaman",
+                icon: <BellRingIcon className="mr-2 h-4 w-4" />,
                 columnToFilter: "cron",
                 options: [
                   {
                     label: "1 Saat kalan",
-                    value: "1", //?in hours
+                    value: "1", //? in hours
                   },
                   { label: "12 saat kalan", value: "12" },
                   {
@@ -39,7 +41,7 @@ const CronTable: FC<{ data: Crons }> = ({ data }) => {
                 ],
               },
             ]}
-            datePicker={{columnToFilter:"jobId",title:"Cron"}}
+            datePicker={{ columnToFilter: "jobId", title: "Cron" }}
           />
         </CardContent>
       </Card>

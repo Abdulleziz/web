@@ -170,10 +170,6 @@ export const columns: ColumnDef<Crons[number]>[] = [
     accessorKey: "jobId",
     header: "Sonraki Tarih",
     filterFn: (row, id, value: Array<Date>) => {
-      console.log(row);
-      console.log(id);
-      console.log(value);
-
       const fromDate = value[0]?.getTime();
       const toDate = value[1]?.getTime();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

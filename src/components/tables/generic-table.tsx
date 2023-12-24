@@ -47,6 +47,7 @@ interface DataTableProps<TData, TValue> {
     {
       title: string;
       columnToFilter: string;
+      icon?:React.ReactNode
       options: {
         label: string;
         value: string;
@@ -127,6 +128,7 @@ const isFiltered = table.getState().columnFilters.length > 0;
               <DataTableFacetedFilter
                 options={a.options}
                 title={a.title}
+                icon={a.icon}
                 column={table.getColumn(a.columnToFilter)}
                 key={a.columnToFilter}
               />
