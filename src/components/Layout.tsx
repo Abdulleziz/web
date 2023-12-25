@@ -31,7 +31,7 @@ export const Layout: React.FC<Props> = ({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
       </Head>
-      <main className=" min-h-screen bg-white dark:bg-zinc-950">
+      <main className="2xl:px-28 3xl:px-48 min-h-screen bg-white dark:bg-zinc-950">
         <Navbar />
         <SendMoneyDialog />
         {children}
