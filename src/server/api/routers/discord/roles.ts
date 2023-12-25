@@ -232,11 +232,11 @@ export const rolesRouter = createTRPCRouter({
       return await ctx.prisma.voteEvent.findMany({
         where: unfinished
           ? {
-            OR: [
-              { endedAt: null },
-              { endedAt: { gt: new Date(Date.now() - FIVE_MINUTES) } },
-            ],
-          }
+              OR: [
+                { endedAt: null },
+                { endedAt: { gt: new Date(Date.now() - FIVE_MINUTES) } },
+              ],
+            }
           : {},
         take: 20,
         include: { votes: { orderBy: { createdAt: "asc" } } },
@@ -499,7 +499,7 @@ export const rolesRouter = createTRPCRouter({
       const users = await getGuildMembersWithRoles();
       const required =
         env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
-          ctx.session.user.discordId === "223071656510357504"
+        ctx.session.user.discordId === "223071656510357504"
           ? 1
           : users.filter((u) => !u.user.bot && u.isStaff).length;
       const voter = users.find((u) => u.user.id === ctx.session.user.discordId);
@@ -596,16 +596,16 @@ export const rolesRouter = createTRPCRouter({
             endedAt: finisher ? new Date() : undefined,
             votes: voteChanged
               ? {
-                update: {
-                  where: {
-                    eventId_voter: {
-                      eventId: latest.id,
-                      voter: voter.user.id,
+                  update: {
+                    where: {
+                      eventId_voter: {
+                        eventId: latest.id,
+                        voter: voter.user.id,
+                      },
                     },
+                    data: { target: user, createdAt: new Date() },
                   },
-                  data: { target: user, createdAt: new Date() },
-                },
-              }
+                }
               : { create: { voter: voter.user.id, target: user } },
           },
         });
@@ -653,6 +653,7 @@ export const rolesRouter = createTRPCRouter({
 
   /**
    * @internal
+   * @deprecated
    */
   _discordRoleChangeProtection: internalProcedure
     .input(

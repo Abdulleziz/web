@@ -62,63 +62,59 @@ export const bankRouter = createTRPCRouter({
         });
       });
     }),
-  distributeSalary: operateBankProcedure.mutation(async ({ ctx }) => {
-    const result = await ctx.prisma.$transaction(async (prisma) => {
-      const unpaidSalaries = await prisma.bankSalary.findMany({
-        where: { paidAt: null },
-        orderBy: { createdAt: "asc" },
-        include: { salaries: { select: { severity: true } } },
-      });
-
-      if (unpaidSalaries.length > 3)
-        console.error("3'ten fazla ödenmemiş maaş var");
-
-      const unpaid = unpaidSalaries[0];
-
-      if (!unpaid)
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "Ödenmemiş maaş yok",
+  distributeSalary: operateBankProcedure
+    .input(z.string().cuid())
+    .mutation(async ({ ctx, input }) => {
+      const result = await ctx.prisma.$transaction(async (prisma) => {
+        const unpaid = await prisma.bankSalary.findUnique({
+          where: { id: input },
+          include: { salaries: { select: { severity: true } } },
         });
 
-      const total = calculateBankSalary(unpaid);
-      const bank = await calculateBank(prisma);
-      // TODO: CEO wallet.
+        if (!unpaid)
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: "Ödenmemiş maaş yok",
+          });
 
-      if (bank.balance < total)
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "Bankada yeterli para yok",
-        });
+        const total = calculateBankSalary(unpaid);
+        const bank = await calculateBank(prisma);
+        // TODO: CEO wallet.
 
-      return await prisma.bankSalary.update({
-        where: { id: unpaid.id },
-        data: { paidAt: new Date() },
-        include: {
-          salaries: {
-            include: { to: { include: { pushSubscriptions: true } } },
+        if (bank.balance < total)
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: "Bankada yeterli para yok",
+          });
+
+        return await prisma.bankSalary.update({
+          where: { id: unpaid.id },
+          data: { paidAt: new Date() },
+          include: {
+            salaries: {
+              include: { to: { include: { pushSubscriptions: true } } },
+            },
           },
-        },
+        });
       });
-    });
 
-    const salaries = result.salaries.map((s) => ({
-      user: s.to,
-      salary: s.severity * result.multiplier,
-    }));
+      const salaries = result.salaries.map((s) => ({
+        user: s.to,
+        salary: s.severity * result.multiplier,
+      }));
 
-    await ctx.sendNotification(
-      salaries.flatMap((s) => s.user.pushSubscriptions),
-      (u) => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const salary = salaries.find((s) => s.user.id === u.userId)!.salary;
-        return {
-          title: "Maaşınız yatırıldı ☺️",
-          body: `Hesabınıza ${salary}₺ yatırıldı! 🤑`,
-        };
-      }
-    );
+      await ctx.sendNotification(
+        salaries.flatMap((s) => s.user.pushSubscriptions),
+        (u) => {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const salary = salaries.find((s) => s.user.id === u.userId)!.salary;
+          return {
+            title: "Maaşınız yatırıldı ☺️",
+            body: `Hesabınıza ${salary}₺ yatırıldı! 🤑`,
+          };
+        }
+      );
 
-    return result;
-  }),
+      return result;
+    }),
 });

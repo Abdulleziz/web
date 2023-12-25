@@ -25,16 +25,24 @@ export const useCreateBankTransaction = () => {
 export const useDistributeSalary = () => {
   const utils = api.useContext();
   return api.bank.distributeSalary.useMutation({
-    onSuccess: () => {
-      toast.success("Maaşlar dağıtıldı!", { id: "bank.distributeSalary" });
+    onSuccess: ({ id, createdAt }) => {
+      const dateFmt = createdAt.toLocaleDateString("tr-TR", {
+        day: "2-digit",
+        month: "long",
+      });
+      toast.success(`${dateFmt} tarihli maaşlar dağıtıldı!`, {
+        id: `bank.distributeSalary.${id}`,
+      });
       void utils.bank.history.invalidate();
       void utils.payments.invalidate();
     },
-    onMutate: () =>
-      toast.loading("Maaşlar dağıtılıyor...", { id: "bank.distributeSalary" }),
-    onError: (error) => {
+    onMutate: (id) =>
+      toast.loading("Maaşlar dağıtılıyor...", {
+        id: `bank.distributeSalary.${id}`,
+      }),
+    onError: (error, id) => {
       toast.error(error.data?.zodError || error.message, {
-        id: "bank.distributeSalary",
+        id: `bank.distributeSalary.${id}`,
       });
     },
   });
@@ -60,17 +68,20 @@ export const useTriggerEmergency = () => {
   });
 };
 
-export const useGetHistory = () => useGetBankHistory(undefined, {
-  select({ balance, invoices, salaries, transfers }) {
-    return {
-      balance,
-      events: [
-        ...invoices.map((i) => ({ ...i, type: "invoice" as const })),
-        ...salaries.map((s) => ({ ...s, type: "salary" as const })),
-        ...transfers.map((t) => ({ ...t, type: "transfer" as const })),
-      ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
-    };
-  },
-});
+export const useGetHistory = () =>
+  useGetBankHistory(undefined, {
+    select({ balance, invoices, salaries, transfers }) {
+      return {
+        balance,
+        events: [
+          ...invoices.map((i) => ({ ...i, type: "invoice" as const })),
+          ...salaries.map((s) => ({ ...s, type: "salary" as const })),
+          ...transfers.map((t) => ({ ...t, type: "transfer" as const })),
+        ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+      };
+    },
+  });
 
-export type BankHistoryEvent = NonNullable<ReturnType<typeof useGetHistory>["data"]>["events"][number];
+export type BankHistoryEvent = NonNullable<
+  ReturnType<typeof useGetHistory>["data"]
+>["events"][number];

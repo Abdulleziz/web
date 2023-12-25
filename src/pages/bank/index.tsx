@@ -167,7 +167,7 @@ const BankPage: NextPage = () => {
                                   paySalary.isLoading
                                 }
                                 isLoading={paySalary.isLoading}
-                                onClick={() => paySalary.mutate()}
+                                onClick={() => paySalary.mutate(event.id)}
                               >
                                 {event.paidAt ? "Ödenmiş" : "Maaşları öde!"}
                               </Button>
