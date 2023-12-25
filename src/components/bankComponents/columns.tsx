@@ -20,7 +20,7 @@ import {
 } from "~/components/ui/drawer";
 import { useState } from "react";
 import { getSystemEntityById } from "~/utils/entities";
-import { EntityDetails } from "../store/EntityCard";
+import { EntityDetails } from "../../pages/store/EntityCard";
 
 const SalaryComponent = (Props: {
   data: BankHistoryEvent & { type: "salary" };

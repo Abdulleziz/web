@@ -14,7 +14,7 @@ import {
 } from "~/utils/useBank";
 import { useGetAbdullezizUser } from "~/utils/useDiscord";
 import { useGetWallet } from "~/utils/usePayments";
-import { columns } from "./columns";
+import { columns } from "../../components/bankComponents/columns";
 import { SalaryCounter } from "~/components/panels";
 
 const BankPage: NextPage = () => {
