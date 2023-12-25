@@ -16,6 +16,8 @@ const tokenRegex = new RegExp(
 
 // TODO: CRUD memes with descriptions
 const MEMES = [
+  "abdulleziz",
+  "tahsinlerimi yayarken",
   "tahsin",
   "tesis",
   "yaren",
@@ -33,35 +35,15 @@ const MEMES = [
 export function tokenize(content: string, memes: string[] = MEMES) {
   const result = [];
   const memesRegex = new RegExp(memes.join("|"), "gi");
-  const tokens = content.match(tokenRegex);
+  // use memesRegex first and then use tokenRegex
+  const regex = new RegExp(
+    `(${memesRegex.source})|(${tokenRegex.source})`,
+    "gi"
+  );
+  const tokens = content.match(regex);
   if (!tokens) throw new Error("no tokens found in tokenize()!");
   for (const token of tokens) {
-    if (token === " ") {
-      result.push({ type: "space", content: token } as const);
-    } else if (token === "\n") {
-      result.push({ type: "newline" as const, content: token } as const);
-    } else if (token.match(urlRegex)) {
-      // external if url does not match https://uploadthing.com/f/1621a05b-23cc-4cc5-85cb-c5b7757facdf-wpvi0o.jpg
-      const data = { type: "url" as const, content: token } as const;
-      const cdn = !token.match(/https:\/\/uploadthing.com\/f\/[a-z0-9-]+/);
-      if (!cdn) result.push({ ...data, cdn });
-      else {
-        const fileKey = token.split("/").pop();
-        if (!fileKey) throw new Error("no file key found in tokenize()!");
-        result.push({ ...data, cdn, fileKey });
-      }
-    } else if (token.match(mentionsRegex)) {
-      const matches = token.match(mentionsRegex);
-      if (!matches) continue;
-      const userId = matches[2];
-      const userName = matches[1];
-      if (!userId || !userName) continue;
-      result.push({
-        type: "mention" as const,
-        content: userName,
-        userId,
-      });
-    } else if (memes.length && token.match(memesRegex)) {
+    if (memes.length && token.match(memesRegex)) {
       const matches = [...token.matchAll(memesRegex)];
 
       for (let i = 0; i < matches.length; i++) {
@@ -87,6 +69,31 @@ export function tokenize(content: string, memes: string[] = MEMES) {
         result.push({ type: "meme" as const, content: curr } as const);
         if (rhs) result.push({ type: "text" as const, content: rhs } as const);
       }
+    } else if (token === " ") {
+      result.push({ type: "space", content: token } as const);
+    } else if (token === "\n") {
+      result.push({ type: "newline" as const, content: token } as const);
+    } else if (token.match(urlRegex)) {
+      // external if url does not match https://uploadthing.com/f/1621a05b-23cc-4cc5-85cb-c5b7757facdf-wpvi0o.jpg
+      const data = { type: "url" as const, content: token } as const;
+      const cdn = !token.match(/https:\/\/uploadthing.com\/f\/[a-z0-9-]+/);
+      if (!cdn) result.push({ ...data, cdn });
+      else {
+        const fileKey = token.split("/").pop();
+        if (!fileKey) throw new Error("no file key found in tokenize()!");
+        result.push({ ...data, cdn, fileKey });
+      }
+    } else if (token.match(mentionsRegex)) {
+      const matches = token.match(mentionsRegex);
+      if (!matches) continue;
+      const userId = matches[2];
+      const userName = matches[1];
+      if (!userId || !userName) continue;
+      result.push({
+        type: "mention" as const,
+        content: userName,
+        userId,
+      });
     } else {
       result.push({ type: "text" as const, content: token } as const);
     }
@@ -123,15 +130,18 @@ const extractUrl = (token: Token & { type: "url" }, key: number) => {
         onEnded={(e) => void e.currentTarget.play()}
       />
     );
-  // unsupported media
-  else if (url.includes("https://tenor.com/view"))
-    // TODO: custom tenor api endpoint
+  else if (url.includes("https://tenor.com/view")) {
+    const tenorId = url.split("-").pop();
+    if (!tenorId) return <p>Tenor id not found in link</p>;
     return (
-      <a key={key} className="link link-error" href={url}>
-        *tenor gif not supported yet*
-      </a>
+      <>
+        <iframe
+          src={`https://tenor.com/embed/${tenorId}`}
+          className="h-48 w-48 md:h-72 md:w-72"
+        />
+      </>
     );
-  else {
+  } else {
     const fileName =
       new URL(url).pathname
         .split("/")
