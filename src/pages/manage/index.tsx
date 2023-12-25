@@ -145,6 +145,7 @@ const Manage: NextPage = () => {
 };
 
 export const getRequiredSeverity = (event: VoteEventWithMember) => {
+  if (event.role === undefined || event.beforeRole === undefined) return -1;
   const done = !!event.endedAt;
   const userSeverity = getSeverity(
     done ? event.beforeRole?.name : event.target.roles[0]?.name

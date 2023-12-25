@@ -85,12 +85,14 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
       return (
         <div className="flex flex-row items-center justify-center">
           <DotIcon color={!endedAt ? "green" : "red"} />
-          <ActionMenu
-            target={target.user.id}
-            role={role.name}
-            isEnded={!endedAt}
-            votes={votes}
-          />
+          {role && (
+            <ActionMenu
+              target={target.user.id}
+              role={role.name}
+              isEnded={!endedAt}
+              votes={votes}
+            />
+          )}
         </div>
       );
     },
@@ -114,7 +116,9 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
         original: { beforeRole },
       },
     }) => {
-      return beforeRole ? (
+      if (beforeRole === null) return <div>(Unemployeed 🤣)</div>;
+      if (beforeRole === undefined) return <div>(Deleted Role)</div>;
+      return (
         <div
           style={{
             color: `#${beforeRole.color.toString(16).padStart(6, "0")}`,
@@ -122,8 +126,6 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
         >
           {beforeRole?.name}
         </div>
-      ) : (
-        <div>(Unemployeed 🤣)</div>
       );
     },
   },
@@ -135,10 +137,13 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
         original: { role, beforeRole },
       },
     }) => {
+      if (!role) {
+        return <div>(Deleted Role)</div>;
+      }
       if (role.name === beforeRole?.name) {
         return <div>(Unemployeed 🤣)</div>;
       }
-      return role ? (
+      return (
         <div
           style={{
             color: `#${role.color.toString(16).padStart(6, "0")}`,
@@ -146,8 +151,6 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
         >
           {role.name}
         </div>
-      ) : (
-        <div>(Unemployeed 🤣)</div>
       );
     },
   },
