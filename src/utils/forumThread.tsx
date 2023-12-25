@@ -1,5 +1,10 @@
 import { AbdullezizUser } from "~/components/AbdullezizUser";
 import { Button } from "~/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
 
 const urlRegex = /https:\/\/[^\s]+/g;
 const mentionsRegex = /@\[([^\]]+)\]\(([^)]+)\)/;
@@ -9,8 +14,25 @@ const tokenRegex = new RegExp(
   "g"
 );
 
-export function tokenize(content: string) {
+// TODO: CRUD memes with descriptions
+const MEMES = [
+  "tahsin",
+  "tesis",
+  "yaren",
+  "ahmet",
+  "gökhan",
+  "sinem",
+  "tuzbiber",
+  "osman",
+  "orhan",
+  "mehmet",
+  "goat",
+  "alihan",
+];
+
+export function tokenize(content: string, memes: string[] = MEMES) {
   const result = [];
+  const memesRegex = new RegExp(memes.join("|"), "gi");
   const tokens = content.match(tokenRegex);
   if (!tokens) throw new Error("no tokens found in tokenize()!");
   for (const token of tokens) {
@@ -39,6 +61,32 @@ export function tokenize(content: string) {
         content: userName,
         userId,
       });
+    } else if (memes.length && token.match(memesRegex)) {
+      const matches = [...token.matchAll(memesRegex)];
+
+      for (let i = 0; i < matches.length; i++) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const match = matches[i]!;
+        const meme = match[0];
+
+        const prevMatch = matches[i - 1];
+        const nextMatch = matches[i + 1];
+
+        const after = nextMatch ? nextMatch.index : token.length;
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const start = match.index!;
+        const end = start + meme.length;
+
+        const lhs = token.slice(0, start);
+        const curr = token.slice(start, end);
+        const rhs = token.slice(end, after);
+
+        if (lhs && !prevMatch)
+          result.push({ type: "text" as const, content: lhs } as const);
+        result.push({ type: "meme" as const, content: curr } as const);
+        if (rhs) result.push({ type: "text" as const, content: rhs } as const);
+      }
     } else {
       result.push({ type: "text" as const, content: token } as const);
     }
@@ -56,6 +104,7 @@ const extractUrl = (token: Token & { type: "url" }, key: number) => {
   const ext = url.split(".").pop();
   if (ext === "jpg" || ext === "jpeg" || ext === "png" || ext === "gif")
     return (
+      // TODO: if not external, use <Link />
       // eslint-disable-next-line @next/next/no-img-element
       <img
         className="max-h-[10rem] max-w-[10rem] sm:max-h-[15rem] sm:max-w-[15rem] md:max-h-[20rem] md:max-w-[20rem]"
@@ -118,6 +167,17 @@ export const tokenizePostContent = (content: string) => {
       if (rawTokens.at(i - 1)?.type === "newline")
         tokens.push(<div className="w-full" key={`${i}-pre`} />);
       tokens.push(extractUrl(token, i));
+    } else if (token.type === "meme") {
+      return tokens.push(
+        <Popover>
+          <PopoverTrigger className="font-semibold underline">
+            {token.content}
+          </PopoverTrigger>
+          <PopoverContent className="text-sm">
+            {token.content}: description not found.
+          </PopoverContent>
+        </Popover>
+      );
     } else if (token.type === "mention") {
       tokens.push(
         <AbdullezizUser
