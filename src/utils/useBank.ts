@@ -59,3 +59,18 @@ export const useTriggerEmergency = () => {
     },
   });
 };
+
+export const useGetHistory = () => useGetBankHistory(undefined, {
+  select({ balance, invoices, salaries, transfers }) {
+    return {
+      balance,
+      events: [
+        ...invoices.map((i) => ({ ...i, type: "invoice" as const })),
+        ...salaries.map((s) => ({ ...s, type: "salary" as const })),
+        ...transfers.map((t) => ({ ...t, type: "transfer" as const })),
+      ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+    };
+  },
+});
+
+export type BankHistoryEvent = NonNullable<ReturnType<typeof useGetHistory>["data"]>["events"][number];

@@ -60,7 +60,7 @@ const Dashboard: NextPage = () => {
             </div>
           </div>
           <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            <Card className="flex items-center rounded-lg p-8 shadow">
+            <Card className="flex items-center gap-3 rounded-lg p-8 shadow">
               <Users className="h-16 w-16" />
               <div>
                 <span className="block text-2xl font-bold">

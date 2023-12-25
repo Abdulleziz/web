@@ -141,3 +141,18 @@ export const useVoteCEO = () => {
     },
   });
 };
+export const useAssign = () => {
+  const id = "discord.role.voteCEO";
+  const utils = api.useContext();
+  return api.discord.role.assign.useMutation({
+    onSuccess: () => {
+      toast.success("Vice President seçildi!", { id });
+      void utils.discord.invalidate();
+      void utils.profile.invalidate();
+    },
+    onMutate: () => toast.loading("Vice President Seçiliyor...", { id }),
+    onError: (error) => {
+      toast.error(error.data?.zodError || error.message, { id });
+    },
+  });
+};

@@ -32,13 +32,14 @@ import {
   SelectValue,
 } from "../ui/select";
 import { useMemo, useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon,XIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, XIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { DataTableFacetedFilter } from "./components/generic-table-option";
 import { DataTableFilter } from "./components/table-date-selector";
 
 interface DataTableProps<TData, TValue> {
+  //TODO: Subrow support
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   pagination?: boolean;
@@ -47,7 +48,7 @@ interface DataTableProps<TData, TValue> {
     {
       title: string;
       columnToFilter: string;
-      icon?:React.ReactNode
+      icon?: React.ReactNode;
       options: {
         label: string;
         value: string;
@@ -96,7 +97,7 @@ export function DataTable<TData, TValue>({
     () => new Array<number>(Math.ceil(data.length / pageSize)).fill(0),
     [data.length, pageSize]
   );
-const isFiltered = table.getState().columnFilters.length > 0;
+  const isFiltered = table.getState().columnFilters.length > 0;
   const onPageUp = () => {
     table.setPageIndex(pageIndex + 1);
   };

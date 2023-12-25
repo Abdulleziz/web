@@ -78,7 +78,14 @@ const Worker: NextPage = () => {
           <div className=" grid grid-cols-1 gap-3 md:grid-cols-2">
             {voteEvents && (
               <>
-                <ManageWorker voteEvents={voteEvents} worker={worker} />
+                {worker?.roles[0]?.name !== "CEO" ? (
+                  <ManageWorker worker={worker} />
+                ) : (
+                  <div className="flex flex-col items-start gap-4 rounded-lg p-8 shadow">
+                    <p className="text-2xl">{"CEO'yu"} yönetemezsin</p>
+                  </div>
+                )}
+
                 <TableCard voteEvents={voteEvents} worker={worker} />
               </>
             )}
