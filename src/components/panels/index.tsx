@@ -233,6 +233,7 @@ export const CEOVotePanel = createPanel(undefined, () => {
   const members = abdullezizUsers ?? [];
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [open, setOpen] = useState(false);
+  const [isVotesOpen, setIsVotesOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<string>("");
   const voteCEO = useVoteCEO();
 
@@ -346,7 +347,7 @@ export const CEOVotePanel = createPanel(undefined, () => {
                     </div>
                   </>
                 ) : (
-                  <Drawer open={open} onOpenChange={setOpen}>
+                  <Drawer open={isVotesOpen} onOpenChange={setIsVotesOpen}>
                     <DrawerTrigger asChild>
                       <Button variant="outline">Oylar</Button>
                     </DrawerTrigger>
