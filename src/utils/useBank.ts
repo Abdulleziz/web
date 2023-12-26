@@ -68,7 +68,7 @@ export const useTriggerEmergency = () => {
   });
 };
 
-export const useGetHistory = () =>
+export const useGetBankHistoryDiscriminated = () =>
   useGetBankHistory(undefined, {
     select({ balance, invoices, salaries, transfers }) {
       return {
@@ -83,5 +83,5 @@ export const useGetHistory = () =>
   });
 
 export type BankHistoryEvent = NonNullable<
-  ReturnType<typeof useGetHistory>["data"]
+  ReturnType<typeof useGetBankHistoryDiscriminated>["data"]
 >["events"][number];

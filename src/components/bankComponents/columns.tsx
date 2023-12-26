@@ -22,11 +22,13 @@ import { useState } from "react";
 import { getSystemEntityById } from "~/utils/entities";
 import { EntityDetails } from "../../pages/store/EntityCard";
 
-const SalaryComponent = (Props: {
+const SalaryComponent = ({
+  data,
+}: {
   data: BankHistoryEvent & { type: "salary" };
 }) => {
   const [open, setOpen] = useState(false);
-  const isDesktop = true; //useMediaQuery("(min-width: 768px)");
+  const isDesktop = false; //useMediaQuery("(min-width: 768px)");
 
   // TODO: calculate bank salary func
 
@@ -34,20 +36,20 @@ const SalaryComponent = (Props: {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline">Salary Details</Button>
+          <Button variant="outline">Maaş Detayı</Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Salary Details</DialogTitle>
+            <DialogTitle>Maaş Detayı</DialogTitle>
             <div>
-              {Props.data.salaries.map((a) => {
+              {data.salaries.map((a) => {
                 return (
                   <div
                     key={a.id}
                     className="flex flex-row items-center justify-start gap-3"
                   >
-                    <p>{a.toId}</p>
-                    <p>(${a.severity * Props.data.multiplier})</p>
+                    <p>{a.to.name ?? "Bilinmeyen"}</p>
+                    <p>(${a.severity * data.multiplier})</p>
                   </div>
                 );
               })}
@@ -61,28 +63,28 @@ const SalaryComponent = (Props: {
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <Button variant="outline">Edit Profile</Button>
+        <Button variant="outline">Maaş Detayı</Button>
       </DrawerTrigger>
-      <DrawerContent>
-        <DrawerHeader className="text-left">
-          <DrawerTitle>Salary Details</DrawerTitle>
+      <DrawerContent className="p-4">
+        <DrawerHeader>
+          <DrawerTitle>Maaş Detayı</DrawerTitle>
         </DrawerHeader>
         <div className="p-4">
-          {Props.data.salaries.map((a) => {
+          {data.salaries.map((a) => {
             return (
               <div
                 key={a.id}
-                className="flex flex-row items-center justify-start gap-3"
+                className="flex flex-row items-center justify-center gap-3"
               >
-                <p>{a.toId}</p>
-                <p>(${a.severity * Props.data.multiplier})</p>
+                <p>{a.to.name ?? "bilinmeyen"}</p>
+                <p>(${a.severity * data.multiplier})</p>
               </div>
             );
           })}
         </div>
         <DrawerFooter className="pt-2">
           <DrawerClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline">Kapat</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
@@ -90,31 +92,33 @@ const SalaryComponent = (Props: {
   );
 };
 
-const InvoiceComponent = (Props: {
+const InvoiceComponent = ({
+  data,
+}: {
   data: BankHistoryEvent & { type: "invoice" };
 }) => {
   const [open, setOpen] = useState(false);
-  const isDesktop = true; //useMediaQuery("(min-width: 768px)");
+  const isDesktop = false; //useMediaQuery("(min-width: 768px)");
 
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline">Invoice Entities</Button>
+          <Button variant="outline">Satın Alınanlar</Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Invoice Entities</DialogTitle>
+            <DialogTitle>Satın Alınanlar</DialogTitle>
             <div>
-              {Props.data.entities
-                .map((a) => getSystemEntityById(a.entityId))
-                .map((entity) => {
+              {data.entities
+                .map((e) => ({ ...e, entity: getSystemEntityById(e.entityId) }))
+                .map((e) => {
                   return (
                     <div
-                      key={entity.id}
+                      key={e.id}
                       className="flex flex-row items-center justify-start gap-3"
                     >
-                      <EntityDetails entity={entity} />
+                      {e.quantity} x <EntityDetails entity={e.entity} />
                     </div>
                   );
                 })}
@@ -128,29 +132,29 @@ const InvoiceComponent = (Props: {
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <Button variant="outline">Invoice Entities</Button>
+        <Button variant="outline">Satın Alınanlar</Button>
       </DrawerTrigger>
-      <DrawerContent>
-        <DrawerHeader className="text-left">
-          <DrawerTitle>Invoice Entities</DrawerTitle>
+      <DrawerContent className="flex items-center justify-center">
+        <DrawerHeader>
+          <DrawerTitle>Satın Alınanlar</DrawerTitle>
         </DrawerHeader>
         <div>
-          {Props.data.entities
-            .map((a) => getSystemEntityById(a.entityId))
-            .map((entity) => {
+          {data.entities
+            .map((e) => ({ ...e, entity: getSystemEntityById(e.entityId) }))
+            .map((e) => {
               return (
                 <div
-                  key={entity.id}
+                  key={e.id}
                   className="flex flex-row items-center justify-start gap-3"
                 >
-                  <EntityDetails entity={entity} />
+                  {e.quantity} x <EntityDetails entity={e.entity} />
                 </div>
               );
             })}
         </div>
         <DrawerFooter className="pt-2">
           <DrawerClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline">Kapat</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
@@ -161,7 +165,7 @@ const InvoiceComponent = (Props: {
 export const columns: ColumnDef<BankHistoryEvent>[] = [
   {
     accessorKey: "type",
-    header: "Type",
+    header: "Tür",
     filterFn: (row, id, value: Array<string>) => {
       return value.includes(row.getValue(id));
     },
@@ -170,7 +174,10 @@ export const columns: ColumnDef<BankHistoryEvent>[] = [
         return (
           <div className="flex flex-row items-center justify-start gap-1">
             <CoinsIcon />
-            <p>Transfer ({row.original.operation})</p>
+            <p>
+              Transfer (
+              {row.original.operation === "deposit" ? "yatırma" : "çekme"})
+            </p>
           </div>
         );
       }
@@ -178,7 +185,7 @@ export const columns: ColumnDef<BankHistoryEvent>[] = [
         return (
           <div className="flex flex-row items-center justify-start gap-1">
             <BanknoteIcon />
-            <p>Salary ({row.original.multiplier}x)</p>
+            <p>Maaş ({row.original.multiplier}x)</p>
           </div>
         );
       }
@@ -186,7 +193,7 @@ export const columns: ColumnDef<BankHistoryEvent>[] = [
         return (
           <div className="flex flex-row items-center justify-start gap-1">
             <ReceiptIcon />
-            <p>Invoice</p>
+            <p>Satın Alım</p>
           </div>
         );
       }
@@ -194,8 +201,8 @@ export const columns: ColumnDef<BankHistoryEvent>[] = [
     },
   },
   {
-    accessorKey: "id",
-    header: "Amount",
+    accessorKey: "amount",
+    header: "Miktar",
     cell: ({ row }) => {
       if (row.original.type === "transfer") {
         return (
@@ -221,7 +228,8 @@ export const columns: ColumnDef<BankHistoryEvent>[] = [
             <p>
               $
               {row.original.entities.reduce(
-                (acc, e) => acc + getSystemEntityById(e.entityId).price,
+                (acc, e) =>
+                  acc + getSystemEntityById(e.entityId).price * e.quantity,
                 0
               )}
             </p>
@@ -232,15 +240,17 @@ export const columns: ColumnDef<BankHistoryEvent>[] = [
     },
   },
   {
-    accessorKey: "id",
-    header: "Details",
+    accessorKey: "detail",
+    header: "Detay",
     cell: ({ row }) => {
       if (row.original.type === "transfer") {
         return (
           <div className="flex flex-row items-center justify-start gap-1">
             <p>
-              from{" "}
-              {row.original.referenceId ? row.original.referenceId : "unknown"}
+              {row.original.reference
+                ? row.original.reference.name
+                : "bilinmeyen"}{" "}
+              {row.original.operation === "deposit" ? "tarafından" : "tarafına"}
             </p>
           </div>
         );
@@ -260,6 +270,17 @@ export const columns: ColumnDef<BankHistoryEvent>[] = [
         );
       }
       throw new Error("unknown type for bank");
+    },
+  },
+  {
+    accessorKey: "date",
+    header: "Tarih",
+    cell: ({ row }) => {
+      return (
+        <div className="flex flex-row items-center justify-start gap-1">
+          <p>{row.original.createdAt.toLocaleString("tr-TR", {})}</p>
+        </div>
+      );
     },
   },
 ];

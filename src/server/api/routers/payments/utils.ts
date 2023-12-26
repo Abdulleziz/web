@@ -99,7 +99,7 @@ export const calculateBank = async (db: Transaction = prisma) => {
 
   for (const invoice of invoices) {
     bank.balance -= invoice.entities.reduce(
-      (acc, e) => acc + getSystemEntityById(e.entityId).price,
+      (acc, e) => acc + getSystemEntityById(e.entityId).price * e.quantity,
       0
     );
   }

@@ -7,15 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
+  type BankHistoryEvent,
   useCreateBankTransaction,
   useDistributeSalary,
-  useGetHistory,
+  useGetBankHistoryDiscriminated,
   useTriggerEmergency,
 } from "~/utils/useBank";
 import { useGetAbdullezizUser } from "~/utils/useDiscord";
 import { useGetWallet } from "~/utils/usePayments";
 import { columns } from "../../components/bankComponents/columns";
 import { SalaryCounter } from "~/components/panels";
+import { Separator } from "~/components/ui/separator";
 
 const BankPage: NextPage = () => {
   const wallet = useGetWallet();
@@ -23,9 +25,13 @@ const BankPage: NextPage = () => {
   const transaction = useCreateBankTransaction();
   const paySalary = useDistributeSalary();
   const triggerOhal = useTriggerEmergency();
-  const history = useGetHistory();
+  const history = useGetBankHistoryDiscriminated();
 
   const [amount, setAmount] = useState(0);
+
+  const unpaidSalaries = (history.data?.events.filter(
+    (e) => e.type === "salary" && !e.paidAt
+  ) ?? []) as (BankHistoryEvent & { type: "salary" })[];
 
   const canTriggerOhal = history.data?.events.find(
     (e) =>
@@ -44,7 +50,7 @@ const BankPage: NextPage = () => {
           <CardHeader>
             <CardTitle>Abdulleziz Bankası</CardTitle>
           </CardHeader>
-          <CardContent className=" overflow-x-scroll px-6 py-5 font-semibold xl:overflow-x-hidden">
+          <CardContent className=" overflow-x-scroll px-6 py-5 xl:overflow-x-hidden">
             <div className="flex flex-col gap-3">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <Card>
@@ -116,65 +122,57 @@ const BankPage: NextPage = () => {
                     <CardTitle>Maaş Yönetim</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div>
-                      {history.data?.events.map((event) => {
-                        //TODO: parse id to name
-                        if (event.type === "salary") {
-                          if (event.paidAt) {
-                            return (
-                              <div
-                                className="flex flex-col items-center justify-center gap-3"
-                                key={event.id}
-                              >
-                                <CardTitle>Maaşlar ödendi!</CardTitle>
-                                <div className="flex flex-col items-center justify-center gap-3">
-                                  <p>Sonraki Maaş Ödemesine</p>
-                                  <SalaryCounter />
-                                </div>
-                              </div>
-                            );
-                          }
-                          return (
-                            <div
-                              className="flex flex-col items-center justify-center gap-3"
-                              key={event.id}
-                            >
-                              <CardTitle>Maaşlar ödenmek için hazır!</CardTitle>
+                    <div className="flex flex-col items-center justify-center gap-4">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <p>Sonraki Maaş Ödemesine</p>
+                        <SalaryCounter />
+                      </div>
+                      <Separator />
+                      {unpaidSalaries.map((event) => (
+                        <div
+                          className="flex flex-col items-center justify-center gap-3"
+                          key={event.id}
+                        >
+                          <CardTitle>
+                            {event.createdAt.toLocaleString("tr-TR", {
+                              day: "numeric",
+                              month: "long",
+                            })}{" "}
+                            tarihli maaş ödenmek için hazır!
+                          </CardTitle>
 
-                              <div>
-                                {event.salaries.map((salary) => {
-                                  return (
-                                    <div key={salary.toId}>
-                                      <p>{`${salary.toId} kişisine $${
-                                        salary.severity * event.multiplier
-                                      }`}</p>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                              <p>{`Total $${
-                                event.multiplier *
-                                event.salaries.reduce(
-                                  (p, c) => p + c.severity,
-                                  0
-                                )
-                              } ödenecek.`}</p>
-                              <p>Onaylıyor musunuz?</p>
-                              <Button
-                                disabled={
-                                  !!event.paidAt ||
-                                  !user.data.perms.includes("bankayı işlet") ||
-                                  paySalary.isLoading
-                                }
-                                isLoading={paySalary.isLoading}
-                                onClick={() => paySalary.mutate(event.id)}
-                              >
-                                {event.paidAt ? "Ödenmiş" : "Maaşları öde!"}
-                              </Button>
-                            </div>
-                          );
-                        }
-                      })}
+                          <div>
+                            {event.salaries.map((salary) => {
+                              return (
+                                <div key={salary.id}>
+                                  <p>{`${
+                                    salary.to.name ?? "Bilinmeyen"
+                                  } kişisine $${
+                                    salary.severity * event.multiplier
+                                  }`}</p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <p>{`Total $${
+                            event.multiplier *
+                            event.salaries.reduce((p, c) => p + c.severity, 0)
+                          } ödenecek.`}</p>
+                          <p>Onaylıyor musunuz?</p>
+                          <Button
+                            disabled={
+                              !!event.paidAt ||
+                              !user.data.perms.includes("bankayı işlet") ||
+                              paySalary.isLoading
+                            }
+                            isLoading={paySalary.isLoading}
+                            onClick={() => paySalary.mutate(event.id)}
+                          >
+                            {event.paidAt ? "Ödenmiş" : "Maaşları öde!"}
+                          </Button>
+                          <Separator />
+                        </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
@@ -186,12 +184,12 @@ const BankPage: NextPage = () => {
                   pagination
                   columnFilter={[
                     {
-                      title: "Type",
+                      title: "Tür",
                       columnToFilter: "type",
                       options: [
                         { label: "Transfer", value: "transfer" },
-                        { label: "Invoice", value: "invoice" },
-                        { label: "Salary", value: "salary" },
+                        { label: "Satın Alım", value: "invoice" },
+                        { label: "Maaş", value: "salary" },
                       ],
                     },
                   ]}

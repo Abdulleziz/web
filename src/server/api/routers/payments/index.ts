@@ -13,7 +13,7 @@ const takeSalaryProcedure = createPermissionProcedure(["maaş al"]);
 
 export const paymentsRouter = createTRPCRouter({
   nextSalaryDate: takeSalaryProcedure.query(() => {
-    const i = parseExpression("0 9,21 * * *", { utc: true });
+    const i = parseExpression("0 5 * * 5", { utc: true });
     return i.next().getTime();
   }),
   getWallet: protectedProcedure.query(async ({ ctx }) => {

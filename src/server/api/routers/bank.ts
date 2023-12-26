@@ -19,9 +19,11 @@ const manageBankProcedure = createPermissionProcedure(["bankayı yönet"]);
 
 export const bankRouter = createTRPCRouter({
   history: seeHistoryProcedure.query(async ({ ctx }) => {
-    const transfers = await ctx.prisma.bankTransaction.findMany();
+    const transfers = await ctx.prisma.bankTransaction.findMany({
+      include: { reference: true },
+    });
     const salaries = await ctx.prisma.bankSalary.findMany({
-      include: { salaries: true },
+      include: { salaries: { include: { to: true } } },
     });
     const invoices = await ctx.prisma.bankInvoice.findMany({
       include: { entities: true },
@@ -40,6 +42,23 @@ export const bankRouter = createTRPCRouter({
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR", // since there is no CEO, its 5xx unreachable
             message: "OHAL durumunda banka işlemleri yapılamaz!",
+          });
+
+        const lastTwoOperationsAtOneMinute =
+          await prisma.bankTransaction.findMany({
+            where: {
+              createdAt: {
+                gte: new Date(Date.now() - 60 * 1000),
+              },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 2,
+          });
+
+        if (lastTwoOperationsAtOneMinute.length === 2)
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: "1 dakikada en fazla 2 işlem yapabilirsiniz!",
           });
 
         const bank = await calculateBank(prisma);

@@ -57,7 +57,7 @@ export const useGetCEOVoteEvent = api.discord.role.getCEOVotes.useQuery;
 
 export const useGetVoteEventsWithMembers = (q: In["role"]["getVotes"]) => {
   const roles = useGetAbdullezizRoles();
-  const members = useGetAbdullezizUsersSorted();
+  const members = useGetAbdullezizUsers();
   const memberFromId = memberFinder(members.data ?? []);
   return api.discord.role.getVotes.useQuery(q, {
     enabled: !!roles.data,
