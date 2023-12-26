@@ -36,7 +36,7 @@ export const AbdullezizUser = React.forwardRef<
       <HoverCardTrigger asChild>
         <Link href={`/profiles/${id}`}>
           <Button
-            className="max-w-[15rem] truncate"
+            className="max-w-[15rem] flex gap-2 truncate"
             size={size || "sm"}
             variant={variant || "outline"}
             ref={ref}
@@ -46,7 +46,7 @@ export const AbdullezizUser = React.forwardRef<
               <AvatarImage src={avatar || undefined} />
               <AvatarFallback>{fallback ?? name}</AvatarFallback>
             </Avatar>
-            {name}
+            <p>{name}</p>
           </Button>
         </Link>
       </HoverCardTrigger>

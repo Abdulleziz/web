@@ -86,6 +86,9 @@ dependencies:
   '@trpc/server':
     specifier: ^10.9.0
     version: 10.16.0
+  '@uidotdev/usehooks':
+    specifier: ^2.4.1
+    version: 2.4.1(react-dom@18.2.0)(react@18.2.0)
   '@uploadthing/react':
     specifier: ^5.3.0
     version: 5.3.0(react-dropzone@14.2.3)(react@18.2.0)(uploadthing@5.3.3)(zod@3.22.4)
@@ -2107,6 +2110,17 @@ packages:
       '@typescript-eslint/types': 5.58.0
       eslint-visitor-keys: 3.4.0
     dev: true
+
+  /@uidotdev/usehooks@2.4.1(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-1I+RwWyS+kdv3Mv0Vmc+p0dPYH0DTRAo04HLyXReYBL9AeseDWUJyi4THuksBJcu9F0Pih69Ak150VDnqbVnXg==}
+    engines: {node: '>=16'}
+    peerDependencies:
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+    dev: false
 
   /@uploadthing/mime-types@0.2.0:
     resolution: {integrity: sha512-nRcdyM622+GYT9SdaJIVLknqoc8i7krItinfuBPtvmPc+UNGDJ+pMkr4AatYp88cEc4iYtPlN8flJvZ3dNtgrg==}

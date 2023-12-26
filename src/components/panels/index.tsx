@@ -15,9 +15,11 @@ import { type CSSProperties, useEffect, useState, useCallback } from "react";
 
 import {
   useGetAbdullezizUser,
+  useGetAbdullezizUsersSorted,
   useGetCEOVoteEvent,
   useGetCEOVoteEventWithMembers,
   useGetDiscordMembers,
+  useVoteCEO,
 } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import { toast } from "react-hot-toast";
@@ -36,6 +38,35 @@ import {
 import { Button } from "../ui/button";
 import { useMoneyDialog } from "../SendMoney";
 import { AbdullezizUser } from "../AbdullezizUser";
+import { MoveRightIcon } from "lucide-react";
+import { useMediaQuery } from "@uidotdev/usehooks";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "../ui/drawer";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { DialogClose } from "@radix-ui/react-dialog";
 
 ChartJS.register(
   RadialLinearScale,
@@ -197,96 +228,277 @@ export const DriveablePabel = createPanel(undefined, () => {
 
 export const CEOVotePanel = createPanel(undefined, () => {
   const { data, isLoading } = useGetCEOVoteEventWithMembers();
+  const { data: abdullezizUsers, isLoading: isAbdullezizUsersLoading } =
+    useGetAbdullezizUsersSorted();
+  const members = abdullezizUsers ?? [];
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const [open, setOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<string>("");
+  const voteCEO = useVoteCEO();
 
-  if (isLoading)
-    return <button className="btn loading">CEO oylamasına bakılıyor...</button>;
-  if (!data) return null;
-
+  if (!data || isLoading) return <></>;
   return (
-    <div className="menu flex items-center overflow-x-auto overflow-y-auto rounded-lg bg-black p-4 text-zinc-400 lg:w-max">
-      <div className="menu-title">CEO Oylaması</div>
-      <div className="menu-item flex">
-        <div className="menu-item flex flex-col items-center p-2">
-          <span className="font-mono text-primary">Oy sayısı</span>
-          <span className="px-2 font-mono font-bold">
-            toplam {data.votes.length} oy ({data.required} olan kazanır)
-          </span>
-        </div>
-        {data.estimated && (
-          <div className="menu-item flex flex-col items-center p-2">
-            <span className="font-mono text-primary">Tahmini bitiş</span>
-            <span className="px-2 font-mono font-bold">
-              {data.estimated.toLocaleString("tr-TR")}
-            </span>
-          </div>
-        )}
-        {data.endedAt && (
-          <div className="menu-item flex flex-col items-center p-2">
-            <span className="font-mono text-primary">Bitti</span>
-            <span className="px-2 font-mono text-sm font-bold">
-              Oylama {data.endedAt.toLocaleString("tr-TR")} tarihinde bitti.
-            </span>
-            {data.sitUntil && (
-              <span className="px-2 font-mono text-sm font-bold">
-                CEO {data.sitUntil.toLocaleString("tr-TR")}
-                {"'e"} kadar koltuktan kaldırılamaz.
-              </span>
-            )}
-            {data.winner ? (
-              <span className="px-2 font-mono font-bold text-primary">
-                Kazanan: {formatName(data.winner)}
-              </span>
-            ) : (
-              <span className="px-2 font-mono text-sm font-bold text-primary">
-                Kazanan çıkmadığı için oylama tekrar başlatılabilir.
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-      <div className="menu-item flex flex-col items-center whitespace-nowrap">
-        <span className="font-mono text-primary">Oy verenler</span>
-        {data.votes.map((v) => (
-          <span key={v.id} className="flex items-center px-2 font-bold">
-            {v.voter.exist && v.voter.id ? (
-              <AbdullezizUser
-                size={"lg-long"}
-                variant={"link"}
-                data={{
-                  id: v.voter.id,
-                  name: formatName(v.voter),
-                  image: getAvatarUrl(v.voter.user, v.voter.avatar),
-                }}
-                fallback=""
-              />
-            ) : (
-              <div>
-                <span>{"KAYITSIZ: "}</span>
-                <span>{v.voter.user.username}</span>
+    <Card className="flex flex-col md:col-span-2">
+      {
+        //TODO: redesign when vote event finish.
+        data.endedAt ? (
+          <>
+            <CardHeader>
+              <CardTitle>CEO Oylaması Bitti</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="menu-item flex flex-col items-center p-2">
+                <span className="font-mono text-primary">Bitti</span>
+                <span className="px-2 font-mono text-sm font-bold">
+                  Oylama {data.endedAt.toLocaleString("tr-TR")} tarihinde bitti.
+                </span>
+                {data.sitUntil && (
+                  <span className="px-2 font-mono text-sm font-bold">
+                    CEO {data.sitUntil.toLocaleString("tr-TR")}
+                    {"'e"} kadar koltuktan kaldırılamaz.
+                  </span>
+                )}
+                {data.winner ? (
+                  <span className="px-2 font-mono font-bold text-primary">
+                    Kazanan: {formatName(data.winner)}
+                  </span>
+                ) : (
+                  <span className="px-2 font-mono text-sm font-bold text-primary">
+                    Kazanan çıkmadığı için oylama tekrar başlatılabilir.
+                  </span>
+                )}
               </div>
-            )}
-            {"-->"}
-            {v.target.exist && v.target.id ? (
-              <AbdullezizUser
-                size={"lg-long"}
-                variant={"link"}
-                data={{
-                  id: v.target.id,
-                  name: formatName(v.target),
-                  image: getAvatarUrl(v.target.user, v.target.avatar),
-                }}
-                fallback=""
-              />
-            ) : (
-              <div>
-                <span>{"KAYITSIZ: "}</span>
-                <span>{v.target.user.username}</span>
+            </CardContent>
+          </>
+        ) : (
+          <>
+            <CardHeader>
+              <CardTitle>CEO Oylaması Mevcut!</CardTitle>
+
+              {data.estimated && (
+                <CardDescription>
+                  {`Oylamanın tahmini bitiş tarihi: ${data.estimated.toLocaleString(
+                    "tr-TR"
+                  )}`}
+                </CardDescription>
+              )}
+              <div className="flex flex-row items-center justify-start gap-3">
+                <CardDescription>
+                  {`Gerekli Oy Sayısı: ${data.required}`}
+                </CardDescription>
+                <CardDescription>{`Toplam Oy: ${data.votes.length}`}</CardDescription>
               </div>
-            )}
-          </span>
-        ))}
-      </div>
-    </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center justify-center gap-3">
+                {isDesktop ? (
+                  <>
+                    <p>Oylar:</p>
+                    <div className="flex flex-col items-center justify-center gap-1">
+                      {data.votes.map((v) => (
+                        <span
+                          key={v.id}
+                          className="flex flex-row items-center justify-between"
+                        >
+                          {v.voter.exist && v.voter.id ? (
+                            <AbdullezizUser
+                              size={"lg-long"}
+                              variant={"link"}
+                              data={{
+                                id: v.voter.id,
+                                name: formatName(v.voter),
+                                image: getAvatarUrl(
+                                  v.voter.user,
+                                  v.voter.avatar
+                                ),
+                              }}
+                              fallback=""
+                            />
+                          ) : (
+                            <div>
+                              <span>{"KAYITSIZ: "}</span>
+                              <span>{v.voter.user.username}</span>
+                            </div>
+                          )}
+                          <MoveRightIcon />
+                          {v.target.exist && v.target.id ? (
+                            <AbdullezizUser
+                              size={"lg-long"}
+                              variant={"link"}
+                              data={{
+                                id: v.target.id,
+                                name: formatName(v.target),
+                                image: getAvatarUrl(
+                                  v.target.user,
+                                  v.target.avatar
+                                ),
+                              }}
+                              fallback=""
+                            />
+                          ) : (
+                            <div>
+                              <span>{"KAYITSIZ: "}</span>
+                              <span>{v.target.user.username}</span>
+                            </div>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <Drawer open={open} onOpenChange={setOpen}>
+                    <DrawerTrigger asChild>
+                      <Button variant="outline">Oylar</Button>
+                    </DrawerTrigger>
+                    <DrawerContent className="p-4">
+                      <DrawerHeader>
+                        <DrawerTitle>Oylar</DrawerTitle>
+                      </DrawerHeader>
+                      <div className="flex max-w-full flex-col items-center justify-center p-4">
+                        {data.votes.map((v) => (
+                          <span
+                            key={v.id}
+                            className="flex flex-row items-center justify-between gap-1"
+                          >
+                            {v.voter.exist && v.voter.id ? (
+                              <CardDescription>
+                                {formatName(v.voter)}
+                              </CardDescription>
+                            ) : (
+                              <div>
+                                <span>{"KAYITSIZ: "}</span>
+                                <span>{v.voter.user.username}</span>
+                              </div>
+                            )}
+                            <MoveRightIcon />
+                            {v.target.exist && v.target.id ? (
+                              <CardDescription>
+                                {formatName(v.target)}
+                              </CardDescription>
+                            ) : (
+                              <div>
+                                <span>{"KAYITSIZ: "}</span>
+                                <span>{v.target.user.username}</span>
+                              </div>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                      <DrawerFooter className="pt-2">
+                        <DrawerClose asChild>
+                          <Button variant="outline">Kapat</Button>
+                        </DrawerClose>
+                      </DrawerFooter>
+                    </DrawerContent>
+                  </Drawer>
+                )}
+
+                {isDesktop ? (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button>Oy Ver</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>CEO oyu ver</DialogTitle>
+                        <DialogDescription>
+                          CEO olmasını istediğin Abdulleziz çalışanını seç!
+                        </DialogDescription>
+                      </DialogHeader>
+                      <Select
+                        onValueChange={(value) => {
+                          setSelectedMember(value);
+                        }}
+                      >
+                        <SelectTrigger disabled={isAbdullezizUsersLoading}>
+                          <SelectValue placeholder="Abdulleziz Çalışanları" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {members.map((member) => {
+                            return (
+                              <SelectItem
+                                key={member.user.id}
+                                value={member.user.id}
+                              >
+                                {formatName(member)}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      <DialogClose asChild>
+                        <Button
+                          disabled={
+                            voteCEO.isLoading || selectedMember.length < 1
+                          }
+                          isLoading={voteCEO.isLoading}
+                          onClick={() => {
+                            voteCEO.mutate(selectedMember);
+                          }}
+                        >
+                          Onayla
+                        </Button>
+                      </DialogClose>
+                    </DialogContent>
+                  </Dialog>
+                ) : (
+                  <Drawer open={open} onOpenChange={setOpen}>
+                    <DrawerTrigger asChild>
+                      <Button>Oy Ver!</Button>
+                    </DrawerTrigger>
+                    <DrawerContent className="p-4">
+                      <DrawerHeader>
+                        <DrawerTitle>CEO oyu ver</DrawerTitle>
+                        <DrawerDescription>
+                          CEO olmasını istediğin Abdulleziz çalışanını seç!
+                        </DrawerDescription>
+                      </DrawerHeader>
+                      <Select
+                        onValueChange={(value) => {
+                          setSelectedMember(value);
+                        }}
+                      >
+                        <SelectTrigger disabled={isAbdullezizUsersLoading}>
+                          <SelectValue placeholder="Abdulleziz Çalışanları" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {members.map((member) => {
+                            return (
+                              <SelectItem
+                                key={member.user.id}
+                                value={member.user.id}
+                              >
+                                {formatName(member)}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      <DrawerFooter className="pt-2">
+                        <Button
+                          disabled={
+                            voteCEO.isLoading || selectedMember.length < 1
+                          }
+                          isLoading={voteCEO.isLoading}
+                          onClick={() => {
+                            voteCEO.mutate(selectedMember);
+                          }}
+                        >
+                          Onayla
+                        </Button>
+                        <DrawerClose asChild>
+                          <Button variant="outline">Kapat</Button>
+                        </DrawerClose>
+                      </DrawerFooter>
+                    </DrawerContent>
+                  </Drawer>
+                )}
+              </div>
+            </CardContent>
+          </>
+        )
+      }
+    </Card>
   );
 });
 
