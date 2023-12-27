@@ -16,16 +16,17 @@ const tokenRegex = new RegExp(
 
 export function tokenize(content: string, memes: string[] = []) {
   const result = [];
-  const memesRegex = new RegExp(memes.join("|"), "gi");
+  const memesRegex =
+    memes.length > 1 ? new RegExp(memes.join("|"), "gi") : undefined;
   // use memesRegex first and then use tokenRegex
-  const regex = new RegExp(
-    `(${memesRegex.source})|(${tokenRegex.source})`,
-    "gi"
-  );
+  const regex = !!memesRegex
+    ? new RegExp(`(${memesRegex.source})|(${tokenRegex.source})`, "gi")
+    : tokenRegex;
+
   const tokens = content.match(regex);
   if (!tokens) throw new Error("no tokens found in tokenize()!");
   for (const token of tokens) {
-    if (memes.length && token.match(memesRegex)) {
+    if (memesRegex && token.match(memesRegex)) {
       const matches = [...token.matchAll(memesRegex)];
 
       for (let i = 0; i < matches.length; i++) {
