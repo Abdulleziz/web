@@ -102,11 +102,6 @@ export const GlobalPanel = createPanel(undefined, () => {
         <Link href="/cron">
           <Button size="sm">Hatırlatıcıya git</Button>
         </Link>
-        <Link href="/projects/mbt">
-          <Button variant={"warning"} size="sm">
-            MBT Project v1.3 //TODO Projeler için ayrı bir panel açılmalı.
-          </Button>
-        </Link>
       </CardContent>
       <CardFooter className="flex items-center justify-center gap-4"></CardFooter>
     </Card>
@@ -209,8 +204,7 @@ export const DriveablePabel = createPanel(undefined, () => {
       <CardHeader>
         <CardTitle>Araç İşlemleri</CardTitle>
         <CardDescription>
-          Megan sürmek veya araba yönetmek için kullanılan işlemler. //TODO
-          Driver rolü için bir şeyler yapılmalı
+          Megan sürmek veya araba yönetmek için kullanılan işlemler.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">

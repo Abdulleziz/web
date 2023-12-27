@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=K2D:wght@300&display=swap');
+
+* {
+    font-family: 'K2D', sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {}
+
+body {
+    background-color: darkslategrey;
+    background-image: url(photos/ItalyFlagBackground.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+header {
+    font-size: large;
+    color: whitesmoke;
+    height: 50px;
+    width: 1200px;
+    background-color: rgba(0, 0, 0, 0.630);
+}
+
+nav {
+    position: relative;
+    max-width: 100%;
+    height: 40px;
+    text-align: center;
+    color: whitesmoke;
+    background-color: rgba(0, 0, 0, 0.630);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+nav a {
+    text-decoration: none;
+    font-size: x-large;
+    color: whitesmoke;
+    padding: 0 25px;
+    font-weight: 900;
+    z-index: 1;
+    display: inline-block;
+    transition: 0.2s all;
+}
+
+nav a:hover {
+    opacity: 0.7;
+    background: #1abc;
+    border-radius: 8px;
+}
+
+h1 {
+    font-style: italic;
+    text-align: center;
+    padding-bottom: 10px;
+    padding-top: 1px;
+}
+
+.container {
+    margin-left: auto;
+    margin-right: auto;
+    width: 1200px;
+}
+
+.scroll-bg {
+    background: rgba(45, 45, 45, 0.5);
+    width: 1200px;
+    overflow: hidden;
+    padding-top: 10px;
+}
+
+.scroll-div {
+    width: 1200px;
+    background: rgba(45, 45, 45, 0.500);
+    height: 900px;
+    overflow: hidden;
+    overflow-y: scroll;
+}
+
+.row1 {
+    float: left;
+    padding-left: 20px;
+    padding-top: 20px;
+}
+
+.box1 {
+    display: flex;
+    gap: 20px;
+}
+
+.p1 {
+    font-size: x-large;
+    color: whitesmoke;
+    padding-top: 60px;
+}
+
+.p1 a {
+    text-decoration: none;
+    color: whitesmoke;
+}
+
+.box2 {
+    display: flex;
+    justify-items: center;
+    align-items: center;
+    flex-direction: column;
+    margin-top: 20px;
+    padding-right: 20px;
+}
+
+.flag {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+}
+
+.ul1 {
+    color: whitesmoke;
+    justify-items: left;
+    -ms-flex-item-align: left;
+    gap: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.list1 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    -ms-flex-item-align: center;
+    gap: 50px;
+    padding-top: 50px;
+}
+
+.list1 a {
+    text-decoration: none;
+    color: whitesmoke;
+}
+
+h2 {
+    color: whitesmoke;
+    flex-direction: column;
+    padding-left: 20px;
+    padding-top: 20px;
+}
+
+h3 {
+    padding-left: 20px;
+    color: whitesmoke;
+    flex-direction: column;
+    padding-top: 20px;
+}
+
+.p2 {
+    padding-left: 30px;
+    text-align: center;
+    color: whitesmoke;
+    font-size: large;
+    padding-top: 30px;
+    padding-right: 30px;
+}
+
+.design-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 15px;
+}
+
+.figcaption {
+    text-align: center;
+    color: whitesmoke;
+    font-size: large;
+}

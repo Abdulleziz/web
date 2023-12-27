@@ -8,6 +8,7 @@ import {
   VoteChart,
   CEOVotePanel,
 } from "~/components/panels";
+import { ProjectPanel } from "~/components/panels/ProjectPanel";
 import type { NextPage } from "next";
 import {
   useGetAbdullezizUser,
@@ -32,6 +33,7 @@ const Dashboard: NextPage = () => {
           DriveablePabel,
           MemberPanel,
           GlobalPanel,
+          ProjectPanel,
           CEOVotePanel,
         ].filter(
           // if any of the visibleBy permissions are not in the user's perms,

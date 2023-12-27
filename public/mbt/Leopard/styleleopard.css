@@ -14,8 +14,6 @@ body {
     background-color: darkslategrey;
     background-image: url(photos/GermanFlagBackground.jpg);
     background-size: cover;
-    background-repeat: no-repeat;
-    overflow: hidden;
 }
 header {
     font-size: large;
@@ -64,4 +62,117 @@ h1 {
     margin-left: auto;
     margin-right: auto;
     width: 1200px;
+}
+.scroll-bg {
+    background: rgba(45, 45, 45, 0.5);
+    width: 1200px;
+    overflow: hidden;
+    padding-top: 10px;
+}
+.scroll-div {
+    width: 1200px;
+    background: rgba(45, 45, 45, 0.500);
+    height: 900px;
+    overflow: hidden;
+    overflow-y: scroll;
+}
+.row1 {
+    float: left;
+    padding-left: 20px;
+    padding-top: 20px;
+}
+
+.box1 {
+    display: flex;
+    gap: 20px;
+}
+
+.p1 {
+    font-size: x-large;
+    color: whitesmoke;
+    padding-top: 60px;
+}
+
+.p1 a {
+    text-decoration: none;
+    color: whitesmoke;
+}
+
+.box2 {
+    display: flex;
+    justify-items: center;
+    align-items: center;
+    flex-direction: column;
+    margin-top: 20px;
+    padding-right: 20px;
+}
+
+.flag {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+}
+.ul1 {
+    color: whitesmoke;
+    justify-items: left;
+    -ms-flex-item-align: left;
+    gap: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.list1 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    -ms-flex-item-align: center;
+    gap: 50px;
+    padding-top: 50px;
+}
+
+.list1 a {
+    text-decoration: none;
+    color: whitesmoke;
+}
+h2 {
+    color: whitesmoke;
+    padding-left: 20px;
+    padding-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: xx-large;
+}
+
+h3 {
+    padding-left: 20px;
+    color: whitesmoke;
+    padding-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: x-large;
+}
+
+.p2 {
+    padding-left: 30px;
+    text-align: center;
+    color: whitesmoke;
+    font-size: large;
+    padding-top: 30px;
+    padding-right: 30px;
+}
+
+.design-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 15px;
+}
+
+.figcaption {
+    text-align: center;
+    color: whitesmoke;
+    font-size: large;
 }
