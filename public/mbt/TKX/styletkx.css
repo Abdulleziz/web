@@ -7,13 +7,14 @@
     box-sizing: border-box;
 }
 
-html {}
+html {
+    
+}
 
 body {
     background-color: darkslategrey;
     background-image: url(photos/JapanFlagBackground.jpg);
     background-size: cover;
-    background-repeat: no-repeat;
 }
 
 header {
@@ -22,6 +23,10 @@ header {
     height: 50px;
     width: 1200px;
     background-color: rgba(0, 0, 0, 0.630);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 5px;
 }
 
 nav {

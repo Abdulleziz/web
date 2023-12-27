@@ -10,7 +10,7 @@ html{
     height: 100%;
 }
 body{
-    background-image: url(photos/BackgroundPhoto3.jpg);
+    background-color: black;
     background-position: center;
     background-size: cover; 
     background-repeat: no-repeat;
@@ -22,6 +22,9 @@ header{
     height: 30px;
     margin-top: 40px;
     margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 nav{
     position: relative;
@@ -46,7 +49,7 @@ nav a{
 }
 nav a:hover{
     opacity: 0.7;
-    background: #1abc;
+    background: gray;
     border-radius: 8px;
 }
 main{
@@ -66,7 +69,7 @@ footer{
     justify-content: center;
     align-items: center;
     height: 75vh;
-    background-color: rgba(245, 245, 245, 0.21);
+    background-color: rgba(1, 1, 1, 0.21);
 }
 .card{
     position: relative;
@@ -213,7 +216,7 @@ section{
 
 .swiper-button-next:hover, .swiper-button-prev:hover {
     opacity: 1;
-    color: black;
+    color: whitesmoke;
 }
 
 .p1{

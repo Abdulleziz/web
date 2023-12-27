@@ -4,8 +4,12 @@ html{
 header{
     font-size: large;
     color: whitesmoke;
-    height: 50px;
+    height: 80px;
     width: 1080px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 5px;
 }
 nav {
     position: relative;
@@ -44,7 +48,6 @@ body{
     background-color: darkslategrey;
     background-image: url(photos/BackgroundPhoto4.jpg);
     background-size: cover;
-    background-repeat: no-repeat;
 }
 .container{
     margin-left: auto;

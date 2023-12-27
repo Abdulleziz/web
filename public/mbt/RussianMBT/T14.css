@@ -31,10 +31,11 @@ header {
     color: whitesmoke;
     height: 70px;
     width: 100%;
-    background-color: rgba(0, 0, 0, 0.630);
+    background-color: rgba(0, 0, 0, 0.550);
     display: flex;
     align-items: center;
     justify-content: center;
+    padding-top: 5px;
 }
 
 h1:hover {
@@ -49,7 +50,7 @@ nav {
     height: 40px;
     text-align: center;
     color: whitesmoke;
-    background-color: rgba(0, 0, 0, 0.630);
+    background-color: rgba(0, 0, 0, 0.550);
     display: flex;
     justify-content: center;
     align-items: center;
