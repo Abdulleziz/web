@@ -65,7 +65,7 @@ import {
   type UploadFileResponse,
   generateClientDropzoneAccept,
 } from "uploadthing/client";
-import { type RouterOutputs } from "~/utils/api";
+import { api, type RouterOutputs } from "~/utils/api";
 
 type Attachment = UploadFileResponse;
 type DatabaseUser = RouterOutputs["discord"]["getAbdullezizUsers"][number] & {
@@ -449,6 +449,8 @@ const Posts: React.FC<ThreadProps> = ({ threadId, locked, canSend }) => {
   const [page, setPage] = React.useState(0);
   const [postsRef] = useAutoAnimate();
 
+  const memes = api.forum.memes.getMemes.useQuery().data ?? [];
+
   const handleNext = async () => {
     await fetchNextPage();
     setPage(page + 1);
@@ -500,7 +502,7 @@ const Posts: React.FC<ThreadProps> = ({ threadId, locked, canSend }) => {
                   : "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
               )}
             >
-              {tokenizePostContent(post.message)}
+              {tokenizePostContent(post.message, memes)}
             </div>
             <time className="text-xs opacity-50">
               {post.createdAt.toLocaleString("tr-TR")}

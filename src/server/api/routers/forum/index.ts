@@ -14,6 +14,7 @@ import { getForumNotificationListeners } from "./trpc";
 import { ThreadId, ThreadMessage, ThreadTag, ThreadTitle } from "./types";
 import { tokenize } from "~/utils/forumThread";
 import { utapi } from "uploadthing/server";
+import { forumMemesRouter } from "./memes";
 
 const managePinsProcedure = createPermissionProcedure(["forum thread pinle"]);
 const deleteThreadsProcedure = createPermissionProcedure(["forum thread sil"]);
@@ -24,6 +25,7 @@ const lockThreadsProcedure = createPermissionProcedure([
 export const forumRouter = createTRPCRouter({
   posts: forumPostsRouter,
   notifications: forumNotificationsRouter,
+  memes: forumMemesRouter,
   getThreads: protectedProcedure.query(({ ctx }) => {
     return ctx.prisma.forumThread.findMany({
       include: {

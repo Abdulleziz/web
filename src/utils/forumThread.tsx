@@ -14,25 +14,7 @@ const tokenRegex = new RegExp(
   "g"
 );
 
-// TODO: CRUD memes with descriptions
-const MEMES = [
-  "abdulleziz",
-  "tahsinlerimi yayarken",
-  "tahsin",
-  "tesis",
-  "yaren",
-  "ahmet",
-  "gökhan",
-  "sinem",
-  "tuzbiber",
-  "osman",
-  "orhan",
-  "mehmet",
-  "goat",
-  "alihan",
-];
-
-export function tokenize(content: string, memes: string[] = MEMES) {
+export function tokenize(content: string, memes: string[] = []) {
   const result = [];
   const memesRegex = new RegExp(memes.join("|"), "gi");
   // use memesRegex first and then use tokenRegex
@@ -160,8 +142,14 @@ const extractUrl = (token: Token & { type: "url" }, key: number) => {
   }
 };
 
-export const tokenizePostContent = (content: string) => {
-  const rawTokens = tokenize(content);
+export const tokenizePostContent = (
+  content: string,
+  memes: { name: string; description: string }[]
+) => {
+  const rawTokens = tokenize(
+    content,
+    memes.map((meme) => meme.name)
+  );
   const tokens: (string | JSX.Element)[] = [];
   const getLast = () => tokens.at(-1);
   const setLast = (content: string) => (tokens[tokens.length - 1] = content);
@@ -184,7 +172,10 @@ export const tokenizePostContent = (content: string) => {
             {token.content}
           </PopoverTrigger>
           <PopoverContent className="text-sm">
-            {token.content}: description not found.
+            {token.content}:{" "}
+            {memes.find(
+              (m) => m.name.toLowerCase() === token.content.toLowerCase()
+            )?.description ?? "description not found."}
           </PopoverContent>
         </Popover>
       );
