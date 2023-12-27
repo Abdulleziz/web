@@ -15,7 +15,6 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Button } from "~/components/ui/button";
 
 const maker = "https://crontab.guru/";
 
@@ -104,8 +103,8 @@ const CronPage: NextPage = () => {
         </div>
       </div>
       <div className="flex flex-col gap-4 p-4">
-        <div className="rounded-3xl dark:bg-zinc-900 dark:text-zinc-50">
-          <div className="flex flex-col items-center justify-center gap-4 px-4 py-16 md:flex-row">
+        <div className="mockup-window border bg-base-300">
+          <div className="flex flex-col items-center justify-center gap-4 bg-base-200 px-4 py-16 md:flex-row">
             <div className="flex items-center justify-center" ref={animateRef}>
               <CronMaker handleSubmit={handleSubmit} />
             </div>
@@ -120,7 +119,6 @@ const CronPage: NextPage = () => {
                 value={input}
                 onChange={(e) => handleSubmit(e.target.value)}
               />
-              {/* use shadcn/modal instead of -- label+htmlFor -- trick from daisyui */}
               <label
                 htmlFor="create-cron"
                 className={classNames("btn btn-success btn-sm", {
@@ -138,7 +136,6 @@ const CronPage: NextPage = () => {
                   <span className="text-info">Sonraki hatırlatıcı: </span>
                   <p>{nextDateString}</p>
                 </div>
-                {/* use shadcn/modal instead of -- label+htmlFor -- trick from daisyui */}
                 <label htmlFor="next-dates" className="btn btn-xs">
                   Hepsini göster
                 </label>
@@ -234,9 +231,9 @@ const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
               </label>
             ))}
           </div>
-          <Button size={"sm"} onClick={() => setIsPageActive(true)}>
+          <button className="btn btn-sm" onClick={() => setIsPageActive(true)}>
             Devam
-          </Button>
+          </button>
         </div>
       );
     }
@@ -262,15 +259,11 @@ const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
               }
             />
           )}
-          <Button
-            size={"sm"}
-            variant={"outline"}
-            onClick={() => setIsPageActive(false)}
-          >
+          <button className="btn btn-sm" onClick={() => setIsPageActive(false)}>
             Geri dön
-          </Button>
-          <Button
-            size={"sm"}
+          </button>
+          <button
+            className="btn btn-sm"
             onClick={handleSubmit}
             disabled={
               (req.weekDays && weekDays.size === 0) ||
@@ -279,7 +272,7 @@ const CronMaker: React.FC<{ handleSubmit: (cron: string) => void }> = ({
             }
           >
             Bunu kullan
-          </Button>
+          </button>
         </div>
       );
     }
@@ -377,17 +370,15 @@ export const useHourSelect = () => {
             </select>
           )}
         </div>
-        <Button
-          size={"relative-sm"}
-          variant={"outline"}
-          className="m-3"
+        <button
+          className="btn btn-secondary btn-xs m-3"
           onClick={() => {
             setHours(0);
             setMinutes(0);
           }}
         >
           Sıfırla
-        </Button>
+        </button>
       </div>
     );
   };
@@ -435,14 +426,14 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
             <p>Cron: </p> <p>{cron} (UTC)</p>
           </div>
           <div className="modal-action">
-            {/* use shadcn/modal instead of -- label+htmlFor -- trick from daisyui */}
             <label className={"btn btn-warning"} htmlFor="create-cron">
               Kapat
             </label>
-            <Button
-              isLoading={create.isLoading}
+            <button
+              className={classNames("btn btn-primary", {
+                ["loading"]: create.isLoading,
+              })}
               disabled={!cron || !title.trim() || create.isLoading}
-              size={"lg"}
               onClick={() =>
                 create.mutate(
                   { title, cron, isGlobal },
@@ -451,7 +442,7 @@ const CronCreate: React.FC<{ cron: string }> = ({ cron }) => {
               }
             >
               Oluştur
-            </Button>
+            </button>
           </div>
         </label>
       </label>
@@ -490,7 +481,6 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
 
   if (!session || !data || !data.length) return <></>;
   return (
-    // TODO: shadcn/ui generic table
     <div className="w-full overflow-x-auto">
       <table className="table w-full">
         {/* head */}
@@ -626,7 +616,6 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                 >
                   {job.cron}
                   <br />
-                  {/* use shadcn/modal instead of -- label+htmlFor -- trick from daisyui */}
                   <label
                     htmlFor="next-dates"
                     className="btn btn-xs"
@@ -644,39 +633,40 @@ const CronTable: React.FC<{ handleSubmit: (cron: string) => void }> = ({
                 <td>
                   {!!meAsListener ? (
                     <div className="flex flex-col gap-2">
-                      <Button
+                      <button
                         onClick={() => toggle.mutate(job.cron)}
                         disabled={toggle.isLoading || !meAsListener.isAuthor}
-                        isLoading={toggle.isLoading}
-                        variant={"warning"}
-                        size={"relative-sm"}
+                        className={classNames("btn btn-warning btn-xs", {
+                          ["loading"]: toggle.isLoading,
+                        })}
                       >
                         {job.listeners.find((u) => u.isAuthor)?.isActive
                           ? "Kapat"
                           : "Aç"}
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         onClick={() => leave.mutate(job.cron)}
                         disabled={leave.isLoading}
-                        isLoading={leave.isLoading}
-                        variant={"destructive"}
-                        size={"relative-sm"}
+                        className={classNames("btn btn-error btn-xs", {
+                          ["loading"]: leave.isLoading,
+                        })}
                       >
                         Ayrıl
-                      </Button>
+                      </button>
                     </div>
                   ) : (
                     <div className="flex flex-col">
-                      <Button
-                        size={"relative-sm"}
-                        disabled={join.isLoading}
-                        isLoading={join.isLoading}
+                      <button
                         onClick={() =>
                           join.mutate({ title: "31", cron: job.cron })
                         }
+                        disabled={join.isLoading}
+                        className={classNames("btn btn-success btn-xs", {
+                          ["loading"]: join.isLoading,
+                        })}
                       >
                         Katıl
-                      </Button>
+                      </button>
                     </div>
                   )}
                 </td>

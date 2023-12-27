@@ -144,7 +144,7 @@ export const Profile = ({ profileId }: ProfileProps) => {
             </svg>
             <div className="ml-4 flex flex-col">
               <span className="ml-1 text-xl font-bold">
-                0{/* {user._count.paymentsReceived} */}
+                {user._count.paymentsRecieved}
               </span>
               <span>Maaş/Transfer Alma</span>
             </div>
@@ -161,7 +161,7 @@ export const Profile = ({ profileId }: ProfileProps) => {
             </svg>
             <div className="ml-4 flex flex-col">
               <span className="ml-1 text-xl font-bold">
-                0{/* {user._count.paymentsSent} */}
+                {user._count.paymentsSent}
               </span>
               <span>Maaş/Transfer Gönderme</span>
             </div>

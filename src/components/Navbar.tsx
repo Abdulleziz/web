@@ -78,7 +78,6 @@ import {
 import { PushSubscription } from "~/utils/shared";
 import { useHydrated } from "~/pages/_app";
 import toast from "react-hot-toast";
-import { useIsSafari } from "~/hooks/browserDetect";
 
 export const Navbar: React.FC = () => {
   const { data: session } = useSession();
@@ -312,7 +311,6 @@ export function CommandMenu() {
   const router = useRouter();
   const threads = useGetForumThreads();
   const crons = useGetAllCrons();
-  const isSafari = useIsSafari();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const openMoneyDialog = useMoneyDialog((s) => s.setOpen);
@@ -338,13 +336,13 @@ export function CommandMenu() {
     <div>
       <Button
         variant="outline"
-        className="relative w-full items-center justify-start text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64"
+        className="relative w-full justify-start text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64"
         onClick={() => setOpen(true)}
       >
         <span className="hidden lg:inline-flex">Arama yap...</span>
         <span className="inline-flex lg:hidden">Ara...</span>
-        <kbd className="bg-muted pointer-events-none absolute right-1.5 hidden h-5 select-none items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 md:flex">
-          <span className="text-xs">{isSafari ? "⌘" : "CTRL"}</span>K
+        <kbd className="bg-muted pointer-events-none absolute right-1.5 top-1.5 hidden h-5 select-none items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+          <span className="text-xs">⌘</span>K
         </kbd>
       </Button>
       <CommandDialog open={open} onOpenChange={setOpen}>

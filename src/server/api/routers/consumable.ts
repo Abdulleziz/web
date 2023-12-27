@@ -7,8 +7,8 @@ import { env } from "~/env.mjs";
 
 export const consumableRouter = createTRPCRouter({
   tea: createTRPCRouter({
-    getRemaining: protectedProcedure.query(({ ctx }) => {
-      return calculateRemainingTea(ctx.prisma);
+    getRemaining: protectedProcedure.query(async ({ ctx }) => {
+      return await calculateRemainingTea(ctx.prisma);
     }),
     history: protectedProcedure.query(async ({ ctx }) => {
       return await ctx.prisma.consumeTea.findMany({
@@ -50,7 +50,7 @@ export const consumableRouter = createTRPCRouter({
               message: `${N} dakika içinde sadece bir bardak çay içebilirsin!`,
             });
 
-          const leftover = calculateRemainingTea(tx);
+          const leftover = await calculateRemainingTea(tx);
           if (
             leftover.amountGram < amountGram ||
             leftover.amountSugar < amountSugar
@@ -72,50 +72,50 @@ export const consumableRouter = createTRPCRouter({
   }),
 });
 
-export function calculateRemainingTea(db: Transaction = prisma) {
-  // const invoices = await db.payment.findMany({
-  //   where: { type: "invoice" },
-  //   select: { type: true, entityId: true, amount: true },
-  //   orderBy: { createdAt: "asc" },
-  // });
+export async function calculateRemainingTea(db: Transaction = prisma) {
+  const invoices = await db.payment.findMany({
+    where: { type: "invoice" },
+    select: { type: true, entityId: true, amount: true },
+    orderBy: { createdAt: "asc" },
+  });
 
-  // const consumes = await db.consumeTea.findMany({
-  //   select: { amountGram: true, amountSugar: true },
-  //   orderBy: { createdAt: "asc" },
-  // });
+  const consumes = await db.consumeTea.findMany({
+    select: { amountGram: true, amountSugar: true },
+    orderBy: { createdAt: "asc" },
+  });
 
-  // const entities = invoices
-  //   .map((p) => {
-  //     // invoices must have an entityId, but other types might not
-  //     // manual type guard
-  //     if (!p.entityId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-  //     const entity = getSystemEntityById(p.entityId);
-  //     return { ...p, entity, amountTotal: p.amount * entity.price };
-  //   })
-  //   .filter((p) => p.entity.type === "tea")
-  //   // TODO: add sugar
-  //   .map((p) => {
-  //     // FUCK TYPESCRIPT .MAP
-  //     if (p.entity.type !== "tea") throw new Error("unreachable");
-  //     return p as (typeof p) & {entity: {type: "tea"}}
-  //   });
+  const entities = invoices
+    .map((p) => {
+      // invoices must have an entityId, but other types might not
+      // manual type guard
+      if (!p.entityId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const entity = getSystemEntityById(p.entityId);
+      return { ...p, entity, amountTotal: p.amount * entity.price };
+    })
+    .filter((p) => p.entity.type === "tea")
+    // TODO: add sugar
+    .map((p) => {
+      // FUCK TYPESCRIPT .MAP
+      if (p.entity.type !== "tea") throw new Error("unreachable");
+      return p as (typeof p) & {entity: {type: "tea"}}
+    });
 
   const has = { amountGram: 0, amountSugar: 0 };
-  // entities.forEach((e) => (has.amountGram += e.entity.tea.amountGram));
-  // consumes.forEach((c) => {
-  //   has.amountGram -= c.amountGram;
-  //   has.amountSugar -= c.amountSugar;
-  // });
+  entities.forEach((e) => (has.amountGram += e.entity.tea.amountGram));
+  consumes.forEach((c) => {
+    has.amountGram -= c.amountGram;
+    has.amountSugar -= c.amountSugar;
+  });
 
-  // if (has.amountGram < 0 || has.amountSugar < 0) {
-  //   console.error("negative has in calculateLeftTea", { has });
-  //   throw new TRPCError({
-  //     code: "INTERNAL_SERVER_ERROR",
-  //     message:
-  //       "Bir şekilde batırdık gibi duruyor!" +
-  //       " kalan çayı hesaplarken negatif değer bulduk." +
-  //       " Lütfen hatayı web adminlerine iletin!",
-  //   });
-  // }
+  if (has.amountGram < 0 || has.amountSugar < 0) {
+    console.error("negative has in calculateLeftTea", { has });
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message:
+        "Bir şekilde batırdık gibi duruyor!" +
+        " kalan çayı hesaplarken negatif değer bulduk." +
+        " Lütfen hatayı web adminlerine iletin!",
+    });
+  }
   return has;
 }

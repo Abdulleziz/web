@@ -57,7 +57,7 @@ export const useGetCEOVoteEvent = api.discord.role.getCEOVotes.useQuery;
 
 export const useGetVoteEventsWithMembers = (q: In["role"]["getVotes"]) => {
   const roles = useGetAbdullezizRoles();
-  const members = useGetAbdullezizUsers();
+  const members = useGetAbdullezizUsersSorted();
   const memberFromId = memberFinder(members.data ?? []);
   return api.discord.role.getVotes.useQuery(q, {
     enabled: !!roles.data,
@@ -65,11 +65,8 @@ export const useGetVoteEventsWithMembers = (q: In["role"]["getVotes"]) => {
     select(data) {
       return data.map((event) => {
         const role = roles.data?.find((r) => r.name === event.role);
-        const beforeRole =
-          event.beforeRole === null
-            ? null
-            : roles.data?.find((r) => r.name === event.beforeRole);
-
+        const beforeRole = roles.data?.find((r) => r.name === event.beforeRole);
+        if (!role) throw new Error(`No role with name ${event.role}`);
         return {
           ...event,
           role,
@@ -139,21 +136,6 @@ export const useVoteCEO = () => {
       void utils.profile.invalidate();
     },
     onMutate: () => toast.loading("CEO Oyu veriliyor...", { id }),
-    onError: (error) => {
-      toast.error(error.data?.zodError || error.message, { id });
-    },
-  });
-};
-export const useAssign = () => {
-  const id = "discord.role.voteCEO";
-  const utils = api.useContext();
-  return api.discord.role.assign.useMutation({
-    onSuccess: () => {
-      toast.success("Vice President seçildi!", { id });
-      void utils.discord.invalidate();
-      void utils.profile.invalidate();
-    },
-    onMutate: () => toast.loading("Vice President Seçiliyor...", { id }),
     onError: (error) => {
       toast.error(error.data?.zodError || error.message, { id });
     },

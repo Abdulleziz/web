@@ -32,11 +32,6 @@ webPush.setVapidDetails(
   env.VAPID_SECRET_KEY
 );
 type Options = NotificationOptions & { title: string };
-
-/**
- * @param title 40 to 75 characters
- * @param body 50 to 225 characters
- */
 export const sendNotification = async <Sub extends PushSubscription>(
   subs: Sub[],
   body: Options | ((sub: Sub) => Options),

@@ -1,6 +1,8 @@
 import Head from "next/head";
+import { createModal } from "~/utils/modal";
 import { Navbar } from "./Navbar";
 import { SendMoneyDialog } from "./SendMoney";
+// import { useSession } from "next-auth/react";
 
 type Props = {
   children?: React.ReactNode;
@@ -13,6 +15,10 @@ export const Layout: React.FC<Props> = ({
   title = "Abdulleziz Corp.",
   location = "",
 }) => {
+  // const { data: session } = useSession();
+
+  const { Modal } = createModal("notif", "unreachable", false);
+
   return (
     <>
       <Head>
@@ -31,9 +37,25 @@ export const Layout: React.FC<Props> = ({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
       </Head>
-      <main className="3xl:px-48 min-h-screen bg-white dark:bg-zinc-950 2xl:px-28">
+      <main className=" min-h-screen bg-white dark:bg-zinc-950">
         <Navbar />
+        {/* {notifStage === "denied" && <Alert />} */}
         <SendMoneyDialog />
+        <Modal>
+          <div className="flex flex-col items-center justify-center">
+            <div className="loader h-32 w-32 rounded-full border-8 border-t-8 border-gray-200 ease-linear"></div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold">
+              Bekleniyor...
+            </h2>
+            <p className="mt-2 text-center text-sm">
+              Abdülleziz bildirimlerini kabul etmeniz bekleniyor.
+            </p>
+            <p className="mt-2 text-center text-sm text-info">
+              Not: Bildirimleri açmak, Abdülleziz{"'"}in daha iyi çalışmasını
+              sağlar.
+            </p>
+          </div>
+        </Modal>
         {children}
       </main>
     </>

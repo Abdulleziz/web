@@ -8,7 +8,12 @@ import {
 } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import { LoadingDashboard } from "~/components/LoadingDashboard";
-import { DEMOTE, PROMOTE, getSeverity } from "~/utils/zod-utils";
+import {
+  type AbdullezizRole,
+  DEMOTE,
+  PROMOTE,
+  abdullezizRoleSeverities,
+} from "~/utils/zod-utils";
 import {
   Card,
   CardContent,
@@ -149,8 +154,10 @@ const Manage: NextPage = () => {
   );
 };
 
+export const getSeverity = (role?: AbdullezizRole) =>
+  role ? abdullezizRoleSeverities[role] : 1;
+
 export const getRequiredSeverity = (event: VoteEventWithMember) => {
-  if (event.role === undefined || event.beforeRole === undefined) return -1;
   const done = !!event.endedAt;
   const userSeverity = getSeverity(
     done ? event.beforeRole?.name : event.target.roles[0]?.name

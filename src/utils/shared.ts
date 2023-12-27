@@ -32,5 +32,3 @@ export const PushSubscription = z.object({
     p256dh: z.string(),
   }),
 });
-
-export const TransferMoney = z.number().positive().int();

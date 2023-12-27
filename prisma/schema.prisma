@@ -54,7 +54,7 @@ model ForumThread {
     title         String            @db.TinyText
     createdAt     DateTime          @default(now())
     updatedAt     DateTime          @updatedAt
-    locked        Boolean           @default(false) // TODO: datetime
+    locked        Boolean           @default(false)
     creatorId     String
     posts         ForumPost[]
     tags          ForumTag[]
@@ -109,112 +109,30 @@ model CronListener {
     @@index([cronJobId])
 }
 
-model EntityPurchase {
-    id        String   @id @default(cuid())
-    entityId  Int
-    quantity  Int
-    createdAt DateTime @default(now())
-
-    invoice   Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-    invoiceId String?
-
-    bankInvoice   BankInvoice? @relation(fields: [bankInvoiceId], references: [id], onDelete: Cascade)
-    bankInvoiceId String?
-
-    @@unique([entityId, invoiceId])
-    @@unique([entityId, bankInvoiceId])
-    @@index([invoiceId])
-    @@index([bankInvoiceId])
+enum PaymentType {
+    salary
+    transfer
+    invoice
 }
 
-model Invoice {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
+model Payment {
+    id        String      @id @default(cuid())
+    type      PaymentType
+    amount    Int
+    createdAt DateTime    @default(now())
 
-    to   User   @relation("invoices", fields: [toId], references: [id], onDelete: Cascade)
+    to   User   @relation("paymentReciever", fields: [toId], references: [id], onDelete: Cascade)
     toId String
 
-    entities EntityPurchase[]
-
-    @@index([toId])
-}
-
-model Transfer {
-    id        String   @id @default(cuid())
-    amount    Int
-    createdAt DateTime @default(now())
-
-    from   User?   @relation("transferSender", fields: [fromId], references: [id], onDelete: SetNull)
+    from   User?   @relation("paymentSender", fields: [fromId], references: [id], onDelete: SetNull)
     fromId String?
 
-    to   User   @relation("transferReciever", fields: [toId], references: [id], onDelete: Cascade)
-    toId String
+    entityId Int?
 
     @@index([fromId])
     @@index([toId])
-}
-
-model Salary {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
-    severity  Int
-
-    to   User   @relation(fields: [toId], references: [id], onDelete: Cascade)
-    toId String
-
-    bankSalary   BankSalary @relation(fields: [bankSalaryId], references: [id], onDelete: Cascade)
-    bankSalaryId String
-
-    @@unique([bankSalaryId, toId])
-    @@index([bankSalaryId])
-    @@index([toId])
-}
-
-enum BankTransactionOperations {
-    deposit
-    withdraw
-}
-
-model BankTransaction {
-    id        String                    @id @default(cuid())
-    amount    Int
-    operation BankTransactionOperations
-
-    reference   User?    @relation(fields: [referenceId], references: [id], onDelete: SetNull)
-    referenceId String?
-    createdAt   DateTime @default(now())
-
-    @@index([referenceId])
-}
-
-model BankSalary {
-    id         String    @id @default(cuid())
-    multiplier Float
-    createdAt  DateTime  @default(now())
-    paidAt     DateTime?
-
-    salaries Salary[]
-}
-
-model BankInvoice {
-    id        String           @id @default(cuid())
-    createdAt DateTime         @default(now())
-    entities  EntityPurchase[]
-}
-
-model StateOfEmergency {
-    id        String    @id @default(cuid())
-    createdAt DateTime  @default(now())
-    endedAt   DateTime?
-}
-
-model DictionaryMeme {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    name        String @unique
-    description String @db.Text
+    @@index([fromId, toId])
+    @@index([entityId])
 }
 
 model ConsumeTea {
@@ -318,15 +236,12 @@ model User {
     forumPosts          ForumPost[]
     listenedCrons       CronListener[]
     ForumPin            ForumPin[]
-    transfersSent       Transfer[]         @relation("transferSender")
-    transfersRecieved   Transfer[]         @relation("transferReciever")
+    paymentsSent        Payment[]          @relation("paymentSender")
+    paymentsRecieved    Payment[]          @relation("paymentReciever")
     teaConsumer         ConsumeTea[]
     threadNotify        ForumNotify[]
     defaultThreadNotify ForumNotification  @default(mentions)
     pushSubscriptions   PushSubscription[]
-    bankTransactions    BankTransaction[]
-    invoices            Invoice[]          @relation("invoices")
-    salaries            Salary[]
 }
 
 model VerificationToken {
