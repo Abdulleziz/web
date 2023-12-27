@@ -4,6 +4,9 @@ type Props = {
   children: string | JSX.Element | JSX.Element[] | null;
 };
 
+/**
+ * @deprecated use shadcn/ui modal instead
+ */
 export const createModal = (
   id: string,
   openText: string | React.ReactNode,

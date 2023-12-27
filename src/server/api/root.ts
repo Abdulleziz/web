@@ -6,6 +6,8 @@ import { paymentsRouter } from "./routers/payments";
 import { consumableRouter } from "./routers/consumable";
 import { profilesRouter } from "./routers/profiles";
 import { notificationsRouter } from "./routers/notifications";
+import { bankRouter } from "./routers/bank";
+import { emergenciesRouter } from "./routers/discord/emergency";
 
 /**
  * This is the primary router for your server.
@@ -20,6 +22,8 @@ export const appRouter = createTRPCRouter({
   profile: profilesRouter,
   consumable: consumableRouter,
   notifications: notificationsRouter,
+  bank: bankRouter,
+  emergency: emergenciesRouter,
 });
 
 // export type definition of API

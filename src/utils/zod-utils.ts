@@ -11,8 +11,10 @@ export const nonEmptyString = z.string().trim().min(1);
 export const abdullezizRoles = {
   CEO: "937780766446858273",
   "Vice President": "1181660483225407548",
-  CTO: "1045426389425328158",
-  CIO: "918842869211594762",
+  CTO: "1045426389425328158", // deprecated - same as COO
+  COO: "1045426389425328158",
+  CFO: "918842869211594762",
+  CIO: "918842869211594762", // deprecated - same as CFO
   CSO: "1100828409736744990",
   "Product Manager": "1045427076158738502",
   "Advertisement Lead": "1045658094635602002",
@@ -35,13 +37,15 @@ export const abdullezizUnvotableRoles = [
   "Vice President",
 ] as const satisfies readonly AbdullezizRole[];
 
-export type AbdullezizUnvotableRole = typeof abdullezizUnvotableRoles[number];
+export type AbdullezizUnvotableRole = (typeof abdullezizUnvotableRoles)[number];
 
 export const abdullezizRoleSeverities = {
   CEO: 100,
   "Vice President": 95,
-  CTO: 90,
-  CIO: 80,
+  CTO: 90, // deprecated
+  COO: 90,
+  CIO: 80, // deprecated
+  CFO: 80,
   CSO: 70,
   "Product Manager": 60,
   "Advertisement Lead": 60,
@@ -52,6 +56,9 @@ export const abdullezizRoleSeverities = {
   Servant: 20,
   // "@everyone": 1,
 } as const satisfies Record<AbdullezizRole, Severity>;
+
+export const getSeverity = (role?: AbdullezizRole) =>
+  role ? abdullezizRoleSeverities[role] : 1;
 
 //..
 //..

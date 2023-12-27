@@ -24,6 +24,7 @@ import {
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
   title?: string;
+  icon?: React.ReactNode;
   options: {
     label: string;
     value: string;
@@ -34,6 +35,7 @@ export function DataTableFacetedFilter<TData, TValue>({
   column,
   title,
   options,
+  icon,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues();
   const selectedValues = new Set(column?.getFilterValue() as string[]);
@@ -41,8 +43,8 @@ export function DataTableFacetedFilter<TData, TValue>({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
-          <PlusCircleIcon className="mr-2 h-4 w-4" />
+        <Button variant="outline" className=" border-dashed">
+          {icon ? icon : <PlusCircleIcon className="mr-2 h-4 w-4" />}
           {title}
           {selectedValues?.size > 0 && (
             <>
@@ -89,6 +91,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                 const isSelected = selectedValues.has(option.value);
                 return (
                   <CommandItem
+                    className="gap-3"
                     key={option.value}
                     onSelect={() => {
                       if (isSelected) {
@@ -105,7 +108,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     <div
                       className={`"mr-2 border-primary", ${
                         isSelected
-                          ? "text-primary-foreground bg-primary"
+                          ? "text-primary-foreground bg-muted-foreground"
                           : "opacity-50 [&_svg]:invisible"
                       }
                         flex

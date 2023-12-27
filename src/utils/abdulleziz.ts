@@ -44,6 +44,10 @@ export const requiredSeverity = [
   { perm: "forum thread sil", min: 80 },
   { perm: "forum thread kilitle", min: 80 },
   { perm: "forumu yönet", min: 80 }, // thread/post kilitleme vb. + forum bildirimleri yönetme
+  { perm: "ohal başlat", some: ["CSO"] },
+  { perm: "banka geçmişini gör", some: ["CEO", "CFO", "CSO"] },
+  { perm: "bankayı işlet", some: ["CFO"] }, // maaş dağıt, şirket parasıyla bir şeyler al
+  { perm: "bankayı yönet", some: ["CEO"] },
   { perm: "vice president seç", some: ["CEO"] },
 ] as const satisfies readonly RequiredSeverity[];
 

@@ -7,6 +7,7 @@ import {
 } from "~/server/discord-api/trpc";
 import { rolesRouter } from "./roles";
 import { DiscordId } from "~/utils/zod-utils";
+import { emergenciesRouter } from "./emergency";
 
 // api router
 export const discordRouter = createTRPCRouter({
@@ -27,4 +28,5 @@ export const discordRouter = createTRPCRouter({
     return await getAbdullezizUsers();
   }),
   role: rolesRouter,
+  emergency: emergenciesRouter,
 });

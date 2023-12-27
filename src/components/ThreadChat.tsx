@@ -65,7 +65,7 @@ import {
   type UploadFileResponse,
   generateClientDropzoneAccept,
 } from "uploadthing/client";
-import { type RouterOutputs } from "~/utils/api";
+import { api, type RouterOutputs } from "~/utils/api";
 
 type Attachment = UploadFileResponse;
 type DatabaseUser = RouterOutputs["discord"]["getAbdullezizUsers"][number] & {
@@ -449,6 +449,8 @@ const Posts: React.FC<ThreadProps> = ({ threadId, locked, canSend }) => {
   const [page, setPage] = React.useState(0);
   const [postsRef] = useAutoAnimate();
 
+  const memes = api.forum.memes.getMemes.useQuery().data ?? [];
+
   const handleNext = async () => {
     await fetchNextPage();
     setPage(page + 1);
@@ -494,13 +496,13 @@ const Posts: React.FC<ThreadProps> = ({ threadId, locked, canSend }) => {
             )}
             <div
               className={cn(
-                "flex w-max max-w-[16rem] flex-col overflow-x-auto rounded-lg px-3 py-2 text-sm sm:max-w-md lg:max-w-2xl",
+                "w-max max-w-[16rem] overflow-x-auto rounded-lg px-3 py-2 text-sm sm:max-w-md lg:max-w-2xl",
                 session?.user.id === post.creatorId
                   ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
                   : "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
               )}
             >
-              {tokenizePostContent(post.message)}
+              {tokenizePostContent(post.message, memes)}
             </div>
             <time className="text-xs opacity-50">
               {post.createdAt.toLocaleString("tr-TR")}
