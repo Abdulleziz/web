@@ -10,7 +10,7 @@ export const PROJECTS = [
     title: "Aktuelim Project",
   },
   {
-    url: "/world-battle/world-battle.html",
+    url: "https://ayagiz1.github.io/worldbattle",
     name: "world-battle",
     title: "World Battle Project",
   },
