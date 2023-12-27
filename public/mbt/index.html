@@ -57,12 +57,72 @@
         function ZTZPointerLeave() {
                 document.getElementsByClassName('static_ztz')[0].src = 'photos/ZTZ99.jpg'
             }
+        function VT4PointerDown() {
+                document.getElementsByClassName('static_vt4')[0].src = 'photos/VT4GIF.gif'
+                }
+        function VT4PointerLeave() {
+                document.getElementsByClassName('static_vt4')[0].src = 'photos/VT4.jpg'
+                }
+        function K2PointerDown() {
+                document.getElementsByClassName('static_k2')[0].src = 'photos/K2GIF.gif'
+            }
+        function K2PointerLeave() {
+                document.getElementsByClassName('static_k2')[0].src = 'photos/K2.jpg'
+            }
+        function SabraPointerDown() {
+                document.getElementsByClassName('static_sabra')[0].src = 'photos/SabraGIF.gif'
+            }
+        function SabraPointerLeave() {
+                document.getElementsByClassName('static_sabra')[0].src = 'photos/M60Sabra.jpg'
+            }
+        function MerkavaPointerDown() {
+                document.getElementsByClassName('static_merkava')[0].src = 'photos/MerkavaGIF.gif'
+            }
+        function MerkavaPointerLeave() {
+                document.getElementsByClassName('static_merkava')[0].src = 'photos/Merkava.jpg'
+            }
+        function TKXPointerDown() {
+                document.getElementsByClassName('static_tkx')[0].src = 'photos/TKXGIF.webp'
+            }
+        function TKXPointerLeave() {
+                document.getElementsByClassName('static_tkx')[0].src = 'photos/Type10.jpg'
+            }
+        function ArietePointerDown() {
+                document.getElementsByClassName('static_ariete')[0].src = 'photos/ArieteGIF.gif'
+            }
+        function ArietePointerLeave() {
+                document.getElementsByClassName('static_ariete')[0].src = 'photos/Ariete.jpg'
+            }
+        function KarrarPointerDown() {
+                document.getElementsByClassName('static_karrar')[0].src = 'photos/KarrarGIF.webp'
+            }
+        function KarrarPointerLeave() {
+                document.getElementsByClassName('static_karrar')[0].src = 'photos/Karrar.jpg'
+            }
+        function AltayPointerDown() {
+                document.getElementsByClassName('static_altay')[0].src = 'photos/AltayGIF.gif'
+            }
+        function AltayPointerLeave() {
+                document.getElementsByClassName('static_altay')[0].src = 'photos/Altay.jpg'
+            }
+        function ArmataPointerDown() {
+                document.getElementsByClassName('static_armata')[0].src = 'photos/ArmataGIF.gif'
+            }
+        function ArmataPointerLeave() {
+                document.getElementsByClassName('static_armata')[0].src = 'photos/Armata.jpg'
+            }
+        function StrvPointerDown() {
+                document.getElementsByClassName('static_strv')[0].src = 'photos/StrvGIF.gif'
+            }
+        function StrvPointerLeave() {
+                document.getElementsByClassName('static_strv')[0].src = 'photos/STRV122.jpg'
+            }                                            
     </script>
 </head>
 
 <body>
     <header>
-        <p>MBT Project 1.4.1 Release</p>
+        <a href="index.html"><img src="photos/LOGO.png" height="80" width="350" alt=""></a>
     </header>
 
     <nav>
@@ -73,7 +133,7 @@
     </nav>
 
     <main>
-        <h2>Active Main Battle Tanks In Service</h2>
+        <h2>Main Battle Tank Projects</h2>
     </main>
 
     <footer>
@@ -82,6 +142,9 @@
 
             <div class="swiper mySwiper container">
                 <div class="swiper-wrapper content">
+
+                    <!--Abrams Card-->
+
                     <div class="swiper-slide card">
                         <div class="box1"></div>
                         <div class="card-content">
@@ -97,13 +160,15 @@
                                 <span class="origin">USA</span>
                             </div>
                             <div class="about">
-                                <p>M1 Abrams is a third generation main battle tank designed by Chrysler Defence.</p>
+                                <p>M1 Abrams is a third generation American main battle tank designed by Chrysler Defence.</p>
                             </div>
                             <div class="button b1">
                                 <button class="aboutMe"><a href="Abrams/Abrams.html">Details</a></button>
                             </div>
                         </div>
                     </div>
+
+                    <!--T-90 Card-->
 
                     <div class="swiper-slide card">
                         <div class="box2"></div>
@@ -127,6 +192,8 @@
                             </div>
                         </div>
                     </div>
+
+                    <!--Leopard Card-->
 
                     <div class="swiper-slide card">
                         <div class="box3"></div>
@@ -153,6 +220,8 @@
                         </div>
                     </div>
 
+                    <!--T-80 Card-->
+
                     <div class="swiper-slide card">
                         <div class="box3"></div>
                         <div class="card-content">
@@ -177,6 +246,8 @@
                             </div>
                         </div>
                     </div>
+
+                    <!--Challenger Card-->
 
                     <div class="swiper-slide card">
                         <div class="box3"></div>
@@ -203,6 +274,8 @@
                         </div>
                     </div>
 
+                    <!--T-72 Card-->
+
                     <div class="swiper-slide card">
                         <div class="box3"></div>
                         <div class="card-content">
@@ -227,6 +300,8 @@
                             </div>
                         </div>
                     </div>
+
+                    <!--Leclerc Card-->
 
                     <div class="swiper-slide card">
                         <div class="box3"></div>
@@ -253,6 +328,8 @@
                         </div>
                     </div>
 
+                    <!--Type 99 Card-->
+
                     <div class="swiper-slide card">
                         <div class="box3"></div>
                         <div class="card-content">
@@ -278,14 +355,19 @@
                         </div>
                     </div>
 
+                    <!--VT-4 Card-->
+
                     <div class="swiper-slide card">
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <a href="ChinaMBT/VT4.html"><img src="photos/VT4.jpg" alt="" height="350px" width="400px"></a>
+                                <a href="ChinaMBT/VT4.html"><img class="static_vt4" src="photos/VT4.jpg" alt=""
+                                onpointerenter="VT4PointerDown()"
+                                onpointerleave="VT4PointerLeave()" height="350px" width="400px"></a>
                             </div>
                             <div class="flags">
-                                 <img src="photos/chinaround.webp" alt="" height="45px" width="45px">
+                                 <img src="photos/chinaround.webp" alt=""
+                                  height="45px" width="45px">
                             </div>
                             <div class="name-tank">
                                 <span class="name">VT-4 (MBT-3000)</span>
@@ -301,11 +383,15 @@
                         </div>
                     </div>
 
+                    <!--K2 Card-->
+
                     <div class="swiper-slide card">
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <a href="K2/K2.html"><img src="photos/K2.jpg" alt="" height="350px" width="400px"></a>
+                                <a href="K2/K2.html"><img class="static_k2" src="photos/K2.jpg" alt=""
+                                    onpointerenter="K2PointerDown()"
+                                    onpointerleave="K2PointerLeave()" height="350px" width="400px"></a>
                             </div>
                             <div class="flags">
                                 <img src="photos/KoreaRound.png" alt="" height="45px" width="45px">
@@ -323,11 +409,15 @@
                         </div>
                     </div>
 
+                    <!--Sabra Card-->
+
                     <div class="swiper-slide card">
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <a href="TurkishMBT/M60TSabra.html"> <img src="photos/M60Sabra.jpg" alt="" height="350px" width="400px"></a>
+                                <a href="TurkishMBT/M60TSabra.html"> <img class="static_sabra" src="photos/M60Sabra.jpg" alt=""
+                                    onpointerenter="SabraPointerDown()"
+                                    onpointerleave="SabraPointerLeave()" height="350px" width="400px"></a>
                             </div>
                             <div class="flags">
                                 <img src="photos/TurkeyRound.webp" alt="" height="45px" width="45px">
@@ -345,11 +435,15 @@
                         </div>
                     </div>
 
+                    <!--Merkava Card-->
+
                     <div class="swiper-slide card">
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <a href="Merkava/Merkava.html"> <img src="photos/Merkava.jpg" alt="" height="350px" width="400px"></a>
+                                <a href="Merkava/Merkava.html"> <img class="static_merkava" src="photos/Merkava.jpg" alt=""
+                                    onpointerenter="MerkavaPointerDown()"
+                                    onpointerleave="MerkavaPointerLeave()" height="350px" width="400px"></a>
                             </div>
                             <div class="flags">
                                 <img src="photos/israelround.webp" alt="" height="45px" width="45px">
@@ -368,11 +462,15 @@
                         </div>
                     </div>
 
+                    <!--Type 10 Card-->
+
                     <div class="swiper-slide card">
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <a href="TKX/TKX.html"><img src="photos/Type10.jpg" alt="" height="350px" width="400px"></a>
+                                <a href="TKX/TKX.html"><img class="static_tkx" src="photos/Type10.jpg" alt=""
+                                    onpointerenter="TKXPointerDown()"
+                                    onpointerleave="TKXPointerLeave()" height="350px" width="400px"></a>
                             </div>
                             <div class="flags">
                                 <img src="photos/JapanRound.webp" alt="" height="45px" width="45px">
@@ -390,11 +488,15 @@
                         </div>
                     </div>
 
+                    <!--Ariete Card-->
+
                     <div class="swiper-slide card">
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                               <a href="Ariete/Ariete.html"><img src="photos/Ariete.jpg" alt="" height="350px" width="400px"></a>
+                               <a href="Ariete/Ariete.html"><img class="static_ariete" src="photos/Ariete.jpg" alt=""
+                                onpointerenter="ArietePointerDown()"
+                                onpointerleave="ArietePointerLeave()" height="350px" width="400px"></a>
                             </div>
                             <div class="flags">
                                 <img src="photos/ItalyRound.webp" alt="" height="45px" width="45px">
@@ -412,11 +514,15 @@
                         </div>
                     </div>
 
+                    <!--Karrar Card-->
+
                     <div class="swiper-slide card">
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <a href="Karrar/Karrar.html"><img src="photos/Karrar.jpg" alt="" height="350px" width="400px"></a>
+                                <a href="Karrar/Karrar.html"><img class="static_karrar" src="photos/Karrar.jpg" alt=""
+                                    onpointerenter="KarrarPointerDown()"
+                                    onpointerleave="KarrarPointerLeave()" height="350px" width="400px"></a>
                             </div>
                             <div class="flags">
                                 <img src="photos/iranround.webp" alt="" height="45px" width="45px">
@@ -434,11 +540,15 @@
                         </div>
                     </div>
 
+                    <!--Altay Card-->
+
                     <div class="swiper-slide card">
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <a href="TurkishMBT/Altay.html"> <img src="photos/Altay.jpg" alt="" height="350px" width="400px"></a>
+                                <a href="TurkishMBT/Altay.html"> <img class="static_altay" src="photos/Altay.jpg" alt=""
+                                    onpointerenter="AltayPointerDown()"
+                                    onpointerleave="AltayPointerLeave()" height="350px" width="400px"></a>
                             </div>
                             <div class="flags">
                                 <img src="photos/TurkeyRound.webp" alt="" height="45px" width="45px">
@@ -456,11 +566,15 @@
                         </div>
                     </div>
 
+                    <!--Armata Card-->
+
                     <div class="swiper-slide card">
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <a href="RussianMBT/T14.html"><img src="photos/Armata.jpg" alt="" height="350px" width="400px"></a>
+                                <a href="RussianMBT/T14.html"><img class="static_armata" src="photos/Armata.jpg" alt=""
+                                    onpointerenter="ArmataPointerDown()"
+                                    onpointerleave="ArmataPointerLeave()" height="350px" width="400px"></a>
                             </div>
                             <div class="flags">
                                  <img src="photos/RussiaRound1.webp" alt="" height="45px" width="45px">
@@ -479,11 +593,15 @@
                         </div>
                     </div>
 
+                    <!--Stridsvagn Card-->
+
                     <div class="swiper-slide card">
                         <div class="box3"></div>
                         <div class="card-content">
                             <div class="image">
-                                <a href="Strv/Strv.html"><img src="photos/STRV122.jpg" alt="" height="350px" width="400px"></a>
+                                <a href="Strv/Strv.html"><img class="static_strv" src="photos/STRV122.jpg" alt=""
+                                    onpointerenter="StrvPointerDown()"
+                                    onpointerleave="StrvPointerLeave()" height="350px" width="400px"></a>
                             </div>
                             <div class="flags">
                                 <img src="photos/swedenround.png" alt="" height="45px" width="45px">
