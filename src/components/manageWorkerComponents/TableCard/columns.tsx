@@ -115,7 +115,6 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
   {
     id: "role",
     accessorKey: "beforeRole",
-    accessorFn: (row) => `${row.role.name}`,
     header: "Eski Rol",
     cell: ({
       row: {
@@ -138,7 +137,6 @@ export const columns: ColumnDef<VoteEventsWithMembers>[] = [
   {
     id: "role",
     accessorKey: "role",
-    accessorFn: (row) => `${row.role.name}`,
     header: "Yeni Rol",
     cell: ({
       row: {
