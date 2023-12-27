@@ -7,7 +7,7 @@ import { getAbdullezizUser } from "~/server/discord-api/trpc";
 import { connectMembersWithIds } from "~/server/discord-api/utils";
 
 const PartialDiscordUser = z.object({
-  id: z.string().trim().nonempty().max(20),
+  id: z.string().trim().min(1).max(20),
 });
 
 export const profilesRouter = createTRPCRouter({
@@ -42,8 +42,6 @@ async function getUser(id: UserId) {
           forumPosts: true,
           forumThreads: true,
           listenedCrons: true,
-          paymentsRecieved: true,
-          paymentsSent: true, // includes salary-sent(each-user)
           ForumPin: true,
           teaConsumer: true,
         },

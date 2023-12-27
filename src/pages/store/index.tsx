@@ -24,6 +24,7 @@ type Checkout = {
   items: Array<[SystemEntity["id"], number]>;
   addItems: (items: Array<SystemEntity["id"]>) => void;
   removeItems: (item: Array<SystemEntity["id"]>) => void;
+  updateItem: (item: SystemEntity["id"], amount: number) => void;
 };
 
 const checkoutDefault = {
@@ -55,6 +56,18 @@ export const useCheckout = create<Checkout>()(
             set({ items: [...oldItems] });
           }
         });
+      },
+      updateItem: (id, amount) => {
+        const oldItems = get().items;
+        const item = oldItems.find((old) => {
+          return old[0] === id;
+        });
+        if (item) {
+          item[1] = amount;
+        } else {
+          oldItems.push([id, amount]);
+        }
+        set({ items: [...oldItems] });
       },
     }),
     { name: "store-checkout" }

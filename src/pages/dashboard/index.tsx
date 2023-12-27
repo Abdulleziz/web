@@ -6,7 +6,6 @@ import {
   DriveablePabel,
   MemberPanel,
   VoteChart,
-  HistoryPanel,
   CEOVotePanel,
 } from "~/components/panels";
 import { ProjectPanel } from "~/components/panels/ProjectPanel";
@@ -63,7 +62,7 @@ const Dashboard: NextPage = () => {
             </div>
           </div>
           <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            <Card className="flex items-center rounded-lg p-8 shadow">
+            <Card className="flex items-center gap-3 rounded-lg p-8 shadow">
               <Users className="h-16 w-16" />
               <div>
                 <span className="block text-2xl font-bold">
@@ -82,8 +81,8 @@ const Dashboard: NextPage = () => {
               <Panel key={i} />
             ))}
           </section>
-          <section className="grid gap-6 md:grid-cols-2 xl:grid-flow-col xl:grid-cols-4 xl:grid-rows-3">
-            <Card className="flex flex-col rounded-lg shadow md:col-span-2 md:row-span-2">
+          <section className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-flow-col xl:grid-cols-4 xl:grid-rows-3">
+            <Card className=" col-span-1 rounded-lg shadow md:col-span-2 md:row-span-2">
               <div className="border-b border-gray-100 px-6 py-5 font-semibold">
                 Oylar!
               </div>
@@ -91,7 +90,7 @@ const Dashboard: NextPage = () => {
                 <VoteChart />
               </div>
             </Card>
-            <HistoryPanel />
+            {/* <HistoryPanel /> */}
           </section>
         </main>
       </div>

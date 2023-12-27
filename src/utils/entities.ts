@@ -1,9 +1,13 @@
 import { z } from "zod";
 import { DiscordId } from "./zod-utils";
+import { TransferMoney } from "./shared";
 
 const SystemEntityBase = z.object({
-  id: z.number().positive().int().min(1),
-  price: z.number().positive().int().min(1),
+  id: z.number().positive().int(),
+  price: z.union([
+    TransferMoney,
+    z.array(z.object({ until: z.date(), value: TransferMoney })).min(1),
+  ]),
   image: z.string().url().optional(),
 });
 
@@ -39,7 +43,8 @@ export const SystemEntity = z.discriminatedUnion("type", [
     }),
   }),
 ]);
-export type SystemEntity = z.infer<typeof SystemEntity>;
+export type SystemEntityInput = z.infer<typeof SystemEntity>;
+export type SystemEntity = z.output<typeof SE>[number];
 export type Tea = Extract<SystemEntity, { type: "tea" }>["tea"];
 export type Car = Extract<SystemEntity, { type: "car" }>["car"];
 export type Phone = Extract<SystemEntity, { type: "phone" }>["phone"];
@@ -50,9 +55,21 @@ const SE = z.array(SystemEntity).transform((t) => {
   if (new Set(ids).size !== ids.length)
     throw new Error("SystemEntities array contains duplicate ids");
 
-  return t;
+  return t.map((entity) => {
+    const price =
+      typeof entity.price === "number"
+        ? entity.price
+        : entity.price
+            .filter((p) => p.until <= new Date()) // ignore future prices
+            .sort((a, b) => b.until.getTime() - a.until.getTime())[0]?.value; // get latest price
+
+    if (!price) throw new Error("SystemEntity price not found");
+    return { ...entity, price };
+  });
 });
 type SE = z.infer<typeof SE>;
+
+const start = new Date("2021");
 
 export const SystemEntitiesUrl =
   "https://github.com/Abdulleziz/web/tree/main/src/utils/entities.ts#L49";
@@ -133,11 +150,15 @@ export const SystemEntities = SE.parse([
       name: "Barkin",
       surname: "Balci",
     },
-    price: 9999,
+    price: [
+      { until: start, value: 9999 },
+      { until: new Date("2023-12-22"), value: 1 },
+      { until: new Date("2023-12-23"), value: 9999 },
+    ],
     image:
       "https://uploadthing.com/f/5bf7445a-c410-4867-8e5e-43f0905a9d0a-n39zc3.jpg",
   },
-] satisfies SE);
+] satisfies SystemEntityInput[]);
 
 export function getSystemEntityById(id: number): SystemEntity {
   const entity = SystemEntities.find((e) => e.id === id);

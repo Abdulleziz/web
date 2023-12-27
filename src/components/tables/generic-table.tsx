@@ -32,24 +32,30 @@ import {
   SelectValue,
 } from "../ui/select";
 import { useMemo, useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, XIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { DataTableFacetedFilter } from "./components/generic-table-option";
+import { DataTableFilter } from "./components/table-date-selector";
 
 interface DataTableProps<TData, TValue> {
+  //TODO: Subrow support
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   pagination?: boolean;
-  inputFilter?: string;
+  inputFilter?: { columnToFilter: string; title: string };
   columnFilter?: [
     {
+      title: string;
       columnToFilter: string;
+      icon?: React.ReactNode;
       options: {
         label: string;
         value: string;
       }[];
     }
   ];
+  datePicker?: { columnToFilter: string; title: string };
 }
 
 export function DataTable<TData, TValue>({
@@ -58,6 +64,7 @@ export function DataTable<TData, TValue>({
   pagination = false,
   inputFilter,
   columnFilter,
+  datePicker,
 }: DataTableProps<TData, TValue>) {
   const [pageSize, setPageSize] = useState(10);
   const [rowSelection, setRowSelection] = useState({});
@@ -90,28 +97,59 @@ export function DataTable<TData, TValue>({
     () => new Array<number>(Math.ceil(data.length / pageSize)).fill(0),
     [data.length, pageSize]
   );
-
+  const isFiltered = table.getState().columnFilters.length > 0;
   const onPageUp = () => {
     table.setPageIndex(pageIndex + 1);
   };
   const onPageDown = () => {
     table.setPageIndex(pageIndex - 1);
   };
-
   return (
     <div className="min-w-max rounded-md border">
       <div className=" flex flex-row items-start justify-start gap-3 p-3">
         {inputFilter && (
           <Input
-            placeholder={`Filter for ${inputFilter}`}
+            placeholder={`${inputFilter.title} için arama yap`}
             value={
-              (table.getColumn(inputFilter)?.getFilterValue() as string) ?? ""
+              (table
+                .getColumn(inputFilter.columnToFilter)
+                ?.getFilterValue() as string) ?? ""
             }
             onChange={(event) => {
-              table.getColumn(inputFilter)?.setFilterValue(event.target.value);
+              table
+                .getColumn(inputFilter.columnToFilter)
+                ?.setFilterValue(event.target.value);
             }}
-            className="h-8 w-[150px] lg:w-[250px]"
+            className=" w-[150px] lg:w-[250px]"
           />
+        )}
+        {columnFilter &&
+          columnFilter.map((a) => {
+            return (
+              <DataTableFacetedFilter
+                options={a.options}
+                title={a.title}
+                icon={a.icon}
+                column={table.getColumn(a.columnToFilter)}
+                key={a.columnToFilter}
+              />
+            );
+          })}
+        {datePicker && (
+          <DataTableFilter
+            column={table.getColumn(datePicker.columnToFilter)}
+            title={datePicker.title}
+          />
+        )}
+        {isFiltered && (
+          <Button
+            variant="ghost"
+            onClick={() => table.resetColumnFilters()}
+            className="px-2 lg:px-3"
+          >
+            Reset
+            <XIcon />
+          </Button>
         )}
       </div>
       <Table>
