@@ -26,14 +26,12 @@ const ForumWelcome: React.FC = () => {
             Abdulleziz Forumuna Hoş Geldin!
           </h1>
         </div>
-        <div className="navbar-end">
-          <Link
-            href="/forum/threads/new"
-            className="mr-7 p-2 font-semibold transition-all hover:scale-110"
-          >
-            <div className="flex gap-4">
-              <Button size="relative-lg">Yeni Thread</Button>
-            </div>
+        <div className="navbar-end flex flex-row gap-3">
+          <Link href="/forum/memes">
+            <Button>Sözlüğe Git</Button>
+          </Link>
+          <Link href="/forum/threads/new">
+            <Button>Yeni Thread</Button>
           </Link>
         </div>
       </div>

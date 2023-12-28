@@ -4,7 +4,7 @@ import { api, type RouterOutputs, type RouterInputs } from "./api";
 type GetPosts = RouterInputs["forum"]["posts"]["getMany"];
 
 type Threads = RouterOutputs["forum"]["getThreads"];
-
+export type Meme = RouterOutputs["forum"]["memes"]["getMemes"][number]
 export const usePrefetchThreads = () => {
   const utils = api.useContext();
 
@@ -211,6 +211,25 @@ export const useCreateForumPost = () => {
     onError(error) {
       toast.error(error.data?.zodError || error.message, {
         id: "forum.createPost",
+      });
+    },
+  });
+};
+
+export const useInsertMeme = () => {
+  const utils = api.useContext();
+  return api.forum.memes.insertMeme.useMutation({
+    onSuccess: async () => {
+      toast.success("Kelime Eklendi/Düzenlendi!", { id: "meme.insertMeme" });
+      // invalidate the thread so it's not listed anymore
+      await utils.forum.memes.getMemes.invalidate();
+    },
+    onMutate: () => {
+      toast.loading("Kelime Düzenleniyor...", { id: "meme.insertMeme" });
+    },
+    onError(error) {
+      toast.error(error.data?.zodError || error.message, {
+        id: "meme.insertMeme",
       });
     },
   });
