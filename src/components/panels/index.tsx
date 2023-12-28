@@ -44,20 +44,11 @@ import {
   Drawer,
   DrawerClose,
   DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from "../ui/drawer";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
 import {
   Select,
   SelectContent,
@@ -65,7 +56,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { DialogClose } from "@radix-ui/react-dialog";
+import ResponsivePopup from "../ResponsivePopup";
 
 ChartJS.register(
   RadialLinearScale,
@@ -225,12 +216,12 @@ export const CEOVotePanel = createPanel(undefined, () => {
     useGetAbdullezizUsersSorted();
   const members = abdullezizUsers ?? [];
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const [open, setOpen] = useState(false);
   const [isVotesOpen, setIsVotesOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<string>("");
   const voteCEO = useVoteCEO();
 
   if (!data || isLoading) return <></>;
+
   return (
     <Card className="flex flex-col md:col-span-2">
       {
@@ -387,106 +378,44 @@ export const CEOVotePanel = createPanel(undefined, () => {
                   </Drawer>
                 )}
 
-                {isDesktop ? (
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button>Oy Ver</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>CEO oyu ver</DialogTitle>
-                        <DialogDescription>
-                          CEO olmasını istediğin Abdulleziz çalışanını seç!
-                        </DialogDescription>
-                      </DialogHeader>
-                      <Select
-                        onValueChange={(value) => {
-                          setSelectedMember(value);
-                        }}
-                      >
-                        <SelectTrigger disabled={isAbdullezizUsersLoading}>
-                          <SelectValue placeholder="Abdulleziz Çalışanları" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {members.map((member) => {
-                            return (
-                              <SelectItem
-                                key={member.user.id}
-                                value={member.user.id}
-                              >
-                                {formatName(member)}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                      <DialogClose asChild>
-                        <Button
-                          disabled={
-                            voteCEO.isLoading || selectedMember.length < 1
-                          }
-                          isLoading={voteCEO.isLoading}
-                          onClick={() => {
-                            voteCEO.mutate(selectedMember);
-                          }}
-                        >
-                          Onayla
-                        </Button>
-                      </DialogClose>
-                    </DialogContent>
-                  </Dialog>
-                ) : (
-                  <Drawer open={open} onOpenChange={setOpen}>
-                    <DrawerTrigger asChild>
-                      <Button>Oy Ver!</Button>
-                    </DrawerTrigger>
-                    <DrawerContent className="p-4">
-                      <DrawerHeader>
-                        <DrawerTitle>CEO oyu ver</DrawerTitle>
-                        <DrawerDescription>
-                          CEO olmasını istediğin Abdulleziz çalışanını seç!
-                        </DrawerDescription>
-                      </DrawerHeader>
-                      <Select
-                        onValueChange={(value) => {
-                          setSelectedMember(value);
-                        }}
-                      >
-                        <SelectTrigger disabled={isAbdullezizUsersLoading}>
-                          <SelectValue placeholder="Abdulleziz Çalışanları" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {members.map((member) => {
-                            return (
-                              <SelectItem
-                                key={member.user.id}
-                                value={member.user.id}
-                              >
-                                {formatName(member)}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                      <DrawerFooter className="pt-2">
-                        <Button
-                          disabled={
-                            voteCEO.isLoading || selectedMember.length < 1
-                          }
-                          isLoading={voteCEO.isLoading}
-                          onClick={() => {
-                            voteCEO.mutate(selectedMember);
-                          }}
-                        >
-                          Onayla
-                        </Button>
-                        <DrawerClose asChild>
-                          <Button variant="outline">Kapat</Button>
-                        </DrawerClose>
-                      </DrawerFooter>
-                    </DrawerContent>
-                  </Drawer>
-                )}
+                <ResponsivePopup
+                  triggerButtonName="Oylar"
+                  headerTitle="CEO oyu ver!"
+                  headerDesc="CEO olmasını istediğin Abduleziz çalışanını seç!"
+                  dialogFooter={
+                    <Button
+                      disabled={voteCEO.isLoading || selectedMember.length < 1}
+                      isLoading={voteCEO.isLoading}
+                      onClick={() => {
+                        voteCEO.mutate(selectedMember);
+                      }}
+                    >
+                      Onayla
+                    </Button>
+                  }
+                >
+                  <Select
+                    onValueChange={(value) => {
+                      setSelectedMember(value);
+                    }}
+                  >
+                    <SelectTrigger disabled={isAbdullezizUsersLoading}>
+                      <SelectValue placeholder="Abdulleziz Çalışanları" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {members.map((member) => {
+                        return (
+                          <SelectItem
+                            key={member.user.id}
+                            value={member.user.id}
+                          >
+                            {formatName(member)}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </ResponsivePopup>
               </div>
             </CardContent>
           </>
