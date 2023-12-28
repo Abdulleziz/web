@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { AbdullezizUser } from "~/components/AbdullezizUser";
 import { Button } from "~/components/ui/button";
 import {
@@ -16,16 +17,17 @@ const tokenRegex = new RegExp(
 
 export function tokenize(content: string, memes: string[] = []) {
   const result = [];
-  const memesRegex = new RegExp(memes.join("|"), "gi");
+  const memesRegex =
+    memes.length > 1 ? new RegExp(memes.join("|"), "gi") : undefined;
   // use memesRegex first and then use tokenRegex
-  const regex = new RegExp(
-    `(${memesRegex.source})|(${tokenRegex.source})`,
-    "gi"
-  );
+  const regex = !!memesRegex
+    ? new RegExp(`(${memesRegex.source})|(${tokenRegex.source})`, "gi")
+    : tokenRegex;
+
   const tokens = content.match(regex);
   if (!tokens) throw new Error("no tokens found in tokenize()!");
   for (const token of tokens) {
-    if (memes.length && token.match(memesRegex)) {
+    if (memesRegex && token.match(memesRegex)) {
       const matches = [...token.matchAll(memesRegex)];
 
       for (let i = 0; i < matches.length; i++) {
@@ -58,7 +60,7 @@ export function tokenize(content: string, memes: string[] = []) {
     } else if (token.match(urlRegex)) {
       // external if url does not match https://uploadthing.com/f/1621a05b-23cc-4cc5-85cb-c5b7757facdf-wpvi0o.jpg
       const data = { type: "url" as const, content: token } as const;
-      const cdn = !token.match(/https:\/\/uploadthing.com\/f\/[a-z0-9-]+/);
+      const cdn = token.match(/https:\/\/uploadthing.com\/f\/[a-z0-9-]+/);
       if (!cdn) result.push({ ...data, cdn });
       else {
         const fileKey = token.split("/").pop();
@@ -91,18 +93,20 @@ const extractUrl = (token: Token & { type: "url" }, key: number) => {
     throw new Error("This should never happen, but typescript is dumb");
   const url = match[0];
   const ext = url.split(".").pop();
-  if (ext === "jpg" || ext === "jpeg" || ext === "png" || ext === "gif")
+  if (ext === "jpg" || ext === "jpeg" || ext === "png" || ext === "gif") {
+    // TODO: + discord cdn
+    const Element = token.cdn ? Image : "img";
     return (
-      // TODO: if not external, use <Link />
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
+      <Element
         className="max-h-[10rem] max-w-[10rem] sm:max-h-[15rem] sm:max-w-[15rem] md:max-h-[20rem] md:max-w-[20rem]"
         key={key}
         src={url}
+        width={1024}
+        height={1024}
         alt="image"
       />
     );
-  else if (ext === "mp4" || ext === "webm" || ext === "ogg")
+  } else if (ext === "mp4" || ext === "webm" || ext === "ogg")
     return (
       <video
         className="max-h-[10rem] max-w-[10rem] sm:max-h-[15rem] sm:max-w-[15rem] md:max-h-[20rem] md:max-w-[20rem]"
@@ -191,4 +195,20 @@ export const tokenizePostContent = (
     } else tokens.push(token.content);
   });
   return tokens;
+};
+
+export const notificationMessage = (
+  content: string,
+  options?: { slice?: number }
+) => {
+  let displayMessage = "";
+
+  tokenize(content).forEach((lexem) => {
+    if (lexem.type === "url")
+      if (lexem.cdn) displayMessage += "🔗 Fotoğraf";
+      else displayMessage += "🔗 Ek";
+    else displayMessage += lexem.content;
+  });
+
+  return displayMessage.trim().slice(0, options?.slice ?? 200);
 };

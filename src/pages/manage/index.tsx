@@ -138,7 +138,7 @@ const Manage: NextPage = () => {
                   data={events}
                   columns={columns}
                   pagination
-                  inputFilter="role"
+                  inputFilter={{ columnToFilter: "role", title: "Rol" }}
                 />
               </div>
             </CardContent>

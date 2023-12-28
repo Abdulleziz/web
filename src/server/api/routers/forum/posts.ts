@@ -10,6 +10,7 @@ import {
 import { UserId } from "~/utils/zod-utils";
 import { getForumNotificationListeners } from "./trpc";
 import { PostId, ThreadId, ThreadMessage } from "./types";
+import { notificationMessage } from "~/utils/forumThread";
 
 export const forumPostsRouter = createTRPCRouter({
   getMany: protectedProcedure
@@ -83,7 +84,10 @@ export const forumPostsRouter = createTRPCRouter({
         notifyUsers,
         {
           title: `Yeni Mesaj: ${post.thread.title.slice(0, 50)}`,
-          body: `${ctx.session.user.name ?? ""}: ${message.slice(0, 100)}`,
+          body: notificationMessage(
+            `${ctx.session.user.name ?? ""}: ${message}`,
+            { slice: 130 }
+          ),
           tag: `new-thread-post-${post.id}`,
           icon: ctx.session.user.image ?? undefined,
           actions: [{ action: `/forum/threads/${threadId}`, title: "Git" }],
