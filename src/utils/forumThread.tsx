@@ -193,3 +193,17 @@ export const tokenizePostContent = (
   });
   return tokens;
 };
+
+export const notificationMessage = (
+  content: string,
+  options?: { slice?: number }
+) => {
+  let displayMessage = "";
+
+  tokenize(content).forEach((lexem) => {
+    if (lexem.type === "url" && lexem.cdn) displayMessage += "🔗 Fotoğraf";
+    else displayMessage += lexem.content;
+  });
+
+  return displayMessage.trim().slice(0, options?.slice ?? 200);
+};

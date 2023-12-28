@@ -12,7 +12,7 @@ import { forumNotificationsRouter } from "./notifications";
 import { forumPostsRouter } from "./posts";
 import { getForumNotificationListeners } from "./trpc";
 import { ThreadId, ThreadMessage, ThreadTag, ThreadTitle } from "./types";
-import { tokenize } from "~/utils/forumThread";
+import { notificationMessage, tokenize } from "~/utils/forumThread";
 import { utapi } from "uploadthing/server";
 import { forumMemesRouter } from "./memes";
 
@@ -128,7 +128,10 @@ export const forumRouter = createTRPCRouter({
           notifyUsers,
           {
             title: `Yeni Thread: ${title.slice(0, 50)}`,
-            body: `${ctx.session.user.name ?? ""}: ${message.slice(0, 100)}`,
+            body: notificationMessage(
+              `${ctx.session.user.name ?? ""}: ${message}`,
+              { slice: 130 }
+            ),
             tag: `new-thread-${thread.id}`,
             icon: ctx.session.user.image ?? undefined,
             actions: [{ action: `/forum/threads/${thread.id}`, title: "Git" }],
