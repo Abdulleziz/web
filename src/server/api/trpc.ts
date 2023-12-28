@@ -204,12 +204,12 @@ const enforceIsInternal = t.middleware(async ({ ctx, next }) => {
 
   const context = user
     ? {
-        ...ctx,
-        session: {
-          user: { ...user, discordId, inAbdullezizServer: true },
-          expires: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
-        } satisfies Session,
-      }
+      ...ctx,
+      session: {
+        user: { ...user, discordId, inAbdullezizServer: true },
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
+      } satisfies Session,
+    }
     : { ...ctx, session: null, internalDiscordId: discordId };
 
   return next({ ctx: context });
@@ -233,7 +233,7 @@ import { getGuildMemberWithRoles } from "../discord-api/trpc";
 import { type PushSubscription } from "@prisma/client";
 
 export const createPermissionProcedure = (requiredPerms: AbdullezizPerm[]) =>
-  t.procedure.use(
+  internalProcedure.use(
     enforceUserIsAuthed.unstable_pipe(async ({ ctx, next }) => {
       const member = await getGuildMemberWithRoles(ctx.session.user.discordId);
       const verifiedRoles = getAbdullezizRoles(member.roles);
