@@ -17,7 +17,6 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { type Meme, useInsertMeme } from "~/utils/useForum";
-import { useMediaQuery } from "@uidotdev/usehooks";
 import { useState } from "react";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { Input } from "../ui/input";
@@ -30,16 +29,17 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "../ui/drawer";
+import useDevice from "~/hooks/useDevice";
 
 const ActionMenu = (Props: { memeName: string; memeDesc: string }) => {
   const [open, setOpen] = useState(false);
   const [Description, setDescription] = useState(Props.memeDesc);
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const { isDesktop } = useDevice();
   const insertMeme = useInsertMeme();
 
-  if (!isDesktop) {
+  if (isDesktop) {
     return (
-      <Drawer open={open} onOpenChange={setOpen}>
+      <Dialog>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -49,28 +49,26 @@ const ActionMenu = (Props: { memeName: string; memeDesc: string }) => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DrawerTrigger asChild>
+            <DialogTrigger asChild>
               <DropdownMenuItem>Düzenle</DropdownMenuItem>
-            </DrawerTrigger>
+            </DialogTrigger>
           </DropdownMenuContent>
         </DropdownMenu>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Düzenle</DrawerTitle>
-          </DrawerHeader>
-          <div className="flex flex-col items-center justify-center gap-3 p-4">
-            <Input value={Props.memeName} disabled />
-            <Input
-              defaultValue={Props.memeDesc}
-              disabled={insertMeme.isLoading}
-              onChange={(event) => {
-                setDescription(event.target.value);
-              }}
-              value={Description}
-            />
-          </div>
-          <DrawerFooter>
-            <DrawerClose asChild>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Düzenle</DialogTitle>
+          </DialogHeader>
+          <Input value={Props.memeName} disabled />
+          <Input
+            defaultValue={Props.memeDesc}
+            disabled={insertMeme.isLoading}
+            onChange={(event) => {
+              setDescription(event.target.value);
+            }}
+            value={Description}
+          />
+          <DialogFooter>
+            <DialogClose asChild>
               <Button
                 onClick={() =>
                   insertMeme.mutate({
@@ -83,17 +81,18 @@ const ActionMenu = (Props: { memeName: string; memeDesc: string }) => {
               >
                 Onayla
               </Button>
-            </DrawerClose>
-            <DrawerClose asChild>
+            </DialogClose>
+
+            <DialogClose asChild>
               <Button variant={"outline"}>Kapat</Button>
-            </DrawerClose>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     );
   }
   return (
-    <Dialog>
+    <Drawer open={open} onOpenChange={setOpen}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -103,26 +102,28 @@ const ActionMenu = (Props: { memeName: string; memeDesc: string }) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DialogTrigger asChild>
+          <DrawerTrigger asChild>
             <DropdownMenuItem>Düzenle</DropdownMenuItem>
-          </DialogTrigger>
+          </DrawerTrigger>
         </DropdownMenuContent>
       </DropdownMenu>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Düzenle</DialogTitle>
-        </DialogHeader>
-        <Input value={Props.memeName} disabled />
-        <Input
-          defaultValue={Props.memeDesc}
-          disabled={insertMeme.isLoading}
-          onChange={(event) => {
-            setDescription(event.target.value);
-          }}
-          value={Description}
-        />
-        <DialogFooter>
-          <DialogClose asChild>
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle>Düzenle</DrawerTitle>
+        </DrawerHeader>
+        <div className="flex flex-col items-center justify-center gap-3 p-4">
+          <Input value={Props.memeName} disabled />
+          <Input
+            defaultValue={Props.memeDesc}
+            disabled={insertMeme.isLoading}
+            onChange={(event) => {
+              setDescription(event.target.value);
+            }}
+            value={Description}
+          />
+        </div>
+        <DrawerFooter>
+          <DrawerClose asChild>
             <Button
               onClick={() =>
                 insertMeme.mutate({
@@ -135,14 +136,13 @@ const ActionMenu = (Props: { memeName: string; memeDesc: string }) => {
             >
               Onayla
             </Button>
-          </DialogClose>
-
-          <DialogClose asChild>
+          </DrawerClose>
+          <DrawerClose asChild>
             <Button variant={"outline"}>Kapat</Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </DrawerClose>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 };
 

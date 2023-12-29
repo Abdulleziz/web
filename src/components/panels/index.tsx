@@ -39,7 +39,6 @@ import { Button } from "../ui/button";
 import { useMoneyDialog } from "../SendMoney";
 import { AbdullezizUser } from "../AbdullezizUser";
 import { MoveRightIcon } from "lucide-react";
-import { useMediaQuery } from "@uidotdev/usehooks";
 import {
   Drawer,
   DrawerClose,
@@ -57,6 +56,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import ResponsivePopup from "../ResponsivePopup";
+import useDevice from "~/hooks/useDevice";
 
 ChartJS.register(
   RadialLinearScale,
@@ -215,7 +215,7 @@ export const CEOVotePanel = createPanel(undefined, () => {
   const { data: abdullezizUsers, isLoading: isAbdullezizUsersLoading } =
     useGetAbdullezizUsersSorted();
   const members = abdullezizUsers ?? [];
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const { isDesktop } = useDevice();
   const [isVotesOpen, setIsVotesOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<string>("");
   const voteCEO = useVoteCEO();

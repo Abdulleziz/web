@@ -10,7 +10,7 @@ import { Input } from "~/components/ui/input";
 import { api } from "~/utils/api";
 import { useInsertMeme } from "~/utils/useForum";
 
-const Dictionary: NextPage = () => {
+const Memes: NextPage = () => {
   const [Name, setName] = useState<string>("");
   const [Desc, setDesc] = useState<string>("");
   const memes = api.forum.memes.getMemes.useQuery().data ?? [];
@@ -54,16 +54,20 @@ const Dictionary: NextPage = () => {
           </ResponsivePopup>
         </CardHeader>
         <CardContent className="max-h-screen overflow-x-scroll font-semibold 2xl:overflow-x-hidden">
-          <DataTable
-            data={memes}
-            columns={columns}
-            pagination
-            inputFilter={{ columnToFilter: "name", title: "Kelime" }}
-          />
+          {memes ? (
+            <DataTable
+              data={memes}
+              columns={columns}
+              pagination
+              inputFilter={{ columnToFilter: "name", title: "Kelime" }}
+            />
+          ) : (
+            <p>No Data!</p>
+          )}
         </CardContent>
       </Card>
     </Layout>
   );
 };
 
-export default Dictionary;
+export default Memes;

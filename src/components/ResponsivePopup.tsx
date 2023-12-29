@@ -1,5 +1,9 @@
-import { useMediaQuery } from "@uidotdev/usehooks";
-import { type FC, type PropsWithChildren, useState,type ReactNode } from "react";
+import {
+  type FC,
+  type PropsWithChildren,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +25,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "./ui/drawer";
+import useDevice from "~/hooks/useDevice";
 
 type ResponsiveProps = PropsWithChildren<{
   triggerButtonName: string;
@@ -36,7 +41,7 @@ const ResponsivePopup: FC<ResponsiveProps> = ({
   headerDesc,
   dialogFooter,
 }) => {
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const { isDesktop } = useDevice();
   const [open, setOpen] = useState(false);
 
   if (isDesktop) {
