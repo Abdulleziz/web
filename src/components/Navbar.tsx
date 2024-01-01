@@ -170,12 +170,12 @@ export const Navbar: React.FC = () => {
                 <DropdownMenuLabel>Hesabım</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem asChild>
                     <Link href={`/profiles/${session.user.id}`}>
+                      <User className="mr-2 h-4 w-4" />
                       <span>Profil</span>
+                      <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
                     </Link>
-                    <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => openMoneyDialog()}>
                     <Wallet className="mr-2 h-4 w-4" />
