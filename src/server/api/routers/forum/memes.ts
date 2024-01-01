@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../../trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "../../trpc";
 import { nonEmptyString } from "~/utils/zod-utils";
 import { TRPCError } from "@trpc/server";
 import { MemeId } from "./types";
@@ -10,6 +14,12 @@ const Meme = z.object({
 });
 
 export const forumMemesRouter = createTRPCRouter({
+  random: publicProcedure.query(async ({ ctx }) => {
+    const count = await ctx.prisma.dictionaryMeme.count();
+    return await ctx.prisma.dictionaryMeme.findFirst({
+      skip: Math.floor(Math.random() * count),
+    });
+  }),
   getMemes: protectedProcedure.query(async ({ ctx }) => {
     return await ctx.prisma.dictionaryMeme.findMany({ take: 200 });
   }),
