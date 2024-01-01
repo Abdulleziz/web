@@ -234,3 +234,21 @@ export const useInsertMeme = () => {
     },
   });
 };
+
+export const useDeleteMeme = () => {
+  const utils = api.useContext();
+  return api.forum.memes.deleteMeme.useMutation({
+    onSuccess: async () => {
+      toast.success("Kelime Silindi!", { id: "meme.deleteMeme" });
+      await utils.forum.memes.getMemes.invalidate();
+    },
+    onMutate: () => {
+      toast.loading("Kelime Siliniyor...", { id: "meme.deleteMeme" });
+    },
+    onError(error) {
+      toast.error(error.data?.zodError || error.message, {
+        id: "meme.deleteMeme",
+      });
+    },
+  });
+};

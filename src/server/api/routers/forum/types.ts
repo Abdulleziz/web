@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const ThreadId = z.string().cuid();
 export const PostId = z.string().cuid();
+export const MemeId = z.string().cuid();
 
 export const ThreadTitle = z
   .string({ required_error: "Thread başlığı boş olamaz" })
@@ -26,3 +27,4 @@ export type ThreadMessage = z.infer<typeof ThreadMessage>;
 export type ThreadTag = z.infer<typeof ThreadTag>;
 export type ThreadId = z.infer<typeof ThreadId>;
 export type PostId = z.infer<typeof PostId>;
+export type MemeId = z.infer<typeof MemeId>;

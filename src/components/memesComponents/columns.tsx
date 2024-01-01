@@ -16,7 +16,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { type Meme, useInsertMeme } from "~/utils/useForum";
+import { type Meme, useInsertMeme, useDeleteMeme } from "~/utils/useForum";
 import { useState } from "react";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { Input } from "../ui/input";
@@ -31,49 +31,56 @@ import {
 } from "../ui/drawer";
 import useDevice from "~/hooks/useDevice";
 
-const ActionMenu = (Props: { memeName: string; memeDesc: string }) => {
+const ActionMenu = ({ meme }: { meme: Meme }) => {
   const [open, setOpen] = useState(false);
-  const [Description, setDescription] = useState(Props.memeDesc);
+  const [newDescription, setDescription] = useState(meme.description);
   const { isDesktop } = useDevice();
   const insertMeme = useInsertMeme();
+  const deleteMeme = useDeleteMeme();
 
   if (isDesktop) {
     return (
       <Dialog>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="ghost">
               <span className="sr-only">Open menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuLabel>Eylemler</DropdownMenuLabel>
             <DialogTrigger asChild>
               <DropdownMenuItem>Düzenle</DropdownMenuItem>
             </DialogTrigger>
+            <DropdownMenuItem
+              onClick={() => deleteMeme.mutate(meme.id)}
+              // isLoading={deleteMeme.isLoading}
+              disabled={deleteMeme.isLoading}
+            >
+              Sil
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Düzenle</DialogTitle>
           </DialogHeader>
-          <Input value={Props.memeName} disabled />
+          <Input value={meme.name} disabled />
           <Input
-            defaultValue={Props.memeDesc}
             disabled={insertMeme.isLoading}
             onChange={(event) => {
               setDescription(event.target.value);
             }}
-            value={Description}
+            value={newDescription}
           />
           <DialogFooter>
             <DialogClose asChild>
               <Button
                 onClick={() =>
                   insertMeme.mutate({
-                    name: Props.memeName,
-                    description: Description,
+                    name: meme.name,
+                    description: newDescription,
                   })
                 }
                 isLoading={insertMeme.isLoading}
@@ -101,10 +108,17 @@ const ActionMenu = (Props: { memeName: string; memeDesc: string }) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuLabel>Eylemler</DropdownMenuLabel>
           <DrawerTrigger asChild>
             <DropdownMenuItem>Düzenle</DropdownMenuItem>
           </DrawerTrigger>
+          <DropdownMenuItem
+            onClick={() => deleteMeme.mutate(meme.id)}
+            // isLoading={deleteMeme.isLoading}
+            disabled={deleteMeme.isLoading}
+          >
+            Sil
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <DrawerContent>
@@ -112,14 +126,13 @@ const ActionMenu = (Props: { memeName: string; memeDesc: string }) => {
           <DrawerTitle>Düzenle</DrawerTitle>
         </DrawerHeader>
         <div className="flex flex-col items-center justify-center gap-3 p-4">
-          <Input value={Props.memeName} disabled />
+          <Input value={meme.name} disabled />
           <Input
-            defaultValue={Props.memeDesc}
             disabled={insertMeme.isLoading}
             onChange={(event) => {
               setDescription(event.target.value);
             }}
-            value={Description}
+            value={newDescription}
           />
         </div>
         <DrawerFooter>
@@ -127,8 +140,8 @@ const ActionMenu = (Props: { memeName: string; memeDesc: string }) => {
             <Button
               onClick={() =>
                 insertMeme.mutate({
-                  name: Props.memeName,
-                  description: Description,
+                  name: meme.name,
+                  description: newDescription,
                 })
               }
               isLoading={insertMeme.isLoading}
@@ -149,12 +162,8 @@ const ActionMenu = (Props: { memeName: string; memeDesc: string }) => {
 export const columns: ColumnDef<Meme>[] = [
   {
     id: "actions",
-    cell: ({
-      row: {
-        original: { name, description },
-      },
-    }) => {
-      return <ActionMenu memeName={name} memeDesc={description} />;
+    cell: ({ row: { original } }) => {
+      return <ActionMenu meme={original} />;
     },
   },
   {
