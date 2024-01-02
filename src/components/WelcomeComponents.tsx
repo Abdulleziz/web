@@ -9,7 +9,7 @@ export const WelcomeComponent: React.FC = () => {
     <div className="flex flex-col items-center justify-center gap-12 py-20">
       <div
         className="cursor-default transition-all hover:rotate-2 hover:scale-125"
-        onClick={() => message.refetch()}
+        onClick={() => void message.refetch()}
       >
         <h1 className="bg-gradient-to-r from-[#95FFFF] via-[#9C99FF] to-[#FD5DAD] bg-clip-text text-5xl font-extrabold tracking-tight text-transparent sm:text-[5rem]">
           Abdulleziz Corp.
