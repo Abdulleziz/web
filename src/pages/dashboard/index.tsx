@@ -19,6 +19,7 @@ import { LoadingDashboard } from "~/components/LoadingDashboard";
 import { type AbdullezizPerm } from "~/utils/abdulleziz";
 import { Users } from "lucide-react";
 import { Card } from "~/components/ui/card";
+import { HistoryPanel } from "~/components/panels/HistoryPanel";
 
 const Dashboard: NextPage = () => {
   const { data: session } = useSession();
@@ -90,7 +91,7 @@ const Dashboard: NextPage = () => {
                 <VoteChart />
               </div>
             </Card>
-            {/* <HistoryPanel /> */}
+            <HistoryPanel />
           </section>
         </main>
       </div>
