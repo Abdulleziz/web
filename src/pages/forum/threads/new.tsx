@@ -132,7 +132,17 @@ const CreateThread: NextPage = () => {
           </MentionsInput>
 
           <div className=" flex flex-row items-center justify-center gap-3">
-            <Checkbox id="terms1" />
+            <Checkbox
+              id="terms1"
+              checked={
+                hydrated
+                  ? notifyStore.notify
+                  : createThreadOptionsDefault.notify
+              }
+              onCheckedChange={(checked: boolean) =>
+                notifyStore.setNotify(checked)
+              }
+            />
             <div className="flex flex-col items-start">
               <label
                 htmlFor="terms1"
