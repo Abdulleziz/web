@@ -17,10 +17,10 @@ export const ProjectPanel = createPanel(undefined, () => {
         <CardTitle>Projeler</CardTitle>
         <CardDescription>Abdulleziz çalışanlarının projeleri</CardDescription>
         <CardContent>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="flex items-center justify-center flex-col gap-4 p-4">
             {PROJECTS.map((project) => (
               <Link key={project.name} href={`/projects/${project.name}`}>
-                <Button>{project.title}</Button>
+                <Button size={"sm"}>{project.title}</Button>
               </Link>
             ))}
           </div>

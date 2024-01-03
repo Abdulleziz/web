@@ -82,7 +82,7 @@ const Manage: NextPage = () => {
                 return (
                   <Card
                     key={member.user.id}
-                    className=" cursor-pointer rounded bg-slate-300 transition-all hover:scale-110 hover:bg-info-content dark:bg-zinc-950"
+                    className="cursor-pointer rounded transition-all hover:scale-110 hover:bg-info-content"
                   >
                     {member.user.id && (
                       <Link

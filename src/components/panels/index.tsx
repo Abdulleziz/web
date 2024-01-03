@@ -163,19 +163,17 @@ export const AdminPanel = createPanel(undefined, () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
-        <Link href="/manage">
-          <Button size="sm">Çalışanları Yönet!</Button>
-        </Link>
-        <Link href="/forum">
-          <Button size="sm" disabled={!manageForum && !manageForumPins}>
+        <Button size="sm">
+          <Link href="/manage">Çalışanları Yönet!</Link>
+        </Button>
+        <Button size="sm" disabled={!manageForum && !manageForumPins}>
+          <Link href="/forum">
             {manageForumPins && !manageForum ? "Thread Pinle" : "Forumu yönet"}
-          </Button>
-        </Link>
-        <Link href="/bank">
-          <Button size="sm" disabled={!seeBank}>
-            Bankayı yönet
-          </Button>
-        </Link>
+          </Link>
+        </Button>
+        <Button size="sm" disabled={!seeBank}>
+          <Link href="/bank">Bankayı yönet</Link>
+        </Button>
       </CardContent>
       <CardFooter className="flex items-center justify-center gap-4"></CardFooter>
     </Card>
