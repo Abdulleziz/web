@@ -82,9 +82,8 @@ export const cronRouter = createTRPCRouter({
       const url = new URL("/cron", getDomainUrl());
       url.searchParams.set("exp", cron);
 
-      const content = `${job.title} hatırlatıcısı ${
-        enabled ? "kapatıldı" : "tekrar açıldı"
-      }. <@${ctx.session.user.discordId}>`;
+      const content = `${job.title} hatırlatıcısı ${enabled ? "kapatıldı" : "tekrar açıldı"
+        }. <@${ctx.session.user.discordId}>`;
       type MessageBody = RESTPostAPIChannelMessageJSONBody;
       const postBody: MessageBody = {
         content,
