@@ -241,11 +241,7 @@ export const verifySignatureMiddleware = t.middleware(
 
     const verified = await receiver.verify({
       signature: parsed.data["upstash-signature"],
-      // Main TRPC difference bit, using HTTP directly with TRPC, the body have to be inside a `json` attribute.
-      // And TRPC strips it, so the `rawInput` will be the value of `json`
-      // i.e if the request POST body is `{ json: { key: value }}`, the `rawInput` will equal `{key: value}`
-      body: JSON.stringify({ json: rawInput }),
-      // TODO: indendation breaks the verification
+      body: superjson.stringify(rawInput),
     });
 
     if (!verified) {

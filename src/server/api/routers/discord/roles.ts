@@ -88,9 +88,9 @@ type MiniUser = {
   roles: Array<{ name: AbdullezizRole }>;
 };
 
-function checkVote<Voter extends MiniUser, User extends MiniUser>(
-  voter: Voter,
-  user: User,
+function checkVote(
+  voter: MiniUser,
+  user: MiniUser,
   targetRole: AbdullezizRole, // quit as null
   beforeHighest?: DiscordId | null
 ) {
@@ -568,7 +568,9 @@ export const rolesRouter = createTRPCRouter({
         });
         const event = await createGuildEvent(
           "CEO oylaması",
+          // TODO: "4. CEO oylaması User 1/5 (toplam 1 oy)"
           "Abdulleziz büyük CEO oylaması! #oylarbana",
+          // TODO: "User -> User2\n"
           new Date(Date.now() + THREE_DAYS_OR_THREE_HOURS)
         );
         if (event.status !== 2) await modifyGuildEvent(event.id, "Active");
