@@ -20,7 +20,7 @@ export const Layout: React.FC<Props> = ({
         <meta
           name="description"
           content={
-            "Abdulleziz Corp. Early Alpha" + (location ? " - " : "") + location
+            "Abdulleziz Corp." + (location ? " - " : "") + location
           }
         />
         <link rel="icon" href="/favicon.ico" />
@@ -31,7 +31,7 @@ export const Layout: React.FC<Props> = ({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
       </Head>
-      <main className="3xl:px-48 min-h-screen bg-white dark:bg-zinc-950 2xl:px-28">
+      <main className="3xl:px-48 min-h-screen 2xl:px-28">
         <Navbar />
         <SendMoneyDialog />
         {children}

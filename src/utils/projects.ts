@@ -13,5 +13,8 @@ export const PROJECTS = [
     url: "https://ayagiz1.github.io/worldbattle",
     name: "world-battle",
     title: "World Battle Project",
-  },
+  }, {
+    url: "https://globe-info-sable.vercel.app",
+    name: "Globe Info", title: "Globe Project"
+  }
 ];

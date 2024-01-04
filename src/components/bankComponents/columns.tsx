@@ -21,7 +21,7 @@ import {
 import { useState } from "react";
 import { getSystemEntityById } from "~/utils/entities";
 import { EntityDetails } from "../../pages/store/EntityCard";
-import { useMediaQuery } from "@uidotdev/usehooks";
+import useDevice from "~/hooks/useDevice";
 
 const SalaryComponent = ({
   data,
@@ -29,7 +29,7 @@ const SalaryComponent = ({
   data: BankHistoryEvent & { type: "salary" };
 }) => {
   const [open, setOpen] = useState(false);
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const { isDesktop } = useDevice();
 
   // TODO: calculate bank salary func
 
@@ -99,7 +99,7 @@ const InvoiceComponent = ({
   data: BankHistoryEvent & { type: "invoice" };
 }) => {
   const [open, setOpen] = useState(false);
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const { isDesktop } = useDevice();
 
   if (isDesktop) {
     return (

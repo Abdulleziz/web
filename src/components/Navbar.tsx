@@ -114,7 +114,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <div
-      className="min-h-16 sticky top-0 z-50 flex w-full items-center justify-between bg-white p-2 dark:bg-zinc-950"
+      className="min-h-16 sticky top-0 z-50 flex w-full items-center justify-between p-2 bg-background"
       ref={ref}
     >
       <NavigationMenu>
@@ -170,12 +170,12 @@ export const Navbar: React.FC = () => {
                 <DropdownMenuLabel>Hesabım</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem asChild>
                     <Link href={`/profiles/${session.user.id}`}>
+                      <User className="mr-2 h-4 w-4" />
                       <span>Profil</span>
+                      <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
                     </Link>
-                    <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => openMoneyDialog()}>
                     <Wallet className="mr-2 h-4 w-4" />
@@ -290,7 +290,7 @@ const Item: FC<ItemProps> = ({ children, title, Icon, href }) => {
     <li>
       <NavigationMenuItem asChild>
         <Link
-          className="hover:text-accent-foreground focus:text-accent-foreground block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-zinc-600 focus:bg-accent"
+          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
           href={href}
           legacyBehavior
           passHref
@@ -343,7 +343,7 @@ export function CommandMenu() {
       >
         <span className="hidden lg:inline-flex">Arama yap...</span>
         <span className="inline-flex lg:hidden">Ara...</span>
-        <kbd className="bg-muted pointer-events-none absolute right-1.5 hidden h-5 select-none items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 md:flex">
+        <kbd className="pointer-events-none absolute right-1.5 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 md:flex">
           <span className="text-xs">{isSafari ? "⌘" : "CTRL"}</span>K
         </kbd>
       </Button>

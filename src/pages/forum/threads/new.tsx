@@ -16,6 +16,13 @@ import { Mention, MentionsInput } from "react-mentions";
 import { useGetAbdullezizUsers } from "~/utils/useDiscord";
 import { getAvatarUrl } from "~/server/discord-api/utils";
 import { formatName } from "~/utils/abdulleziz";
+import { Input } from "~/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Label } from "~/components/ui/label";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { Avatar, AvatarImage } from "~/components/ui/avatar";
 
 type CreateThreadOptionsStore = {
   notify: boolean;
@@ -72,159 +79,131 @@ const CreateThread: NextPage = () => {
       mentions: [...mentions],
       notify: notifyStore.notify,
     });
-
+  //TODO: MentionsInput component çok yazı yazılınca uzuo
   return (
     <>
-      <h1 className="mt-10 p-4 text-sm font-bold tracking-tight text-white md:text-2xl ">
-        Yeni Thread
-      </h1>
-      <div className="title-div justify-centerp-4 mt-8 flex w-full flex-col items-center md:w-6/12">
-        <input
-          type="text"
-          placeholder="Başlık..."
-          className={
-            title
-              ? "input-success input w-full transition-all"
-              : "input-error input w-full transition-all"
-          }
-          defaultValue={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <MentionsInput
-          allowSuggestionsAboveCursor
-          allowSpaceInQuery
-          placeholder="İlk Mesaj..."
-          className={classNames(
-            "mt-4 h-14 w-full rounded border transition-all",
-            title
-              ? "input-success focus:border-success"
-              : "input-error focus:border-error"
-          )}
-          value={content}
-          onChange={(event, _v, _t, mentions) => {
-            setContent(event.target.value);
-            setMentions((m) => new Set([...m, ...mentions.map((m) => m.id)]));
-          }}
-        >
-          <Mention
-            trigger="@"
-            appendSpaceOnAdd
-            className="bg-accent text-accent-content"
-            isLoading={abdullezizUsers.isLoading}
-            displayTransform={(_id, display) => "@" + display}
-            data={users.map((member) => ({
-              id: member.id ?? "",
-              display: formatName(member),
-            }))}
-            renderSuggestion={(suggest, _search, display) => {
-              const u = users.find((u) => suggest.id === u.id);
-              const image = u ? getAvatarUrl(u.user) : undefined;
-              return (
-                <div className="flex items-center justify-between border-2 border-base-300 bg-base-100 p-2 hover:bg-base-200">
-                  <div className="flex items-center">
+      <Card>
+        <CardHeader>
+          <CardTitle>Yeni Thread</CardTitle>
+        </CardHeader>
+        <CardContent className="flex max-w-full flex-col items-start justify-center gap-3">
+          <Label htmlFor="title-input">Başlık</Label>
+          <Input
+            id="title-input"
+            type="text"
+            defaultValue={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <Label htmlFor="mentions-input">İlk Mesaj</Label>
+
+          <MentionsInput
+            id="mentions-input"
+            className="h-10 w-full max-w-full  rounded-md  border border-zinc-200 bg-white   text-sm ring-offset-white placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:ring-offset-zinc-950 dark:placeholder:text-zinc-400 dark:focus-visible:ring-zinc-300"
+            value={content}
+            onChange={(event, _v, _t, mentions) => {
+              setContent(event.target.value);
+              setMentions((m) => new Set([...m, ...mentions.map((m) => m.id)]));
+            }}
+          >
+            <Mention
+              trigger="@"
+              className="rounded bg-zinc-800"
+              isLoading={abdullezizUsers.isLoading}
+              displayTransform={(_id, display) => "@" + display}
+              data={users.map((member) => ({
+                id: member.id ?? "",
+                display: formatName(member),
+              }))}
+              renderSuggestion={(suggest, _search, display) => {
+                const u = users.find((u) => suggest.id === u.id);
+                const image = u ? getAvatarUrl(u.user) : undefined;
+                return (
+                  <div className=" flex flex-row items-center justify-start bg-zinc-950 p-2 hover:bg-zinc-800">
                     {image && (
-                      <Image
-                        src={image}
-                        alt="avatar"
-                        width={32}
-                        height={32}
-                        className="rounded-full"
-                      />
+                      <Avatar>
+                        <AvatarImage src={image} />
+                      </Avatar>
                     )}
                     <span className="ml-2">{display}</span>
                   </div>
-                </div>
-              );
-            }}
-          />
-        </MentionsInput>
-        {/*<input
-          type="text"
-          placeholder="İlk Mesaj..."
-          className={classNames(
-            "input mt-4 w-full transition-all",
-            title ? "input-success" : "input-error"
-          )}
-          defaultValue={content}
-          onChange={(e) => setContent(e.target.value)}
-        />*/}
-      </div>
+                );
+              }}
+            />
+          </MentionsInput>
 
-      <div>
-        <div className="mt-4 flex items-center justify-center">
-          <input
-            type="checkbox"
-            className="checkbox-primary checkbox"
-            checked={
-              hydrated ? notifyStore.notify : createThreadOptionsDefault.notify
-            }
-            onChange={(e) => notifyStore.setNotify(e.target.checked)}
-          />
-          <span className="ml-2 text-white">Herkese bildirim gönder</span>
-        </div>
-      </div>
+          <div className=" flex flex-row items-center justify-center gap-3">
+            <Checkbox
+              id="terms1"
+              checked={
+                hydrated
+                  ? notifyStore.notify
+                  : createThreadOptionsDefault.notify
+              }
+              onCheckedChange={(checked: boolean) =>
+                notifyStore.setNotify(checked)
+              }
+            />
+            <div className="flex flex-col items-start">
+              <label
+                htmlFor="terms1"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Herkese bildirim gönder
+              </label>
+              <p className="text-sm text-muted-foreground">
+                Yeni thread oluşturulduğu zaman herkese bildirim gönderir.
+              </p>
+            </div>
+          </div>
 
-      <div className="form-control">
-        <div className="input-group flex min-w-full flex-row items-center justify-center p-4">
-          <input
-            ref={tagRef}
-            type="text"
-            placeholder="Tag…"
-            className="input-bordered input min-w-full transition-all"
-          />
+          <div className="input-group flex min-w-full flex-row items-center justify-center">
+            <Input ref={tagRef} type="text" placeholder="Tag…" />
 
-          <button
-            className="btn-square btn"
-            onClick={() => {
-              if (tagRef.current.value === "") return;
-              flushSync(() => {
-                setTags((old) => new Set([...old, tagRef.current.value]));
-              });
-              tagRef.current.value = "";
-            }}
-          >
-            +
-          </button>
-        </div>
-        <div
-          className={`mb-3 cursor-pointer rounded-lg ${
-            tags.size ? "bg-base-100" : "bg-base-300"
-          }  p-2`}
-        >
-          {[...tags].map((tag) => (
-            <div
-              key={tag}
-              className=" badge-primary badge m-1 p-4 transition-all hover:scale-105 hover:bg-error"
+            <Button
               onClick={() => {
-                setTags((old) => new Set([...old].filter((t) => tag !== t)));
+                if (tagRef.current.value === "") return;
+                flushSync(() => {
+                  setTags((old) => new Set([...old, tagRef.current.value]));
+                });
+                tagRef.current.value = "";
               }}
             >
-              {tag}
-            </div>
-          ))}
-        </div>
-      </div>
+              +
+            </Button>
+          </div>
+          <div className="grid grid-cols-5 gap-1">
+            {[...tags].map((tag) => (
+              <Badge
+                key={tag}
+                onClick={() => {
+                  setTags((old) => new Set([...old].filter((t) => tag !== t)));
+                }}
+              >
+                {tag}
+              </Badge>
+            ))}
+          </div>
 
-      {createThread.isSuccess ? (
-        <Link
-          className="btn-success btn"
-          href={`/forum/threads/${createThread.data.id}`}
-        >
-          Paylaşıldı! Gitmek için tıkla.
-        </Link>
-      ) : (
-        <button
-          className={classNames("btn-primary btn", {
-            loading: createThread.isLoading,
-          })}
-          onClick={handlePublish}
-          disabled={createThread.isLoading}
-        >
-          {createThread.isIdle && "Paylaş"}
-          {createThread.isSuccess && "Paylaşıldı!"}
-          {createThread.isError && "Paylaşırken bir hata oluştu."}
-        </button>
-      )}
+          {createThread.isSuccess ? (
+            <Link href={`/forum/threads/${createThread.data.id}`}>
+              <Button variant={"warning"}>
+                Paylaşıldı! Gitmek için tıkla.
+              </Button>
+            </Link>
+          ) : (
+            <Button
+              onClick={handlePublish}
+              disabled={createThread.isLoading}
+              isLoading={createThread.isLoading}
+            >
+              {createThread.isIdle && "Paylaş"}
+              {createThread.isLoading && "Paylaş"}
+              {createThread.isSuccess && "Paylaşıldı!"}
+              {createThread.isError && "Paylaşırken bir hata oluştu."}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
     </>
   );
 };

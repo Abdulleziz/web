@@ -4,6 +4,7 @@ import {
   BellIcon,
   UserCogIcon,
   ShoppingCartIcon,
+  LandmarkIcon,
 } from "lucide-react";
 import { type ReactNode } from "react";
 export const NavbarRoutes: {
@@ -47,6 +48,6 @@ export const NavbarRoutes: {
     title: "Banka",
     href: "/bank",
     description: "Banka işlemlerini gör.",
-    Icon: <ShoppingCartIcon />,
+    Icon: <LandmarkIcon />,
   },
 ];

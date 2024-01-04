@@ -39,7 +39,6 @@ import { Button } from "../ui/button";
 import { useMoneyDialog } from "../SendMoney";
 import { AbdullezizUser } from "../AbdullezizUser";
 import { MoveRightIcon } from "lucide-react";
-import { useMediaQuery } from "@uidotdev/usehooks";
 import {
   Drawer,
   DrawerClose,
@@ -57,6 +56,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import ResponsivePopup from "../ResponsivePopup";
+import useDevice from "~/hooks/useDevice";
 
 ChartJS.register(
   RadialLinearScale,
@@ -163,19 +163,17 @@ export const AdminPanel = createPanel(undefined, () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
-        <Link href="/manage">
-          <Button size="sm">Çalışanları Yönet!</Button>
-        </Link>
-        <Link href="/forum">
-          <Button size="sm" disabled={!manageForum && !manageForumPins}>
+        <Button size="sm">
+          <Link href="/manage">Çalışanları Yönet!</Link>
+        </Button>
+        <Button size="sm" disabled={!manageForum && !manageForumPins}>
+          <Link href="/forum">
             {manageForumPins && !manageForum ? "Thread Pinle" : "Forumu yönet"}
-          </Button>
-        </Link>
-        <Link href="/bank">
-          <Button size="sm" disabled={!seeBank}>
-            Bankayı yönet
-          </Button>
-        </Link>
+          </Link>
+        </Button>
+        <Button size="sm" disabled={!seeBank}>
+          <Link href="/bank">Bankayı yönet</Link>
+        </Button>
       </CardContent>
       <CardFooter className="flex items-center justify-center gap-4"></CardFooter>
     </Card>
@@ -215,7 +213,7 @@ export const CEOVotePanel = createPanel(undefined, () => {
   const { data: abdullezizUsers, isLoading: isAbdullezizUsersLoading } =
     useGetAbdullezizUsersSorted();
   const members = abdullezizUsers ?? [];
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const { isDesktop } = useDevice();
   const [isVotesOpen, setIsVotesOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<string>("");
   const voteCEO = useVoteCEO();

@@ -12,7 +12,7 @@ self.addEventListener("notificationclick", (event) => {
   // event.notification.tag
   event?.waitUntil(
     self.clients
-      .matchAll({ type: "window", includeUncontrolled: true })
+      .matchAll({ type: "window" })
       .then(function (clientList) {
         if (clientList.length > 0) {
           let client = clientList[0];

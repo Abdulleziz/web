@@ -20,15 +20,17 @@ export const paymentsRouter = createTRPCRouter({
     return await calculateWallet(ctx.session.user.id);
   }),
   getAll: protectedProcedure.query(async ({ ctx }) => {
-    const salaries = await ctx.prisma.salary.findMany({
-      include: { bankSalary: true },
+    const salaries = await ctx.prisma.bankSalary.findMany({
+      include: { salaries: { include: { to: true } } },
     });
 
     const invoices = await ctx.prisma.invoice.findMany({
-      select: { entities: true },
+      select: { entities: true, createdAt: true, to: true },
     });
 
-    const transfers = await ctx.prisma.transfer.findMany({});
+    const transfers = await ctx.prisma.transfer.findMany({
+      include: { from: true, to: true },
+    });
 
     return { salaries, invoices, transfers };
   }),

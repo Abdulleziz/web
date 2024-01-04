@@ -204,18 +204,58 @@ const enforceIsInternal = t.middleware(async ({ ctx, next }) => {
 
   const context = user
     ? {
-      ...ctx,
-      session: {
-        user: { ...user, discordId, inAbdullezizServer: true },
-        expires: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
-      } satisfies Session,
-    }
+        ...ctx,
+        session: {
+          user: { ...user, discordId, inAbdullezizServer: true },
+          expires: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
+        } satisfies Session,
+      }
     : { ...ctx, session: null, internalDiscordId: discordId };
 
   return next({ ctx: context });
 });
 
 export const internalProcedure = t.procedure.use(enforceIsInternal);
+
+const upstashSignature = z.object({
+  "upstash-signature": z.string({
+    invalid_type_error: "invalid header `upstash-signature`, must be a string",
+    required_error: "missing upstash signature",
+  }),
+});
+
+export const verifySignatureMiddleware = t.middleware(
+  async ({ ctx, next, rawInput }) => {
+    const parsed = upstashSignature.safeParse(ctx.req.headers);
+    if (!parsed.success)
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: parsed.error.message,
+      });
+
+    // TODO: edge supported ?
+    const receiver = new Receiver({
+      currentSigningKey: env.QSTASH_CURRENT_SIGNING_KEY,
+      nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY,
+    });
+
+    const verified = await receiver.verify({
+      signature: parsed.data["upstash-signature"],
+      body: superjson.stringify(rawInput),
+    });
+
+    if (!verified) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "invalid signature",
+      });
+    }
+
+    return next({ ctx });
+  }
+);
+
+export const qstashProcedure = t.procedure.use(verifySignatureMiddleware);
 
 /**
  * Protected (authenticated) procedure
@@ -231,6 +271,7 @@ import { type AbdullezizPerm, permissionDecider } from "~/utils/abdulleziz";
 import { getAbdullezizRoles } from "../discord-api/utils";
 import { getGuildMemberWithRoles } from "../discord-api/trpc";
 import { type PushSubscription } from "@prisma/client";
+import { Receiver } from "@upstash/qstash";
 
 export const createPermissionProcedure = (requiredPerms: AbdullezizPerm[]) =>
   internalProcedure.use(

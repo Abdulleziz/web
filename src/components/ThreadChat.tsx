@@ -498,6 +498,7 @@ const Posts: React.FC<ThreadProps> = ({ threadId, locked, canSend }) => {
               className={cn(
                 "w-max max-w-[16rem] overflow-x-auto rounded-lg px-3 py-2 text-sm sm:max-w-md lg:max-w-2xl",
                 session?.user.id === post.creatorId
+                // TODO: css props
                   ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
                   : "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
               )}
