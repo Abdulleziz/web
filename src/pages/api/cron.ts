@@ -1,3 +1,10 @@
+/**
+ * @deprecated This file is deprecated and will be removed
+ * after the merge past a week or so.
+ * 
+ * @use ~/server/api/routers/qstash.ts
+ */
+
 import type { NextApiRequest, NextApiResponse, NextConfig } from "next";
 import { verifySignature } from "@upstash/qstash/dist/nextjs";
 import { z } from "zod";

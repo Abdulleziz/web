@@ -1,4 +1,5 @@
 import { z } from "zod";
+import superjson from "superjson";
 import {
   createTRPCRouter,
   internalProcedure,
@@ -31,7 +32,6 @@ import {
 import { Client } from "@upstash/qstash";
 import { env } from "~/env.mjs";
 import { getDomainUrl } from "~/utils/api";
-import { type CronBody } from "~/pages/api/cron";
 import { type Prisma } from "@prisma/client";
 import {
   connectMembersWithIds,
@@ -449,11 +449,12 @@ export const rolesRouter = createTRPCRouter({
       if (!ongoing) {
         let jobId: string | null = null;
         if (!finished && env.NEXT_PUBLIC_VERCEL_ENV !== "development") {
-          const url = getDomainUrl() + "/api/cron";
-          const res = await c.publishJSON({
+          const url = getDomainUrl() + "/api/trpc/qstash.vote";
+          const res = await c.publish({
             url,
             delay: THREE_DAYS_OR_THREE_HOURS / 1000,
-            body: { type: "vote", user, role } satisfies CronBody,
+            body: superjson.stringify({ user, role } satisfies Vote),
+            headers: { "Content-Type": "application/json" },
           });
           jobId = res.messageId;
         }
@@ -544,11 +545,12 @@ export const rolesRouter = createTRPCRouter({
         // no latest event or latest event failed and past 3 days, revote allowed
         let jobId: string | null = null;
         if (env.NEXT_PUBLIC_VERCEL_ENV !== "development") {
-          const url = getDomainUrl() + "/api/cron";
-          const res = await c.publishJSON({
+          const url = getDomainUrl() + "/api/trpc/qstash.vote";
+          const res = await c.publish({
             url,
             delay: THREE_DAYS_OR_THREE_HOURS / 1000,
-            body: { type: "vote", user, role: "CEO" } satisfies CronBody,
+            body: superjson.stringify({ user, role: "CEO" } satisfies Vote),
+            headers: { "Content-Type": "application/json" },
           });
           jobId = res.messageId;
         }

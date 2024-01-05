@@ -5,11 +5,9 @@ import { env } from "~/env.mjs";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import type { CronBody } from "~/pages/api/cron";
 import { REST } from "@discordjs/rest";
-import {
-  type RESTPostAPIChannelMessageJSONBody,
-  Routes,
-} from "discord-api-types/v10";
+import * as v10 from "discord-api-types/v10";
 import { getDomainUrl } from "~/utils/api";
+import superjson from "superjson";
 
 const CronInput = z
   .string({ required_error: "Hatırlatıcı ifadesi boş olamaz" })
@@ -82,9 +80,10 @@ export const cronRouter = createTRPCRouter({
       const url = new URL("/cron", getDomainUrl());
       url.searchParams.set("exp", cron);
 
-      const content = `${job.title} hatırlatıcısı ${enabled ? "kapatıldı" : "tekrar açıldı"
-        }. <@${ctx.session.user.discordId}>`;
-      type MessageBody = RESTPostAPIChannelMessageJSONBody;
+      const content = `${job.title} hatırlatıcısı ${
+        enabled ? "kapatıldı" : "tekrar açıldı"
+      }. <@${ctx.session.user.discordId}>`;
+      type MessageBody = v10.RESTPostAPIChannelMessageJSONBody;
       const postBody: MessageBody = {
         content,
         // embeds: [
@@ -101,12 +100,12 @@ export const cronRouter = createTRPCRouter({
         // ],
         components: [
           {
-            type: 1,
+            type: v10.ComponentType.ActionRow,
             components: [
               {
-                type: 2,
+                type: v10.ComponentType.Button,
                 label: "Hatırlatıcıyı göster",
-                style: 5,
+                style: v10.ButtonStyle.Link,
                 url: url.toString(),
               },
             ],
@@ -115,7 +114,7 @@ export const cronRouter = createTRPCRouter({
       };
       const discord = new REST({ version: "10" }).setToken(env.DISCORD_TOKEN);
       const announce = (id: string) =>
-        discord.post(Routes.channelMessages(id), { body: postBody });
+        discord.post(v10.Routes.channelMessages(id), { body: postBody });
 
       if (job.isGlobal) {
         const channelId = "1087476743142637579";
@@ -239,12 +238,12 @@ export const cronRouter = createTRPCRouter({
       let jobId: string; // development reasons...
       if (env.NEXT_PUBLIC_VERCEL_ENV === "production") {
         const c = new Client({ token: env.QSTASH_TOKEN });
-        const destination = getDomainUrl() + "/api/cron";
+        const destination = getDomainUrl() + "/api/trpc/qstash.cron";
         const body = { cron } as z.input<typeof CronBody>;
         const res = await c.schedules.create({
           destination,
           cron,
-          body: JSON.stringify(body),
+          body: superjson.stringify(body),
           headers: { "Content-Type": "application/json" },
         });
         jobId = res.scheduleId;

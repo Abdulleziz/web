@@ -10,13 +10,10 @@ import { env } from "~/env.mjs";
 import { prisma } from "~/server/db";
 import { getGuildMembers } from "./discord-api/guild";
 import { REST } from "@discordjs/rest";
-import {
-  type RESTGetAPICurrentUserResult,
-  Routes,
-} from "discord-api-types/v10";
+import * as v10 from "discord-api-types/v10";
 import { getAvatarUrl } from "./discord-api/utils";
 
-type User = RESTGetAPICurrentUserResult;
+type User = v10.RESTGetAPICurrentUserResult;
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -77,7 +74,7 @@ export const authOptions: NextAuthOptions = {
 
       try {
         // update user image
-        const user = (await discord.get(Routes.user())) as User;
+        const user = (await discord.get(v10.Routes.user())) as User;
         const image = getAvatarUrl(user);
         const to_update = await prisma.user.findUnique({
           where: { id },
