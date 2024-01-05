@@ -11,20 +11,21 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   // event.notification.tag
   event?.waitUntil(
-    self.clients
-      .matchAll({ type: "window" })
-      .then(function (clientList) {
-        if (clientList.length > 0) {
-          let client = clientList[0];
-          for (let i = 0; i < clientList.length; i++) {
-            if (clientList[i].focused) {
-              client = clientList[i];
-            }
-          }
-          return client.focus();
-        }
-        return self.clients.openWindow(event.action ?? "/");
-      })
+    // self.clients
+    //   .matchAll({ type: "window" })
+    //   .then(function (clientList) {
+    //     if (clientList.length > 0) {
+    //       let client = clientList[0];
+    //       for (let i = 0; i < clientList.length; i++) {
+    //         if (clientList[i].focused) {
+    //           client = clientList[i];
+    //         }
+    //       }
+    //       return client.focus();
+    //     }
+    //     return self.clients.openWindow(event.action ?? "/");
+    //   })
+    self.clients.openWindow(event.action ?? "/")
   );
 });
 
