@@ -7,7 +7,7 @@ import {
 import { ABDULLEZIZ_SERVER_ID, type Member } from "./guild";
 
 // discord permlerinden abdülleziz-verified rolleri alıyoz
-// CEO, CTO... gibi
+// CEO, COO... gibi
 export const getAbdullezizRoles = <Role extends { id: string; name: string }>(
   roles: Role[] | undefined
 ) => {
