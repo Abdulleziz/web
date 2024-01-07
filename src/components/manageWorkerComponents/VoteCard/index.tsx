@@ -4,6 +4,8 @@ import {
   DEMOTE,
   abdullezizRoles,
   abdullezizRoleSeverities,
+  abdullezizUnvotableRoles,
+  type AbdullezizUnvotableRole,
 } from "~/utils/zod-utils";
 import { useVote, useVoteCEO, type User, useAssign } from "~/utils/useDiscord";
 import { formatName } from "~/utils/abdulleziz";
@@ -58,14 +60,15 @@ export const ManageWorker: React.FC<{
     resolver: zodResolver(FormSchema),
   });
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
-    if (data.role === "CEO") {
-      voteCEO.mutate(worker?.user.id ?? "");
-    } else if (data.role === "Vice President") {
-      assign.mutate({ role: data.role, user: worker.user.id ?? "" });
-    } else {
-      vote.mutate({ role: data.role, user: worker?.user.id ?? "" });
-    }
+  const onSubmit = ({ role }: z.infer<typeof FormSchema>) => {
+    const user = worker.user.id;
+    const onlyAssign = abdullezizUnvotableRoles.includes(
+      role as AbdullezizUnvotableRole
+    );
+
+    if (role === "CEO") voteCEO.mutate(user);
+    else if (onlyAssign) assign.mutate({ role, user });
+    else vote.mutate({ role, user });
   };
 
   return (

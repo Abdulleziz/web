@@ -35,6 +35,7 @@ export const DEMOTE = 2.0;
 
 export const abdullezizUnvotableRoles = [
   "Vice President",
+  "CFO",
 ] as const satisfies readonly AbdullezizRole[];
 
 export type AbdullezizUnvotableRole = (typeof abdullezizUnvotableRoles)[number];
