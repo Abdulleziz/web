@@ -40,6 +40,7 @@
     "@trpc/server": "^10.9.0",
     "@uploadthing/react": "^5.3.0",
     "@upstash/qstash": "^2.3.0",
+    "@yudiel/react-qr-scanner": "^1.2.4",
     "chart.js": "^4.2.1",
     "class-variance-authority": "^0.7.0",
     "classnames": "^2.3.2",
