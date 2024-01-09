@@ -1,5 +1,5 @@
 import { type NextPage } from "next";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Layout } from "~/components/Layout";
 import { useHydrated } from "../_app";
 import { Button } from "~/components/ui/button";
@@ -30,7 +30,7 @@ import {
   SelectTrigger,
 } from "~/components/ui/select";
 
-type getQrLessonsResponse = {
+export type getQrLessonsResponse = {
   lessonName: string;
   lessonId: string;
   lessonCode: string;
@@ -41,19 +41,7 @@ type joinLectureResponse = {
   paragraph: string;
 };
 
-const LESSON_STUDENTS = {
-  /* Web Tech */ GEE06003: [
-    "20202022025",
-    "20212022067",
-    "20212022072",
-    "20212022089",
-    "20212022021",
-    "20212022071",
-    "20202022035",
-    "20212022092",
-  ],
-};
-const allStudents = [
+export const allStudents = [
   { name: "Barkin", no: "20212022067" },
   { name: "İlker", no: "20212022092" },
   { name: "Ali Kerem Karaduman", no: "20212022072" },
@@ -62,7 +50,7 @@ const allStudents = [
   { name: "Yusuf", no: "20212022071" },
   { name: "Bora", no: "20202022025" },
   { name: "Buğra", no: "20202022035" },
-  { name: "Baran", no: "20212022027" },
+  { name: "Baran", no: "20212022027 " },
   { name: "Ulaştı", no: "20232022062" },
 ];
 
@@ -77,7 +65,7 @@ const Attendance: NextPage = () => {
   const [lessons, setLessons] = useState<getQrLessonsResponse[]>([]);
   const hydrated = useHydrated();
   const { isMobile } = useDevice();
-
+  const joiningStudentArray: string[] = useMemo(() => [], []);
   //! get lessons with Qr code
   useEffect(() => {
     if (qrLink?.startsWith("https://pdks.nisantasi.edu.tr/ogrenci/giris")) {
@@ -131,6 +119,42 @@ const Attendance: NextPage = () => {
       setLessons([]);
     }
   }, [activationCode]);
+
+  useEffect(() => {
+    if (
+      (selectedLesson && activationCode.length === 7) ||
+      qrLink?.startsWith("https://pdks.nisantasi.edu.tr/ogrenci/giris")
+    ) {
+      joiningStudentArray.length = 0;
+      allStudents.map((student) => {
+        void fetch("https://ilker.abdulleziz.com/getStudentLessons", {
+          method: "POST",
+          body: JSON.stringify({
+            studentNo: student.no,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        })
+          .then((res) => {
+            if (!res.ok) {
+              return;
+            }
+            return res.json();
+          })
+          .then((data: getQrLessonsResponse[]) => {
+            data.map((lesson) => {
+              if (
+                lesson.lessonCode.trim() === selectedLesson.lessonCode.trim()
+              ) {
+                joiningStudentArray.push(student.no);
+              }
+            });
+          });
+      });
+    }
+  }, [activationCode, joiningStudentArray, qrLink, selectedLesson]);
 
   return (
     <Layout>
@@ -208,18 +232,10 @@ const Attendance: NextPage = () => {
               </SelectContent>
             </Select>
             <Button
-              disabled={
-                !LESSON_STUDENTS[
-                  selectedLesson.lessonCode as keyof typeof LESSON_STUDENTS
-                ]
-              }
+              disabled={selectedLesson.lessonId === ""}
               onClick={() => {
                 if (selectedLesson) {
-                  const students =
-                    LESSON_STUDENTS[
-                      selectedLesson.lessonCode as keyof typeof LESSON_STUDENTS
-                    ];
-                  students.map((value) => {
+                  joiningStudentArray.map((value) => {
                     const promise = fetch(
                       "https://ilker.abdulleziz.com/joinLecture",
                       {
@@ -246,19 +262,27 @@ const Attendance: NextPage = () => {
                       return no === value;
                     });
                     if (studentDetail) {
-                      void toast.promise(promise, {
-                        loading: "Katılınıyor",
-                        success: (data) =>
-                          `Öğrenci:${studentDetail?.name} için ${data.header}`,
-                        error: "Bir hata oluştu",
-                      });
+                      void toast.promise(
+                        promise,
+                        {
+                          loading: "Katılınıyor",
+                          success: (data) =>
+                            `Öğrenci:${studentDetail?.name} için ${data.header}`,
+                          error: "Bir hata oluştu",
+                        },
+                        { duration: 5000 }
+                      );
                     }
+                    return;
                   });
                 }
               }}
             >
               Derse Katıl
             </Button>
+            {/* 
+            //!Buglı şuanda wip but it works XD
+            <JoiningStudents joiningStudentArray={joiningStudentArray} /> */}
           </CardContent>
         </Card>
       </div>
