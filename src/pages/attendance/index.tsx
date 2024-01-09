@@ -50,7 +50,6 @@ export const allStudents = [
   { name: "Yusuf", no: "20212022071" },
   { name: "Bora", no: "20202022025" },
   { name: "Buğra", no: "20202022035" },
-  { name: "Baran", no: "20212022027 " },
   { name: "Ulaştı", no: "20232022062" },
 ];
 
