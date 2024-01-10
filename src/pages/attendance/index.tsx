@@ -1,5 +1,5 @@
 import { type NextPage } from "next";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Layout } from "~/components/Layout";
 import { useHydrated } from "../_app";
 import { Button } from "~/components/ui/button";
@@ -51,6 +51,10 @@ export const allStudents = [
   { name: "Bora", no: "20202022025" },
   { name: "Buğra", no: "20202022035" },
   { name: "Ulaştı", no: "20232022062" },
+  {
+    name: "Taha",
+    no: "20202022008",
+  },
 ];
 
 const Attendance: NextPage = () => {
@@ -119,39 +123,47 @@ const Attendance: NextPage = () => {
     }
   }, [activationCode]);
 
+  const prevSelectedLesson = useRef<string | undefined>();
+
   useEffect(() => {
-    if (
-      (selectedLesson && activationCode.length === 7) ||
-      qrLink?.startsWith("https://pdks.nisantasi.edu.tr/ogrenci/giris")
-    ) {
-      joiningStudentArray.length = 0;
-      allStudents.map((student) => {
-        void fetch("https://ilker.abdulleziz.com/getStudentLessons", {
-          method: "POST",
-          body: JSON.stringify({
-            studentNo: student.no,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-        })
-          .then((res) => {
-            if (!res.ok) {
-              return;
-            }
-            return res.json();
+    // Check if selectedLesson has changed
+    if (prevSelectedLesson.current !== selectedLesson.lessonId) {
+      if (
+        (selectedLesson && activationCode.length === 7) ||
+        qrLink?.startsWith("https://pdks.nisantasi.edu.tr/ogrenci/giris")
+      ) {
+        joiningStudentArray.length = 0;
+        allStudents.map((student) => {
+          void fetch("https://ilker.abdulleziz.com/getStudentLessons", {
+            method: "POST",
+            body: JSON.stringify({
+              studentNo: student.no,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
           })
-          .then((data: getQrLessonsResponse[]) => {
-            data.map((lesson) => {
-              if (
-                lesson.lessonCode.trim() === selectedLesson.lessonCode.trim()
-              ) {
-                joiningStudentArray.push(student.no);
+            .then((res) => {
+              if (!res.ok) {
+                return;
               }
+              return res.json();
+            })
+            .then((data: getQrLessonsResponse[]) => {
+              data.map((lesson) => {
+                if (
+                  lesson.lessonCode.trim() === selectedLesson.lessonCode.trim()
+                ) {
+                  joiningStudentArray.push(student.no);
+                }
+              });
             });
-          });
-      });
+        });
+      }
+
+      // Update the previous value of selectedLesson
+      prevSelectedLesson.current = selectedLesson.lessonId;
     }
   }, [activationCode, joiningStudentArray, qrLink, selectedLesson]);
 
