@@ -1,10 +1,17 @@
 import { triggerEmergency } from "~/server/discord-api/trpc";
-import { createPermissionProcedure, createTRPCRouter } from "../../trpc";
+import {
+  createPermissionProcedure,
+  createTRPCRouter,
+  protectedProcedure,
+} from "../../trpc";
 import { TRPCError } from "@trpc/server";
 
 const emergencyProcedure = createPermissionProcedure(["ohal başlat"]);
 
 export const emergenciesRouter = createTRPCRouter({
+  history: protectedProcedure.query(async ({ ctx }) => {
+    return await ctx.prisma.stateOfEmergency.findMany({ take: 100 });
+  }),
   triggerEmergency: emergencyProcedure.mutation(async ({ ctx }) => {
     // TODO: check for unpaid with NOT BEFORE last emergency
     const unpaidLast = await ctx.prisma.bankSalary.findFirst({

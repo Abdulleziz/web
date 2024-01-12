@@ -48,11 +48,14 @@ export const useDistributeSalary = () => {
   });
 };
 
+export const useGetEmergencyHistory = api.emergency.history.useQuery;
+
 export const useTriggerEmergency = () => {
   const utils = api.useContext();
   return api.emergency.triggerEmergency.useMutation({
     onSuccess: () => {
       toast.success("Acil durum tetiklendi!", { id: "bank.triggerEmergency" });
+      void utils.emergency.invalidate();
       void utils.bank.history.invalidate();
       void utils.payments.invalidate();
     },
