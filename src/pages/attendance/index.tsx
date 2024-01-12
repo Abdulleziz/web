@@ -29,6 +29,8 @@ import {
   SelectItem,
   SelectTrigger,
 } from "~/components/ui/select";
+import { useQueries, useQuery } from "@tanstack/react-query";
+import JoiningStudents from "~/components/attendanceComponents/JoiningStudents";
 
 export type getQrLessonsResponse = {
   lessonName: string;
@@ -56,7 +58,7 @@ export const allStudents = [
     no: "20202022008",
   },
 ];
-
+const studentNumbers = allStudents.map((student) => student.no);
 const Attendance: NextPage = () => {
   const [qrLink, setQrLink] = useState<string>("");
   const [activationCode, setActivationCode] = useState<string>("");
@@ -65,107 +67,84 @@ const Attendance: NextPage = () => {
     lessonId: "",
     lessonCode: "",
   });
-  const [lessons, setLessons] = useState<getQrLessonsResponse[]>([]);
+  const [joiningStudents, setJoiningStudents] = useState<string[]>([]);
   const hydrated = useHydrated();
   const { isMobile } = useDevice();
-  const joiningStudentArray: string[] = useMemo(() => [], []);
-  //! get lessons with Qr code
-  useEffect(() => {
-    if (qrLink?.startsWith("https://pdks.nisantasi.edu.tr/ogrenci/giris")) {
-      void fetch("https://ilker.abdulleziz.com/QR", {
-        method: "POST",
-        body: JSON.stringify({ url: qrLink }),
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      })
-        .then((res) => {
-          if (!res.ok) {
-            toast.error("Ders Bulunamadı!");
-            return;
-          }
-          toast.success("Dersler Bulundu");
-          return res.json();
-        })
-        .then(setLessons);
-    } else {
-      setLessons([]);
-      setQrLink("");
+  const { data: activationCodeData, isLoading: isActivationLoading } = useQuery(
+    {
+      queryKey: ["activationCode", activationCode],
+      enabled: activationCode?.length === 7,
+      queryFn: () => fetchActivationCode(activationCode),
     }
-  }, [qrLink]);
+  );
+  const { data: qrLinkData, isLoading: isQrLinkLoading } = useQuery({
+    queryKey: ["QrCode", qrLink],
+    enabled: qrLink?.startsWith("https://pdks.nisantasi.edu.tr/ogrenci/giris"),
+    queryFn: () => fetchQrCode(qrLink),
+  });
+  const studentLessons = useQueries({
+    queries: studentNumbers.map((studentNo) => {
+      return {
+        queryKey: ["studentLessons", studentNo],
+        enabled: !!selectedLesson.lessonCode,
+        queryFn: () => fetchStudentLessons(studentNo),
+      };
+    }),
+  });
 
-  //! get lessons with activation code
-  useEffect(() => {
-    if (activationCode?.length === 7) {
-      void fetch("https://ilker.abdulleziz.com/lectureInfo", {
-        method: "POST",
-        body: JSON.stringify({
-          yoklamaKodu: activationCode,
-          name: "dersBilgiGetir",
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      })
-        .then((res) => {
-          if (!res.ok) {
-            toast.error("Ders Bulunamadı!");
-            return;
+  const allSuccess = studentLessons.every((num) => num.status === "success");
+  const isStudentLessonsLoading = studentLessons.every(
+    (num) => num.fetchStatus === "fetching"
+  );
+
+  const onLessonChange = () => {
+    setJoiningStudents([]);
+    if (allSuccess) {
+      studentNumbers.map((studentNumber, i) => {
+        const studentsLesson = studentLessons[i]?.data;
+        studentsLesson?.map((less) => {
+          const lessonCode = less.lessonCode.trim();
+          const selectedLessonCode = selectedLesson.lessonCode.trim();
+          if (lessonCode === selectedLessonCode) {
+            setJoiningStudents((current) => [...current, studentNumber]);
           }
-          toast.success("Dersler Bulundu");
-          return res.json();
-        })
-        .then(setLessons);
-    } else {
-      setLessons([]);
-    }
-  }, [activationCode]);
-
-  const prevSelectedLesson = useRef<string | undefined>();
-
-  useEffect(() => {
-    // Check if selectedLesson has changed
-    if (prevSelectedLesson.current !== selectedLesson.lessonId) {
-      if (
-        (selectedLesson && activationCode.length === 7) ||
-        qrLink?.startsWith("https://pdks.nisantasi.edu.tr/ogrenci/giris")
-      ) {
-        joiningStudentArray.length = 0;
-        allStudents.map((student) => {
-          void fetch("https://ilker.abdulleziz.com/getStudentLessons", {
-            method: "POST",
-            body: JSON.stringify({
-              studentNo: student.no,
-            }),
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-          })
-            .then((res) => {
-              if (!res.ok) {
-                return;
-              }
-              return res.json();
-            })
-            .then((data: getQrLessonsResponse[]) => {
-              data.map((lesson) => {
-                if (
-                  lesson.lessonCode.trim() === selectedLesson.lessonCode.trim()
-                ) {
-                  joiningStudentArray.push(student.no);
-                }
-              });
-            });
         });
-      }
-
-      // Update the previous value of selectedLesson
-      prevSelectedLesson.current = selectedLesson.lessonId;
+      });
     }
-  }, [activationCode, joiningStudentArray, qrLink, selectedLesson]);
+  };
+
+  const studentsJoinLessons = useQueries({
+    queries: studentNumbers.map((studentNo) => {
+      return {
+        queryKey: ["joinLesson", studentNo],
+        enabled: false,
+        queryFn: () =>
+          joinLesson(
+            studentNo,
+            activationCode,
+            selectedLesson.lessonId,
+            qrLink
+          ),
+      };
+    }),
+  });
+
+  const isJoinLessonLoading = studentsJoinLessons.every(
+    (num) => num.fetchStatus === "fetching"
+  );
+
+  function OnJoinClick() {
+    studentsJoinLessons.map(async (lesson, i) => {
+      const data = await lesson.refetch();
+      const student = allStudents[i];
+      if (data.data && student) {
+        toast.success(
+          `${student.name} için ${data.data.header} ${data.data.paragraph}`,
+          { duration: 3000 }
+        );
+      }
+    });
+  }
 
   return (
     <Layout>
@@ -173,15 +152,18 @@ const Attendance: NextPage = () => {
         <Card>
           <CardHeader>
             <CardTitle>Yoklama</CardTitle>
-            <CardDescription>API UPDATE EDILMELI</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <div>
               <Label htmlFor="activation-code-input">Yoklama Kodu</Label>
               <Input
                 id="activation-code-input"
+                disabled={!!qrLink}
                 placeholder="Aktivasyon Kodu"
-                onChange={(event) => setActivationCode(event.target.value)}
+                onChange={(event) => {
+                  setActivationCode(event.target.value);
+                  setQrLink("");
+                }}
                 value={activationCode}
                 type="number"
               />
@@ -190,8 +172,12 @@ const Attendance: NextPage = () => {
             <div className="flex flex-row gap-2">
               <Input
                 id="qr-code-input"
+                disabled={!!activationCode}
                 placeholder="QR Linki"
-                onChange={(event) => setQrLink(event.target.value)}
+                onChange={(event) => {
+                  setQrLink(event.target.value);
+                  setActivationCode("");
+                }}
                 value={qrLink}
               />
               {isMobile && hydrated && (
@@ -219,81 +205,51 @@ const Attendance: NextPage = () => {
               )}
             </div>
             <Select
-              disabled={!lessons}
+              disabled={isActivationLoading || isQrLinkLoading}
               onValueChange={(value) => {
-                const selectedLesson = lessons.find(({ lessonId }) => {
-                  return lessonId === value;
-                });
+                const selectedLesson = activationCodeData?.find(
+                  ({ lessonId }) => {
+                    return lessonId === value;
+                  }
+                );
                 if (selectedLesson) {
                   setSelectedLesson(selectedLesson);
                 }
+                onLessonChange();
               }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Ders Seçimi" />
               </SelectTrigger>
               <SelectContent>
-                {lessons?.map((lesson) => {
-                  return (
-                    <SelectItem key={lesson.lessonId} value={lesson.lessonId}>
-                      {lesson.lessonName}
-                    </SelectItem>
-                  );
-                })}
+                {activationCodeData &&
+                  activationCodeData?.map((lesson) => {
+                    return (
+                      <SelectItem key={lesson.lessonId} value={lesson.lessonId}>
+                        {lesson.lessonName}
+                      </SelectItem>
+                    );
+                  })}
+                {qrLinkData &&
+                  qrLinkData?.map((lesson) => {
+                    return (
+                      <SelectItem key={lesson.lessonId} value={lesson.lessonId}>
+                        {lesson.lessonName}
+                      </SelectItem>
+                    );
+                  })}
               </SelectContent>
             </Select>
             <Button
+              isLoading={isStudentLessonsLoading || isJoinLessonLoading}
               disabled={selectedLesson.lessonId === ""}
-              onClick={() => {
-                if (selectedLesson) {
-                  joiningStudentArray.map((value) => {
-                    const promise = fetch(
-                      "https://ilker.abdulleziz.com/joinLecture",
-                      {
-                        method: "POST",
-                        body: JSON.stringify({
-                          ogrenciNo: value,
-                          yoklamaKodu: activationCode,
-                          yoklamaDers: selectedLesson.lessonId,
-                          getKod: qrLink?.substring(
-                            qrLink.lastIndexOf("/") + 1
-                          ),
-                        }),
-                        headers: {
-                          "Content-Type": "application/json",
-                          Accept: "application/json",
-                        },
-                      }
-                    )
-                      .then((res) => res.json())
-                      .then((data: joinLectureResponse) => {
-                        return data;
-                      });
-                    const studentDetail = allStudents.find(({ no }) => {
-                      return no === value;
-                    });
-                    if (studentDetail) {
-                      void toast.promise(
-                        promise,
-                        {
-                          loading: "Katılınıyor",
-                          success: (data) =>
-                            `Öğrenci:${studentDetail?.name} için ${data.header}`,
-                          error: "Bir hata oluştu",
-                        },
-                        { duration: 5000 }
-                      );
-                    }
-                    return;
-                  });
-                }
-              }}
+              onClick={() => OnJoinClick()}
             >
               Derse Katıl
             </Button>
-            {/* 
-            //!Buglı şuanda wip but it works XD
-            <JoiningStudents joiningStudentArray={joiningStudentArray} /> */}
+            {joiningStudents.length > 0 && (
+              <JoiningStudents joiningStudentArray={joiningStudents} />
+            )}
           </CardContent>
         </Card>
       </div>
@@ -301,4 +257,65 @@ const Attendance: NextPage = () => {
   );
 };
 
+const fetchActivationCode = async (activationCode: string) => {
+  return await fetch("https://ilker.abdulleziz.com/lectureInfo", {
+    method: "POST",
+    body: JSON.stringify({
+      yoklamaKodu: activationCode,
+      name: "dersBilgiGetir",
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  }).then((res) => {
+    return res.json() as Promise<getQrLessonsResponse[]>;
+  });
+};
+const fetchQrCode = async (QrCode: string) => {
+  return await fetch("https://ilker.abdulleziz.com/QR", {
+    method: "POST",
+    body: JSON.stringify({ url: QrCode }),
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  }).then((res) => {
+    return res.json() as Promise<getQrLessonsResponse[]>;
+  });
+};
+const fetchStudentLessons = async (studentNo: string) => {
+  return await fetch("https://ilker.abdulleziz.com/getStudentLessons", {
+    method: "POST",
+    body: JSON.stringify({
+      studentNo: studentNo,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  }).then((res) => {
+    return res.json() as Promise<getQrLessonsResponse[]>;
+  });
+};
+const joinLesson = async (
+  studentNo: string,
+  activationCode: string,
+  lessonId: string,
+  qrLink: string
+) => {
+  return await fetch("https://ilker.abdulleziz.com/joinLecture", {
+    method: "POST",
+    body: JSON.stringify({
+      ogrenciNo: studentNo,
+      yoklamaKodu: activationCode,
+      yoklamaDers: lessonId,
+      getKod: qrLink?.substring(qrLink.lastIndexOf("/") + 1),
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+  }).then((res) => res.json() as Promise<joinLectureResponse>);
+};
 export default Attendance;
