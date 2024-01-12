@@ -150,8 +150,3 @@ Abdülleziz bankası, sadece CEO ve muhasebe yönetiminde olup şirketin gelir v
 - Herhangi bir illegal aksiyonda rapor yetkisi bulunmaktadır ve bu görevi yerine getirmelidir.
 - Herkesi sorgulatabilir. Muhasebeden kaynaklı bir problem oluştuğunda, muhasebeyi sorguya çekebilir.
 - OHAL ilan edebilir. Kurul toplanıtısı yapılır.
-
-### CIO
-
-- CEO dışında herkesi sorgulama yetkisi vardır.
-- Olası CSO harici OHAL durumunda, CSO yetkisi tanınır.

@@ -36,7 +36,7 @@ export const bankRouter = createTRPCRouter({
     .mutation(async ({ ctx, input: { amount, operation } }) => {
       return await ctx.prisma.$transaction(async (prisma) => {
         const emergency = await prisma.stateOfEmergency.findFirst({
-          where: { endedAt: { not: null } },
+          where: { endedAt: {  equals: null } },
         });
         if (emergency)
           throw new TRPCError({
