@@ -20,6 +20,7 @@ import { env } from "~/env.mjs";
 
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "~/server/db";
+import { ablyRest } from "~/server/ably";
 import webPush, { WebPushError } from "web-push";
 
 type CreateContextOptions = {
@@ -90,6 +91,7 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
     prisma,
+    ablyRest,
     sendNotification,
   };
 };

@@ -9,6 +9,7 @@ import { notificationsRouter } from "./routers/notifications";
 import { bankRouter } from "./routers/bank";
 import { emergenciesRouter } from "./routers/discord/emergency";
 import { qstashRouter } from "./routers/qstash";
+import { gambleRouter } from "./routers/gamble";
 
 /**
  * This is the primary router for your server.
@@ -26,6 +27,7 @@ export const appRouter = createTRPCRouter({
   bank: bankRouter,
   emergency: emergenciesRouter,
   qstash: qstashRouter,
+  gamble: gambleRouter,
 });
 
 // export type definition of API

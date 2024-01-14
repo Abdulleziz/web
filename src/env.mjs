@@ -26,6 +26,7 @@ const server = z.object({
   QSTASH_CURRENT_SIGNING_KEY: z.string().min(1),
   QSTASH_NEXT_SIGNING_KEY: z.string().min(1),
   VAPID_SECRET_KEY: z.string().min(1),
+  ABLY_API_KEY: z.string().min(1),
 });
 
 /**
@@ -59,6 +60,7 @@ const processEnv = {
   QSTASH_NEXT_SIGNING_KEY: process.env.QSTASH_NEXT_SIGNING_KEY,
   NEXT_PUBLIC_VAPID_KEY: process.env.NEXT_PUBLIC_VAPID_KEY,
   VAPID_SECRET_KEY: process.env.VAPID_SECRET_KEY,
+  ABLY_API_KEY: process.env.ABLY_API_KEY,
 };
 
 // Don't touch the part below

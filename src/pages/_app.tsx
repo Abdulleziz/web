@@ -30,7 +30,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
     <SessionProvider session={session}>
       <Notifications />
       <ThemeProvider attribute="class" forcedTheme="dark">
-        <Component {...pageProps} />  
+        <Component {...pageProps} />
       </ThemeProvider>
       <Toaster />
     </SessionProvider>
