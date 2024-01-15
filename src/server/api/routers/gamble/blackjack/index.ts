@@ -53,7 +53,10 @@ async function setGame(game: BlackJack | null) {
 
 export const blackJackRouter = createTRPCRouter({
   state: protectedProcedure.query(async () => gameAsPublic(await getGame())),
-  _delete: protectedProcedure.mutation(async () => {
+  _delete: protectedProcedure.mutation(async ({ ctx }) => {
+    if (ctx.session.user.discordId !== "223071656510357504")
+      throw new TRPCError({ code: "BAD_REQUEST" });
+
     const channel = ablyRest.channels.get("gamble:blackjack");
     await setGame(null);
     await channel.publish("ended", null);
@@ -67,22 +70,29 @@ export const blackJackRouter = createTRPCRouter({
         message: "Game already started",
       });
 
-    const { deck_id } = await deckNewShuffle(6);
+    if (!blackJack || blackJack.endedAt) {
+      const { deck_id } = await deckNewShuffle(6);
 
-    blackJack = {
-      gameId: "blackjack-" + Math.random().toString(36).slice(2),
-      deckId: deck_id,
-      createdAt: new Date(),
-      startingAt: new Date(Date.now() + 1000 * 6),
-      dealer: { cards: [] },
-      players: {
-        [ctx.session.user.id]: { cards: [], busted: false },
-      },
-      turn: "dealer",
-    };
-    await setGame(blackJack);
+      blackJack = {
+        gameId: "blackjack-" + Math.random().toString(36).slice(2),
+        deckId: deck_id,
+        createdAt: new Date(),
+        startingAt: new Date(Date.now() + 1000 * 6),
+        dealer: { cards: [] },
+        players: {
+          [ctx.session.user.id]: { cards: [], busted: false },
+        },
+        turn: "dealer",
+      };
+      await setGame(blackJack);
 
-    await announceCreated(blackJack);
+      await announceCreated(blackJack);
+    } else {
+      blackJack.players[ctx.session.user.id] = { cards: [], busted: false };
+      await setGame(blackJack);
+
+      await announceJoin(blackJack, ctx.session.user.id);
+    }
   }),
   hit: protectedProcedure.mutation(async ({ ctx }) => {
     const channel = ablyRest.channels.get("gamble:blackjack");
@@ -178,6 +188,11 @@ async function playAsDealer(game: BlackJack) {
   game.endedAt = new Date();
   await setGame(game);
   await channel.publish("ended", game.gameId);
+}
+
+async function announceJoin(game: BlackJack, playerId: string) {
+  const channel = ablyRest.channels.get("gamble:blackjack");
+  await channel.publish(`joined.${playerId}`, game.gameId);
 }
 
 async function announceCreated(game: BlackJack) {

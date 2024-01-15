@@ -51,6 +51,7 @@ const BlackJackComponent = () => {
     void utils.gamble.blackjack.invalidate();
     const duration = 5000;
     const [eventName, playerId] = getEventName(event.name);
+
     if (eventName === "draw") {
       if (playerId === "dealer")
         toast.success(`Kurpiye kart çekti.`, { duration });
@@ -84,6 +85,10 @@ const BlackJackComponent = () => {
       if (playerId === "dealer")
         toast.success(`Kurpiye kaybetti.`, { duration });
       else toast.success(`${getUsername(playerId)} kaybetti.`, { duration });
+    }
+
+    if (eventName === "joined") {
+      toast.success(`${getUsername(playerId)} katıldı.`, { duration });
     }
 
     if (event.name === "created")
