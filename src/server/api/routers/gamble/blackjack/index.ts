@@ -203,6 +203,8 @@ async function announceCreated(game: BlackJack) {
 
 async function backgroundTask(game: BlackJack) {
   await waitFor(game.startingAt.getTime() - Date.now()).promise;
+  game = (await getGame()) as BlackJack;
+  if (!game) throw new Error("Game not found");
   const players = Object.keys(game.players);
   const player_ = players[0];
   if (!player_) throw new Error("No player on Blackjack game");
