@@ -309,12 +309,26 @@ const BlackJackComponent = () => {
                     Deal
                   </Button>
                   <Button
+                    disabled={
+                      session.data?.user.discordId !== "223071656510357504"
+                    }
                     onClick={() => _delete.mutate()}
                     variant={"destructive"}
                     className="w-24"
                   >
                     End Game
                   </Button>
+                  {!selfJoined && (
+                    <Button
+                      disabled={!canJoin}
+                      onClick={() => {
+                        join.mutate();
+                      }}
+                      className="w-24"
+                    >
+                      Join
+                    </Button>
+                  )}
                 </>
               )}
             </div>

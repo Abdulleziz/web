@@ -73,7 +73,7 @@ export const blackJackRouter = createTRPCRouter({
       gameId: "blackjack-" + Math.random().toString(36).slice(2),
       deckId: deck_id,
       createdAt: new Date(),
-      startingAt: new Date(Date.now() + 1000 * 10),
+      startingAt: new Date(Date.now() + 1000 * 6),
       dealer: { cards: [] },
       players: {
         [ctx.session.user.id]: { cards: [], busted: false },
