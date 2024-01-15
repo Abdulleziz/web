@@ -183,7 +183,7 @@ async function playAsDealer(game: BlackJack) {
 async function announceCreated(game: BlackJack) {
   const channel = ablyRest.channels.get("gamble:blackjack");
   await channel.publish("created", game.gameId);
-  void backgroundTask(game);
+  await backgroundTask(game);
 }
 
 async function backgroundTask(game: BlackJack) {
