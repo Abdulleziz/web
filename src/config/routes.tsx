@@ -6,6 +6,7 @@ import {
   ShoppingCartIcon,
   LandmarkIcon,
   QrCodeIcon,
+  Dice3Icon,
 } from "lucide-react";
 import { type ReactNode } from "react";
 export const NavbarRoutes: {
@@ -56,5 +57,11 @@ export const NavbarRoutes: {
     href: "/attendance",
     description: "Yoklama işlemleri",
     Icon: <QrCodeIcon />,
+  },
+  {
+    title: "Kumar",
+    href: "/gamble",
+    description: "Abdülleziz Kumarhane",
+    Icon: <Dice3Icon />,
   },
 ];

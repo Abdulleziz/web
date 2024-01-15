@@ -8,7 +8,7 @@
 const config = {
   reactStrictMode: true,
   images: {
-    domains: ["cdn.discordapp.com", "uploadthing.com"],
+    domains: ["cdn.discordapp.com", "uploadthing.com", "deckofcardsapi.com"],
   },
   /**
    * If you have the "experimental: { appDir: true }" setting enabled, then you

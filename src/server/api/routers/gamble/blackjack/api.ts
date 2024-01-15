@@ -1,0 +1,157 @@
+const HOST = "https://deckofcardsapi.com";
+
+export const CARD_BACK = `${HOST}/static/img/back.png`;
+
+export type Card = {
+  image: string; // https://deckofcardsapi.com/static/img/5S.png
+  images: { svg: string; png: string }[]; //{ "svg": "https://deckofcardsapi.com/static/img/6H.svg", "png": "https://deckofcardsapi.com/static/img/6H.png"}
+  value:
+    | "ACE"
+    | "2"
+    | "3"
+    | "4"
+    | "5"
+    | "6"
+    | "7"
+    | "8"
+    | "9"
+    | "0"
+    | "JACK"
+    | "QUEEN"
+    | "KING";
+  suit: "SPADES" | "HEARTS" | "DIAMONDS" | "CLUBS";
+  code: string; // 6H, 0D, AS, KC
+};
+
+export function deckNewShuffle(deck_count = 1) {
+  return fetch(`${HOST}/api/deck/new/shuffle/?deck_count=${deck_count}`).then(
+    (response) =>
+      response.json() as Promise<{
+        success: true;
+        deck_id: string;
+        shuffled: true;
+        remaining: number;
+      }>
+  );
+}
+
+export function deckDraw(
+  deckId: string,
+  count?: 1
+): Promise<{
+  success: true;
+  deck_id: string;
+  cards: [Card];
+  remaining: number;
+}>;
+export function deckDraw(
+  deckId: string,
+  count: 2
+): Promise<{
+  success: true;
+  deck_id: string;
+  cards: [Card, Card];
+  remaining: number;
+}>;
+export function deckDraw(
+  deckId: string,
+  count: 4
+): Promise<{
+  success: true;
+  deck_id: string;
+  cards: [Card, Card, Card, Card];
+  remaining: number;
+}>;
+export function deckDraw(deckId: string, count = 1) {
+  return fetch(`${HOST}/api/deck/${deckId}/draw/?count=${count}`).then(
+    (response) =>
+      response.json() as Promise<{
+        success: true;
+        deck_id: string;
+        cards: Card[];
+        remaining: number;
+      }>
+  );
+}
+
+/**
+ * Don't throw away a deck when all you want to do is shuffle. Include the deck_id on your call to shuffle your cards. Don't worry about reminding us how many decks you are playing with. Adding the remaining=true parameter will only shuffle those cards remaining in the main stack, leaving any piles or drawn cards alone.
+ */
+export function deckReShuffle(deckId: string, remaining: boolean) {
+  return fetch(
+    `${HOST}/api/deck/${deckId}/shuffle/?remaining=${String(remaining)}`
+  ).then(
+    (response) =>
+      response.json() as Promise<{
+        success: true;
+        deck_id: string;
+        shuffled: true;
+        remaining: number;
+      }>
+  );
+}
+
+export function deckNew() {
+  return fetch(`${HOST}/api/deck/new/`).then(
+    (response) =>
+      response.json() as Promise<{
+        success: true;
+        deck_id: string;
+        shuffled: false;
+        remaining: number;
+      }>
+  );
+}
+
+export function listCardsInPile(deckId: string, pileName: string) {
+  return fetch(`${HOST}/api/deck/${deckId}/pile/${pileName}/list/`).then(
+    (response) =>
+      response.json() as Promise<{
+        success: true;
+        deck_id: string;
+        remaining: number;
+        piles: Record<string, { remaining: number; cards?: Card[] }>;
+      }>
+  );
+}
+
+export function returnCardToDeck(deckId: string, cards?: Card[]) {
+  const url = new URL(`${HOST}/api/deck/${deckId}/return/`);
+  if (cards)
+    url.searchParams.append("cards", cards.map((card) => card.code).join(","));
+  return fetch(url.toString()).then(
+    (response) =>
+      response.json() as Promise<{
+        success: true;
+        deck_id: string;
+        remaining: number;
+      }>
+  );
+}
+
+export function drawPileBottom(deckId: string) {
+  return fetch(`${HOST}/api/deck/${deckId}/draw/bottom/`).then(
+    (response) =>
+      response.json() as Promise<{
+        success: true;
+        deck_id: string;
+        cards: Card[];
+        piles: { discard: { remaining: number; cards?: Card[] } };
+        remaining: number;
+      }>
+  );
+}
+
+export function getScore(cards?: Card[]) {
+  if (!cards) return 0;
+  return cards.reduce((score, card) => {
+    if (
+      card.value === "JACK" ||
+      card.value === "QUEEN" ||
+      card.value === "KING"
+    )
+      return score + 10;
+    if (card.value === "ACE") return score + 11;
+    return score + Number(card.value);
+  }, 0);
+}

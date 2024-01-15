@@ -1,10 +1,10 @@
 import { waitFor } from "~/utils/shared";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../../../trpc";
 import { env } from "~/env.mjs";
 import { TRPCError } from "@trpc/server";
 import { ablyRest } from "~/server/ably";
 
-type Roulette = { startedAt: Date; players: string[] } & (
+type Roulette = { gameId: string; startedAt: Date; players: string[] } & (
   | {
       resultIndex: undefined;
       options: undefined;
@@ -19,7 +19,7 @@ type Roulette = { startedAt: Date; players: string[] } & (
 
 let game: Roulette | null = null;
 
-export const gambleRouter = createTRPCRouter({
+export const rouletteRouter = createTRPCRouter({
   state: protectedProcedure.query(() => game),
   join: protectedProcedure.mutation(({ ctx }) => {
     if (env.NEXT_PUBLIC_VERCEL_ENV !== "development")
@@ -30,6 +30,7 @@ export const gambleRouter = createTRPCRouter({
 
     if (!game || (game && game.endedAt)) {
       game = {
+        gameId: game?.gameId ? String(Number(game.gameId) + 1) : "1",
         startedAt: new Date(),
         players: [ctx.session.user.id],
       } as Roulette;
@@ -42,7 +43,7 @@ export const gambleRouter = createTRPCRouter({
     console.log("game started");
     const channel = ctx.ablyRest.channels.get("gamble:roulette-1");
 
-    void channel.publish("started", null);
+    void channel.publish("started", game.gameId);
     void backgroundTask();
   }),
 });
@@ -50,8 +51,8 @@ export const gambleRouter = createTRPCRouter({
 async function backgroundTask() {
   await waitFor(10000).promise;
   const channel = ablyRest.channels.get("gamble:roulette-1");
-  endRoulette();
-  await channel.publish("done", null);
+  const game = endRoulette();
+  await channel.publish("done", game.gameId);
   console.log("game ended");
 }
 

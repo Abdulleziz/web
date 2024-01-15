@@ -10,6 +10,7 @@ export default async function handler(
   const tokenRequestData = await ablyRest.auth.createTokenRequest({
     clientId: session?.user.id ?? "",
     capability: {
+      "gamble-internal": ["stats"],
       "*": ["subscribe", "presence", "channel-metadata", "history"],
     },
   });
