@@ -62,6 +62,15 @@ export function deckDraw(
   cards: [Card, Card, Card, Card];
   remaining: number;
 }>;
+export function deckDraw(
+  deckId: string,
+  count: number
+): Promise<{
+  success: true;
+  deck_id: string;
+  cards: Card[];
+  remaining: number;
+}>;
 export function deckDraw(deckId: string, count = 1) {
   return fetch(`${HOST}/api/deck/${deckId}/draw/?count=${count}`).then(
     (response) =>
@@ -151,7 +160,8 @@ export function getScore(cards?: Card[]) {
       card.value === "KING"
     )
       return score + 10;
-    if (card.value === "ACE") return score + 11;
+      // NOTE: Ace is 11 by default, but if the score is over 21, it's 1
+    if (card.value === "ACE") return score < 11 ? score + 11: score + 1;
     return score + Number(card.value);
   }, 0);
 }
