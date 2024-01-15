@@ -15,7 +15,9 @@ import { cx } from "class-variance-authority";
 import {
   type Card as DeckCard,
   getScore,
+  CARD_BACK,
 } from "~/server/api/routers/gamble/blackjack/api";
+import superjson from "superjson";
 
 const BlackJackComponent = () => {
   const users = useGetAbdullezizUsers();
@@ -48,14 +50,46 @@ const BlackJackComponent = () => {
   }
 
   const { channel } = useChannel("gamble:blackjack", (event) => {
-    void utils.gamble.blackjack.invalidate();
     const duration = 5000;
     const [eventName, playerId] = getEventName(event.name);
 
     if (eventName === "draw") {
-      if (playerId === "dealer")
-        toast.success(`Kurpiye kart çekti.`, { duration });
-      else toast.success(`${getUsername(playerId)} kart çekti.`, { duration });
+      const eventData = superjson.parse<{
+        gameId: string;
+        card: DeckCard | null;
+      }>(event.data as string);
+      if (playerId === "dealer") {
+        utils.gamble.blackjack.state.setData(undefined, (data) => {
+          data?.dealer.cards.push(
+            eventData.card
+              ? { ...eventData.card, hidden: false }
+              : { image: CARD_BACK, hidden: true }
+          );
+          return data;
+        });
+      } else {
+        if (eventData.card && playerId) {
+          utils.gamble.blackjack.state.setData(undefined, (data) => {
+            if (!data) return data;
+            data.players[playerId]?.cards.push(eventData.card as DeckCard);
+            return data;
+          });
+        }
+      }
+    }
+
+    if (eventName === "show" && playerId === "dealer") {
+      const eventData = superjson.parse<{
+        gameId: string;
+        card: DeckCard & { hidden: false };
+      }>(event.data as string);
+      utils.gamble.blackjack.state.setData(undefined, (data) => {
+        if (!data) return data;
+        data.dealer.cards = data.dealer.cards.map((card) =>
+          card.hidden ? eventData.card : card
+        );
+        return data;
+      });
     }
 
     if (eventName === "bust") {
@@ -91,20 +125,21 @@ const BlackJackComponent = () => {
       toast.success(`${getUsername(playerId)} katıldı.`, { duration });
     }
 
-    if (event.name === "created")
-      toast.loading("Oyun oluşturuldu, 10 saniye içinde başlayacak.", {
+    if (event.name === "created") {
+      toast.loading("Oyun oluşturuldu, 6 saniye içinde başlayacak.", {
         id: event.data as string,
+        duration: 6000,
       });
+    }
     if (event.name === "started")
       toast.success("Oyun başladı. İyi şanslar!", {
         id: event.data as string,
         duration,
       });
     if (event.name === "ended") toast.success("Oyun bitti.", { duration });
-    if (eventName === "show" && playerId === "dealer")
-      toast.success("Kurpiye kartını gösterdi.", { duration });
     console.log(event);
     setRealtimeLogs((prev) => [...prev, event]);
+    void utils.gamble.blackjack.invalidate();
   });
 
   usePresence(channel.name, {}, (presence) => {
@@ -141,78 +176,76 @@ const BlackJackComponent = () => {
   return (
     <div>
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-green-900">
-        <div className="flex flex-1 flex-col items-center justify-between lg:flex-row">
-          <div>
-            <h1>Gamble House</h1>
-            <h2>Realtime (State: {channel.state})</h2>
-            <ul>
-              {realtimeLogs.slice(0, 20).map((log, i) => (
-                <li
-                  key={i}
-                >{`✉️ Gamble BlackJack: event: ${log.name} gameId: ${log.data}`}</li>
-              ))}
-            </ul>
-
-            <ScrollArea className="h-72 w-48 rounded-md border">
-              <div className="p-4">
-                <h4 className="mb-4 text-sm font-medium leading-none">
-                  History
-                </h4>
-                {historicalLogs.slice(0, 20).map((log) => (
-                  <>
-                    <div key={log.id} className="text-sm">
-                      {`"Gamble BlackJack: history event: ${log.name} gameId: ${
-                        log.data
-                      }" sent at ${new Date(log.timestamp).toLocaleString()}`}
-                    </div>
-                    <Separator className="my-2" />
-                  </>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
-          <div>
-            <div className="flex flex-row items-center justify-center gap-2">
-              <ScrollArea className="h-72 w-48 rounded-md border">
-                <div className="p-4">
+        <div>
+          <h1>Gamble House</h1>
+          <h2>Realtime (State: {channel.state})</h2>
+          <div className="flex flex-1 flex-col items-center justify-between lg:flex-row">
+            <div>
+              <div className="flex flex-row items-center justify-center gap-2">
+                <ScrollArea className="h-72 w-48 rounded-md border p-4">
                   <h4 className="mb-4 text-sm font-medium leading-none">
-                    Realtime Events ({realtimeLogs.length})
+                    History
                   </h4>
-                  {realtimeLogs.map((log) => (
+                  {historicalLogs.slice(0, 20).map((log) => (
                     <>
                       <div key={log.id} className="text-sm">
-                        {`✉️ Gamble BlackJack: event: ${log.name} gameId: ${log.data}`}
+                        {`${log.name} gameId: ${log.data}" sent at ${new Date(
+                          log.timestamp
+                        ).toLocaleString()}`}
                       </div>
                       <Separator className="my-2" />
                     </>
                   ))}
-                </div>
-              </ScrollArea>
-              <ScrollArea className="h-72 w-48 rounded-md border">
-                <div className="p-4">
-                  <h4 className="mb-4 text-sm font-medium leading-none">
-                    Users ({realtimePresence.length})
-                  </h4>
-                  {realtimePresence.map((presence) => (
-                    <>
-                      <div key={presence.id} className="text-sm">
-                        {presence.action}: {getUsername(presence.clientId)}
-                      </div>
-                      <Separator className="my-2" />
-                    </>
-                  ))}
-                </div>
-              </ScrollArea>
+                </ScrollArea>
+                <ScrollArea className="h-72 w-48 rounded-md border">
+                  <div className="p-4">
+                    <h4 className="mb-4 text-sm font-medium leading-none">
+                      Realtime Events ({realtimeLogs.length})
+                    </h4>
+                    {realtimeLogs.map((log) => (
+                      <>
+                        <div key={log.id} className="text-sm">
+                          {`✉️ Gamble BlackJack: event: ${log.name} gameId: ${log.data}`}
+                        </div>
+                        <Separator className="my-2" />
+                      </>
+                    ))}
+                  </div>
+                </ScrollArea>
+                <ScrollArea className="h-72 w-48 rounded-md border">
+                  <div className="p-4">
+                    <h4 className="mb-4 text-sm font-medium leading-none">
+                      Users ({realtimePresence.length})
+                    </h4>
+                    {realtimePresence.map((presence) => (
+                      <>
+                        <div key={presence.id} className="text-sm">
+                          {presence.action}: {getUsername(presence.clientId)}
+                        </div>
+                        <Separator className="my-2" />
+                      </>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+              {started && game.data && (
+                <>
+                  (BlackJack): Playing Now:{" "}
+                  {Object.keys(game.data.players).length}
+                </>
+              )}
             </div>
-            {started && (
-              <>(BlackJack): Playing Now: {game.data?.players.length}</>
-            )}
           </div>
         </div>
 
         {game.data ? (
-          <div className="flex w-full max-w-5xl flex-col items-center justify-center rounded-lg bg-green-500 p-8 shadow-lg">
+          <div className="flex w-full max-w-6xl flex-col items-center justify-center rounded-lg bg-green-700 p-8 shadow-lg">
             <div className="flex flex-col items-center justify-center space-y-4">
+              {game.data.endedAt && (
+                <h1 className="rounded-lg bg-red-500 text-3xl font-bold">
+                  Oyun Bitti
+                </h1>
+              )}
               <div className="flex items-center justify-center space-x-4">
                 {game.data.dealer.cards.map((card, i) => (
                   <Card key={card.image + String(i)} className="bg-red-500">
@@ -236,45 +269,71 @@ const BlackJackComponent = () => {
               </h2>
             </div>
             <div className="mt-8 flex flex-col items-center justify-center space-x-4 md:flex-row">
-              {Object.entries(game.data.players).map(([playerId, player]) => (
-                <div
-                  key={playerId}
-                  className="flex flex-col items-center space-y-2"
-                >
-                  <div className="flex items-center justify-center space-x-4">
-                    {player.cards.map((card, i) => (
-                      <Card
-                        key={card.image + String(i)}
-                        className={cx(
-                          playerId === session.data?.user.id
-                            ? "bg-blue-500"
-                            : "bg-red-500"
-                        )}
-                      >
-                        <CardContent className="flex items-center justify-center p-6">
-                          <Image
-                            src={card.image}
-                            width={80}
-                            height={80}
-                            alt={card.image}
-                          />
-                        </CardContent>
-                      </Card>
-                    ))}
+              {Object.entries(game.data.players)
+                .reverse()
+                .map(([playerId, player]) => (
+                  <div
+                    key={playerId}
+                    className="flex flex-col items-center space-y-2"
+                  >
+                    <div className="flex items-center justify-center space-x-4">
+                      {player.cards.map((card, i) => (
+                        <Card
+                          key={card.image + String(i)}
+                          className={cx(
+                            playerId === session.data?.user.id
+                              ? "bg-blue-500"
+                              : "bg-red-500"
+                          )}
+                        >
+                          <CardContent className="flex items-center justify-center p-6">
+                            <Image
+                              src={card.image}
+                              width={80}
+                              height={80}
+                              alt={card.image}
+                            />
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                    <h2
+                      className={cx(
+                        "text-2xl font-bold",
+                        game.data?.turn === playerId
+                          ? "text-yellow-400"
+                          : "text-white"
+                      )}
+                    >
+                      {users.data?.find((u) => u.id === playerId)?.user
+                        .username ?? playerId}{" "}
+                      ({getScore(player.cards)})
+                    </h2>
                   </div>
-                  <h2 className="text-2xl font-bold text-white">
-                    {users.data?.find((u) => u.id === playerId)?.user
-                      .username ?? playerId}{" "}
-                    ({getScore(player.cards)})
-                  </h2>
-                </div>
-              ))}
+                ))}
             </div>
             <div className="mt-8 flex items-center justify-center space-x-2">
               {game.data.endedAt ? (
                 <>
-                  <Button className="w-24" onClick={() => join.mutate()}>
+                  <Button
+                    variant={"warning"}
+                    onClick={() => join.mutate()}
+                    isLoading={join.isLoading}
+                    disabled={join.isLoading}
+                  >
                     Yeni Oyuna Başla
+                  </Button>
+                </>
+              ) : !selfJoined ? (
+                <>
+                  <Button
+                    variant={"warning"}
+                    disabled={!canJoin}
+                    onClick={() => {
+                      join.mutate();
+                    }}
+                  >
+                    Katıl
                   </Button>
                 </>
               ) : (
@@ -282,8 +341,11 @@ const BlackJackComponent = () => {
                   <Button
                     className="w-24"
                     disabled={
-                      !selfJoined || game.data.turn !== session.data?.user.id
+                      !selfJoined ||
+                      game.data.turn !== session.data?.user.id ||
+                      hit.isLoading
                     }
+                    isLoading={hit.isLoading}
                     onClick={() => hit.mutate()}
                   >
                     Hit
@@ -291,13 +353,16 @@ const BlackJackComponent = () => {
                   <Button
                     className="w-24"
                     disabled={
-                      !selfJoined || game.data.turn !== session.data?.user.id
+                      !selfJoined ||
+                      game.data.turn !== session.data?.user.id ||
+                      stand.isLoading
                     }
+                    isLoading={stand.isLoading}
                     onClick={() => stand.mutate()}
                   >
                     Stand
                   </Button>
-                  <Button
+                  {/* <Button
                     className="w-24"
                     disabled={
                       !selfJoined || game.data.turn !== session.data?.user.id
@@ -312,26 +377,14 @@ const BlackJackComponent = () => {
                     }
                   >
                     Deal
-                  </Button>
-                  <Button
-                    disabled={
-                      session.data?.user.discordId !== "223071656510357504"
-                    }
-                    onClick={() => _delete.mutate()}
-                    variant={"destructive"}
-                    className="w-24"
-                  >
-                    End Game
-                  </Button>
-                  {!selfJoined && (
+                  </Button> */}
+                  {session.data?.user.discordId === "223071656510357504" && (
                     <Button
-                      disabled={!canJoin}
-                      onClick={() => {
-                        join.mutate();
-                      }}
+                      onClick={() => _delete.mutate()}
+                      variant={"destructive"}
                       className="w-24"
                     >
-                      Join
+                      End Game
                     </Button>
                   )}
                 </>
@@ -346,12 +399,14 @@ const BlackJackComponent = () => {
             </span>
           </div>
         ) : (
+          // Welcome screen, no game on history
           <div>
             <Button
-              disabled={!canJoin}
+              disabled={!canJoin || join.isLoading}
               onClick={() => {
                 join.mutate();
               }}
+              isLoading={join.isLoading}
             >
               Yeni oyun başlat
             </Button>

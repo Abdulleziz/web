@@ -106,7 +106,10 @@ export const blackJackRouter = createTRPCRouter({
       const { cards } = await deckDraw(game.deckId, 1);
       game.players[playerId]?.cards.push(cards[0]);
       await setGame(game);
-      await channel.publish(`draw.${playerId}`, game.gameId);
+      await channel.publish(
+        `draw.${playerId}`,
+        superjson.stringify({ gameId: game.gameId, card: cards[0] })
+      );
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -155,7 +158,10 @@ async function playAsDealer(game: BlackJack) {
   if (!hiddenCard) throw new Error("Dealer has no cards");
   hiddenCard.hidden = false;
   await setGame(game);
-  await channel.publish("show.dealer", game.gameId);
+  await channel.publish(
+    "show.dealer",
+    superjson.stringify({ gameId: game.gameId, card: hiddenCard })
+  );
 
   let dealerScore = getScore(game.dealer.cards);
 
@@ -163,7 +169,10 @@ async function playAsDealer(game: BlackJack) {
     const { cards } = await deckDraw(game.deckId, 1);
     game.dealer.cards.push({ ...cards[0], hidden: false });
     await setGame(game);
-    await channel.publish("draw.dealer", game.gameId);
+    await channel.publish(
+      "draw.dealer",
+      superjson.stringify({ gameId: game.gameId, card: cards[0] })
+    );
     dealerScore = getScore(game.dealer.cards);
   }
 
@@ -216,27 +225,46 @@ async function backgroundTask(game: BlackJack) {
 
   for (const player of players) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    game.players[player]?.cards.push(cards.shift()!);
+    const card = cards.shift()!;
+    game.players[player]?.cards.push(card);
     await setGame(game);
-    await channel.publish(`draw.${player}`, game.gameId);
+    await channel.publish(
+      `draw.${player}`,
+      superjson.stringify({ gameId: game.gameId, card })
+    );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  game.dealer.cards.push({ ...cards.shift()!, hidden: false });
-  await setGame(game);
-  await channel.publish("draw.dealer", game.gameId);
-
+  {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const card = cards.shift()!;
+    game.dealer.cards.push({ ...card, hidden: false });
+    await setGame(game);
+    await channel.publish(
+      "draw.dealer",
+      superjson.stringify({ gameId: game.gameId, card })
+    );
+  }
   for (const player of players) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    game.players[player]?.cards.push(cards.shift()!);
+    const card = cards.shift()!;
+    game.players[player]?.cards.push(card);
     await setGame(game);
-    await channel.publish(`draw.${player}`, game.gameId);
+    await channel.publish(
+      `draw.${player}`,
+      superjson.stringify({ gameId: game.gameId, card })
+    );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  game.dealer.cards.push({ ...cards.shift()!, hidden: true });
-  await setGame(game);
-  await channel.publish("draw.dealer", game.gameId);
+  {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const card = cards.shift()!;
+    game.dealer.cards.push({ ...card, hidden: true });
+    await setGame(game);
+    await channel.publish(
+      "draw.dealer",
+      superjson.stringify({ gameId: game.gameId, card: null })
+    );
+  }
 
   game.turn = player_;
   await setGame(game);
