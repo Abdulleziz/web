@@ -73,7 +73,11 @@ export const blackJackRouter = createTRPCRouter({
   start: qstashProcedure.input(startSchema).mutation(async ({ input }) => {
     const game = await getGame();
     if (!game) throw new TRPCError({ code: "NOT_FOUND" });
-    if (game.gameId !== input) throw new TRPCError({ code: "BAD_REQUEST" });
+    if (game.gameId !== input)
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `gameId mismatch, curr=${game.gameId}`,
+      });
 
     await backgroundTask(game); // since there is wait time, we can just call it (we must await on vercel)
   }),

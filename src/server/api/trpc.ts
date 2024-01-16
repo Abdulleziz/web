@@ -241,16 +241,27 @@ export const verifySignatureMiddleware = t.middleware(
       nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY,
     });
 
-    const verified = await receiver.verify({
-      signature: parsed.data["upstash-signature"],
-      body: superjson.stringify(rawInput),
-    });
-
-    if (!verified) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "invalid signature",
+    try {
+      const verified = await receiver.verify({
+        signature: parsed.data["upstash-signature"],
+        body: superjson.stringify(rawInput),
       });
+
+      if (!verified) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "invalid signature",
+        });
+      }
+    } catch (error) {
+      console.error("Invalid Upstash Signature", error);
+      if (error instanceof SignatureError) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: error.message,
+        });
+      }
+      throw error;
     }
 
     return next({ ctx });
@@ -273,7 +284,7 @@ import { type AbdullezizPerm, permissionDecider } from "~/utils/abdulleziz";
 import { getAbdullezizRoles } from "../discord-api/utils";
 import { getGuildMemberWithRoles } from "../discord-api/trpc";
 import { type PushSubscription } from "@prisma/client";
-import { Receiver } from "@upstash/qstash";
+import { Receiver, SignatureError } from "@upstash/qstash";
 
 export const createPermissionProcedure = (requiredPerms: AbdullezizPerm[]) =>
   internalProcedure.use(
