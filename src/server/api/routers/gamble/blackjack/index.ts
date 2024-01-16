@@ -106,13 +106,11 @@ export const blackJackRouter = createTRPCRouter({
           : (await createNewDeck()).deck_id;
       // TODO: get qstash limit
 
-      const USE_VERCEL = true;
-
       blackJack = {
         gameId: "blackjack-" + Math.random().toString(36).slice(2),
         deckId: deck_id,
         createdAt: new Date(),
-        startingAt: new Date(Date.now() + JOIN_WAIT(USE_VERCEL)),
+        startingAt: new Date(Date.now() + JOIN_WAIT()),
         dealer: { cards: [] },
         players: {
           [ctx.session.user.id]: { cards: [], busted: false },
@@ -121,7 +119,7 @@ export const blackJackRouter = createTRPCRouter({
       };
       await setGame(blackJack);
 
-      await handleCreated(blackJack, USE_VERCEL);
+      await handleCreated(blackJack);
     } else {
       blackJack.players[ctx.session.user.id] = { cards: [], busted: false };
       await setGame(blackJack);
