@@ -59,7 +59,7 @@ async function setGame(game: BlackJack | null) {
   await channel.publish("update", game && superjson.stringify(game));
 }
 
-const startSchema = z.string().length(11, { message: "gameId must be 11 len" }); //svu231w2vnq
+const startSchema = z.string().length(21, { message: "gameId must be 21 len" }); // blackjack-svu231w2vnq
 
 // if we are low on qstash limit, we can use forceShort & await on vercel
 const JOIN_WAIT = (forceShort = false) =>
