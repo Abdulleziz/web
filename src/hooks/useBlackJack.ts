@@ -156,6 +156,20 @@ export function useBlackJackGame() {
       });
       void utils.gamble.blackjack.invalidate();
     }
+
+    if (event.name === "info.newDeck") {
+      const eventData = superjson.parse<{
+        gameId?: string;
+        deckCount: number;
+        cardCount: number;
+      }>(event.data as string);
+
+      toast.success(
+        `Yeni deste oluşturuldu, ${eventData.deckCount} deste, ${eventData.cardCount} kart.`,
+        { duration }
+      );
+    }
+
     if (event.name === "started") {
       toast.success("Oyun başladı, Bahisler kapatıldı. İyi şanslar!", {
         id: event.data as string,

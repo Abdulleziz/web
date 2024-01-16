@@ -95,8 +95,11 @@ export const blackJackRouter = createTRPCRouter({
       });
 
     if (!blackJack || blackJack.endedAt) {
-      const { deck_id } = await deckNewShuffle(6);
-
+      // resume to deck
+      const deck_id =
+        blackJack && blackJack.endedAt
+          ? blackJack.deckId
+          : (await createNewDeck()).deck_id;
       // TODO: get qstash limit
 
       blackJack = {
@@ -173,6 +176,22 @@ export const blackJackRouter = createTRPCRouter({
   deal: protectedProcedure.mutation(() => ({})),
 });
 
+async function createNewDeck(game: BlackJack | null = null) {
+  const deck = await deckNewShuffle(6);
+  const channel = ablyRest.channels.get(PUBLIC_CHANNEL);
+
+  await channel.publish(
+    "info.newDeck",
+    superjson.stringify({
+      gameId: game?.gameId,
+      deckCount: 6,
+      cardCount: deck.remaining,
+    })
+  );
+
+  return deck;
+}
+
 function nextTurn(game: BlackJack) {
   const players = ["dealer"].concat(Object.keys(game.players));
   const currentTurn = players.indexOf(game.turn);
@@ -224,6 +243,8 @@ async function playAsDealer(game: BlackJack) {
     }
   }
 
+  const { remaining } = await deckDraw(game.deckId);
+  if (remaining < 150) game.deckId = (await createNewDeck()).deck_id;
   game.endedAt = new Date();
   await setGame(game);
   await channel.publish("ended", game.gameId);
