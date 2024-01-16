@@ -253,7 +253,7 @@ async function handleCreated(game: BlackJack, forceLocalShort = false) {
     const url = getDomainUrl() + "/api/trpc/gamble.blackjack.start";
     await c.publish({
       url,
-      delay: (game.startingAt.getTime() - Date.now()) / 1000,
+      delay: (game.startingAt.getTime() - Date.now()) / 1000 - 4, // -4 for qstash spin up delay
       body: superjson.stringify(
         game.gameId satisfies z.input<typeof startSchema>
       ),
