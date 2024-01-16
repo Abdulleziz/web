@@ -9,25 +9,41 @@ import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
 import { type Types } from "ably";
 import { useGetAbdullezizUsers } from "~/utils/useDiscord";
-import { Card, CardContent } from "./ui/card";
 import Image from "next/image";
 import { cx } from "class-variance-authority";
 import {
   type Card as DeckCard,
   getScore,
   CARD_BACK,
+  cardImage,
 } from "~/server/api/routers/gamble/blackjack/api";
 import superjson from "superjson";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import { useTime } from "~/hooks/useTime";
+import { Progress } from "./ui/progress";
+import { Input } from "./ui/input";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 const BlackJackComponent = () => {
+  const time = useTime({ n: 100 });
   const users = useGetAbdullezizUsers();
   const session = useSession();
   const utils = api.useContext();
+  const [dealerRef] = useAutoAnimate();
+  const [playerRef] = useAutoAnimate();
   const join = api.gamble.blackjack.join.useMutation();
   const game = api.gamble.blackjack.state.useQuery();
   const _delete = api.gamble.blackjack._delete.useMutation();
   const hit = api.gamble.blackjack.hit.useMutation();
   const stand = api.gamble.blackjack.stand.useMutation();
+  const [bet, setBet] = useState(0);
   const [realtimePresence, setRealtimePresence] = useState<
     Array<Types.PresenceMessage>
   >([]);
@@ -65,17 +81,25 @@ const BlackJackComponent = () => {
               ? { ...eventData.card, hidden: false }
               : { image: CARD_BACK, hidden: true }
           );
-          return data;
+          return { ...data } as typeof data;
         });
       } else {
         if (eventData.card && playerId) {
           utils.gamble.blackjack.state.setData(undefined, (data) => {
             if (!data) return data;
             data.players[playerId]?.cards.push(eventData.card as DeckCard);
-            return data;
+            return { ...data };
           });
         }
       }
+    }
+
+    if (eventName === "turn") {
+      utils.gamble.blackjack.state.setData(undefined, (data) => {
+        if (!data || !playerId) return data;
+        data.turn = playerId;
+        return { ...data };
+      });
     }
 
     if (eventName === "show" && playerId === "dealer") {
@@ -88,19 +112,13 @@ const BlackJackComponent = () => {
         data.dealer.cards = data.dealer.cards.map((card) =>
           card.hidden ? eventData.card : card
         );
-        return data;
+        return { ...data };
       });
     }
 
     if (eventName === "bust") {
       if (playerId === "dealer") toast.success(`Kurpiye battı.`, { duration });
       else toast.success(`${getUsername(playerId)} battı.`, { duration });
-    }
-
-    if (eventName === "stand") {
-      if (playerId === "dealer")
-        toast.success(`Kurpiye pas geçti.`, { duration });
-      else toast.success(`${getUsername(playerId)} pas geçti.`, { duration });
     }
 
     if (eventName === "win") {
@@ -123,23 +141,57 @@ const BlackJackComponent = () => {
 
     if (eventName === "joined") {
       toast.success(`${getUsername(playerId)} katıldı.`, { duration });
+      utils.gamble.blackjack.state.setData(undefined, (data) => {
+        if (!data || !playerId) return data;
+        data.players[playerId] = {
+          cards: [],
+          busted: false,
+        };
+        return { ...data };
+      });
     }
 
     if (event.name === "created") {
-      toast.loading("Oyun oluşturuldu, 6 saniye içinde başlayacak.", {
-        id: event.data as string,
-        duration: 6000,
+      const eventData = superjson.parse<{
+        gameId: string;
+        waitFor: number;
+        players: NonNullable<typeof game.data>["players"];
+      }>(event.data as string);
+
+      toast.loading(
+        `Oyun oluşturuldu, ${
+          eventData.waitFor / 1000
+        } saniye içinde başlayacak.`,
+        {
+          id: eventData.gameId,
+          duration: eventData.waitFor,
+        }
+      );
+      utils.gamble.blackjack.state.setData(undefined, (data) => {
+        if (!data) return data;
+        data.createdAt = new Date();
+        data.startingAt = new Date(Date.now() + eventData.waitFor);
+        data.dealer.cards = [];
+        data.players = eventData.players;
+        data.turn = "dealer";
+        data.endedAt = undefined;
+        data.gameId = eventData.gameId;
+        return { ...data };
       });
+      void utils.gamble.blackjack.invalidate();
     }
-    if (event.name === "started")
-      toast.success("Oyun başladı. İyi şanslar!", {
+    if (event.name === "started") {
+      toast.success("Oyun başladı, Bahisler kapatıldı. İyi şanslar!", {
         id: event.data as string,
         duration,
       });
-    if (event.name === "ended") toast.success("Oyun bitti.", { duration });
+    }
+    if (event.name === "ended") {
+      toast.success("Oyun bitti.", { duration });
+      void utils.gamble.blackjack.invalidate();
+    }
     console.log(event);
     setRealtimeLogs((prev) => [...prev, event]);
-    void utils.gamble.blackjack.invalidate();
   });
 
   usePresence(channel.name, {}, (presence) => {
@@ -163,15 +215,23 @@ const BlackJackComponent = () => {
     };
     getHistory().catch(console.error);
   }, [channel]);
+  const gameJoinDuration = game.data
+    ? game.data.startingAt.getTime() - game.data.createdAt.getTime()
+    : 0;
 
-  const started = game.data && game.data.startingAt < new Date();
+  const started = game.data && game.data.startingAt < new Date(time);
+
+  const left = Math.max(
+    game.data && !started ? game.data.startingAt.getTime() - time : 0,
+    0
+  );
 
   const selfJoined =
     session.data?.user.id && game.data?.players
       ? !!game.data?.players[session.data.user.id]
       : false;
 
-  const canJoin = !selfJoined || !started;
+  const canJoin = !selfJoined && !started;
 
   return (
     <div>
@@ -181,7 +241,7 @@ const BlackJackComponent = () => {
           <h2>Realtime (State: {channel.state})</h2>
           <div className="flex flex-1 flex-col items-center justify-between lg:flex-row">
             <div>
-              <div className="flex flex-row items-center justify-center gap-2">
+              <div className="hidden flex-row items-center justify-center gap-2 md:flex">
                 <ScrollArea className="h-72 w-48 rounded-md border p-4">
                   <h4 className="mb-4 text-sm font-medium leading-none">
                     History
@@ -239,78 +299,103 @@ const BlackJackComponent = () => {
         </div>
 
         {game.data ? (
-          <div className="flex w-full max-w-6xl flex-col items-center justify-center rounded-lg bg-green-700 p-8 shadow-lg">
-            <div className="flex flex-col items-center justify-center space-y-4">
-              {game.data.endedAt && (
-                <h1 className="rounded-lg bg-red-500 text-3xl font-bold">
-                  Oyun Bitti
-                </h1>
-              )}
-              <div className="flex items-center justify-center space-x-4">
-                {game.data.dealer.cards.map((card, i) => (
-                  <Card key={card.image + String(i)} className="bg-red-500">
-                    <CardContent className="flex items-center justify-center pt-6">
-                      <Image
-                        src={card.image}
-                        width={80}
-                        height={80}
-                        alt={card.image}
-                      />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              <h2 className="text-2xl font-bold text-white">
-                Kurpiye (
-                {getScore(
-                  game.data.dealer.cards.filter((c) => !c.hidden) as DeckCard[]
-                )}
-                )
-              </h2>
-            </div>
-            <div className="mt-8 flex flex-col items-center justify-center space-x-4 md:flex-row">
+          <div className="flex w-full flex-col items-center justify-center rounded-lg bg-green-700 p-8 shadow-lg">
+            {(() => {
+              const dealer = game.data.dealer;
+              const publicCards = dealer.cards.filter(
+                (c) => !c.hidden
+              ) as DeckCard[];
+              const score = getScore(publicCards);
+
+              return (
+                <div className="flex w-full flex-col items-center justify-center space-y-4">
+                  {game.data.endedAt && (
+                    <h1 className="rounded-lg text-3xl font-bold">
+                      Oyun Bitti
+                    </h1>
+                  )}
+                  <div
+                    ref={dealerRef}
+                    className="flex w-full items-center justify-center gap-4"
+                  >
+                    {dealer.cards.map((card, i) => (
+                      <div key={i} className="bg-red-500">
+                        <Image
+                          src={cardImage(card)}
+                          width={96}
+                          height={133}
+                          alt={card.hidden ? "hidden" : card.code}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">
+                    Kurpiye (
+                    {score == 21 && publicCards.length == 2 ? (
+                      <span className="text-blue-300">BlackJack</span>
+                    ) : (
+                      score
+                    )}
+                    ){" "}
+                    {score > 21 && <span className="text-red-300">Battı</span>}
+                  </h2>
+                </div>
+              );
+            })()}
+            <div className="mt-8 flex w-full flex-col items-center justify-center space-x-4 md:flex-row">
               {Object.entries(game.data.players)
                 .reverse()
-                .map(([playerId, player]) => (
-                  <div
-                    key={playerId}
-                    className="flex flex-col items-center space-y-2"
-                  >
-                    <div className="flex items-center justify-center space-x-4">
-                      {player.cards.map((card, i) => (
-                        <Card
-                          key={card.image + String(i)}
-                          className={cx(
-                            playerId === session.data?.user.id
-                              ? "bg-blue-500"
-                              : "bg-red-500"
-                          )}
-                        >
-                          <CardContent className="flex items-center justify-center p-6">
-                            <Image
-                              src={card.image}
-                              width={80}
-                              height={80}
-                              alt={card.image}
-                            />
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                    <h2
-                      className={cx(
-                        "text-2xl font-bold",
-                        game.data?.turn === playerId
-                          ? "text-yellow-400"
-                          : "text-white"
-                      )}
+                .map(([playerId, player]) => {
+                  const score = getScore(player.cards);
+                  return (
+                    <div
+                      key={playerId}
+                      className="flex w-full flex-col items-center space-y-2"
                     >
-                      {users.data?.find((u) => u.id === playerId)?.user
-                        .username ?? playerId}{" "}
-                      ({getScore(player.cards)})
-                    </h2>
-                  </div>
-                ))}
+                      <div
+                        ref={playerRef}
+                        className="flex w-full items-center justify-center space-x-4"
+                      >
+                        {player.cards.map((card, i) => (
+                          <div
+                            key={i}
+                            className={cx(
+                              playerId === session.data?.user.id
+                                ? "bg-blue-500"
+                                : "bg-red-500"
+                            )}
+                          >
+                            <Image
+                              src={cardImage(card)}
+                              width={96}
+                              height={133}
+                              alt={card.code}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <h2
+                        className={cx(
+                          "text-2xl font-bold",
+                          game.data?.turn === playerId
+                            ? "text-yellow-400"
+                            : "text-white"
+                        )}
+                      >
+                        {getUsername(playerId)} (
+                        {score == 21 && player.cards.length == 2 ? (
+                          <span className="text-blue-300">BlackJack</span>
+                        ) : (
+                          score
+                        )}
+                        ){" "}
+                        {player.busted && (
+                          <span className="text-red-300">Battı</span>
+                        )}
+                      </h2>
+                    </div>
+                  );
+                })}
             </div>
             <div className="mt-8 flex items-center justify-center space-x-2">
               {game.data.endedAt ? (
@@ -343,7 +428,8 @@ const BlackJackComponent = () => {
                     disabled={
                       !selfJoined ||
                       game.data.turn !== session.data?.user.id ||
-                      hit.isLoading
+                      hit.isLoading ||
+                      stand.isLoading
                     }
                     isLoading={hit.isLoading}
                     onClick={() => hit.mutate()}
@@ -355,7 +441,8 @@ const BlackJackComponent = () => {
                     disabled={
                       !selfJoined ||
                       game.data.turn !== session.data?.user.id ||
-                      stand.isLoading
+                      stand.isLoading ||
+                      hit.isLoading
                     }
                     isLoading={stand.isLoading}
                     onClick={() => stand.mutate()}
@@ -390,6 +477,75 @@ const BlackJackComponent = () => {
                 </>
               )}
             </div>
+            <Dialog open={game.data.startingAt > new Date()}>
+              <DialogContent className="font-bold">
+                <DialogHeader>
+                  <DialogTitle>Oyun başlamak üzere</DialogTitle>
+                  <DialogDescription>
+                    <p>Kalan süre: {(left / 1000).toFixed()} saniye</p>
+                    <p>Bahis: ${bet}</p>
+                    <div className="p-4">
+                      <div className="flex items-center justify-center gap-2 p-2">
+                        {[50, 100, 200, 500].map((amount) => (
+                          <Button
+                            key={amount}
+                            size={"sm"}
+                            variant={"outline"}
+                            onClick={() =>
+                              setBet((prev) => Math.max(prev - amount, 0))
+                            }
+                          >
+                            -{amount}
+                          </Button>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-center gap-2 p-2">
+                        {[50, 100, 200, 500].map((amount) => (
+                          <Button
+                            key={amount}
+                            size={"sm"}
+                            onClick={() => setBet((prev) => prev + amount)}
+                          >
+                            +{amount}
+                          </Button>
+                        ))}
+                      </div>
+                      <div className="flex flex-col items-center gap-4 p-4">
+                        <div className="flex items-center justify-center gap-4">
+                          <Input
+                            className="max-w-[8rem]"
+                            type="number"
+                            min={0}
+                            value={bet}
+                            onChange={(e) => setBet(e.target.valueAsNumber)}
+                          />
+                          <Button
+                            disabled={bet === 0}
+                            variant={"outline"}
+                            onClick={() => setBet(0)}
+                          >
+                            Sıfırla
+                          </Button>
+                        </div>
+                        <Progress value={(left / gameJoinDuration) * 100} />
+                        <Button
+                          size={"lg-long"}
+                          disabled={!canJoin}
+                          onClick={() => {
+                            join.mutate();
+                          }}
+                        >
+                          {selfJoined ? "Katıldın" : "Katıl"}
+                        </Button>
+                      </div>
+                    </div>
+                    <DialogFooter className="flex items-center justify-center text-red-500">
+                      Kayıplardan kasa sorumlu değildir!
+                    </DialogFooter>
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
             <span>
               Sıra:{" "}
               {game.data.turn === "dealer"

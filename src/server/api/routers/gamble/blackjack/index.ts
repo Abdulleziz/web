@@ -1,4 +1,8 @@
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  qstashProcedure,
+} from "~/server/api/trpc";
 import {
   CARD_BACK,
   type Card,
@@ -10,6 +14,10 @@ import { TRPCError } from "@trpc/server";
 import { ablyRest } from "~/server/ably";
 import superjson from "superjson";
 import { waitFor } from "~/utils/shared";
+import { env } from "~/env.mjs";
+import { z } from "zod";
+import { Client } from "@upstash/qstash/.";
+import { getDomainUrl } from "~/utils/api";
 
 type BlackJack = {
   gameId: string;
@@ -51,8 +59,21 @@ async function setGame(game: BlackJack | null) {
   await channel.publish("update", game && superjson.stringify(game));
 }
 
+const startSchema = z.string().length(11, { message: "gameId must be 11 len" }); //svu231w2vnq
+
+// if we are low on qstash limit, we can use forceShort & await on vercel
+const JOIN_WAIT = (forceShort = false) =>
+  (env.NEXT_PUBLIC_VERCEL_ENV === "development" || forceShort ? 6 : 15) * 1000;
+
 export const blackJackRouter = createTRPCRouter({
   state: protectedProcedure.query(async () => gameAsPublic(await getGame())),
+  start: qstashProcedure.input(startSchema).mutation(async ({ input }) => {
+    const game = await getGame();
+    if (!game) throw new TRPCError({ code: "NOT_FOUND" });
+    if (game.gameId !== input) throw new TRPCError({ code: "BAD_REQUEST" });
+
+    await backgroundTask(game); // since there is wait time, we can just call it (we must await on vercel)
+  }),
   _delete: protectedProcedure.mutation(async ({ ctx }) => {
     if (ctx.session.user.discordId !== "223071656510357504")
       throw new TRPCError({ code: "BAD_REQUEST" });
@@ -73,11 +94,13 @@ export const blackJackRouter = createTRPCRouter({
     if (!blackJack || blackJack.endedAt) {
       const { deck_id } = await deckNewShuffle(6);
 
+      // TODO: get qstash limit
+
       blackJack = {
         gameId: "blackjack-" + Math.random().toString(36).slice(2),
         deckId: deck_id,
         createdAt: new Date(),
-        startingAt: new Date(Date.now() + 1000 * 6),
+        startingAt: new Date(Date.now() + JOIN_WAIT()),
         dealer: { cards: [] },
         players: {
           [ctx.session.user.id]: { cards: [], busted: false },
@@ -86,7 +109,7 @@ export const blackJackRouter = createTRPCRouter({
       };
       await setGame(blackJack);
 
-      await announceCreated(blackJack);
+      await handleCreated(blackJack);
     } else {
       blackJack.players[ctx.session.user.id] = { cards: [], busted: false };
       await setGame(blackJack);
@@ -121,6 +144,10 @@ export const blackJackRouter = createTRPCRouter({
       await setGame(game);
       await channel.publish(`bust.${playerId}`, game.gameId);
       await channel.publish(`turn.${game.turn}`, game.gameId);
+    } else if (getScore(player.cards) === 21) {
+      game.turn = nextTurn(game);
+      await setGame(game);
+      await channel.publish(`turn.${game.turn}`, game.gameId);
     }
 
     if (game.turn === "dealer") await playAsDealer(game);
@@ -144,9 +171,9 @@ export const blackJackRouter = createTRPCRouter({
 });
 
 function nextTurn(game: BlackJack) {
-  const players = Object.keys(game.players).concat("dealer");
-  const playerIndex = players.indexOf(game.turn);
-  const nextTurn = players[playerIndex + 1];
+  const players = ["dealer"].concat(Object.keys(game.players));
+  const currentTurn = players.indexOf(game.turn);
+  const nextTurn = players[currentTurn + 1];
   return nextTurn || "dealer";
 }
 
@@ -204,10 +231,35 @@ async function announceJoin(game: BlackJack, playerId: string) {
   await channel.publish(`joined.${playerId}`, game.gameId);
 }
 
-async function announceCreated(game: BlackJack) {
+async function handleCreated(game: BlackJack, forceLocalShort = false) {
   const channel = ablyRest.channels.get("gamble:blackjack");
-  await channel.publish("created", game.gameId);
-  await backgroundTask(game);
+  await channel.publish(
+    "created",
+    superjson.stringify({
+      gameId: game.gameId,
+      waitFor: game.startingAt.getTime() - game.createdAt.getTime(),
+      players: game.players,
+    })
+  );
+
+  if (env.NEXT_PUBLIC_VERCEL_ENV === "development" || forceLocalShort) {
+    // on vercel, we can't use qstash, so we wait for low wait time
+    if (forceLocalShort) await backgroundTask(game);
+    // local pc, wait for task instead of qstash
+    else void backgroundTask(game);
+  } else {
+    // vercel, use qstash
+    const c = new Client({ token: env.QSTASH_TOKEN });
+    const url = getDomainUrl() + "/api/trpc/gamble.blackjack.start";
+    await c.publish({
+      url,
+      delay: (game.startingAt.getTime() - Date.now()) / 1000,
+      body: superjson.stringify(
+        game.gameId satisfies z.input<typeof startSchema>
+      ),
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }
 
 async function backgroundTask(game: BlackJack) {
@@ -215,9 +267,9 @@ async function backgroundTask(game: BlackJack) {
   game = (await getGame()) as BlackJack;
   if (!game) throw new Error("Game not found");
   const players = Object.keys(game.players);
-  const player_ = players[0];
-  if (!player_) throw new Error("No player on Blackjack game");
+  if (!players.length) throw new Error("No player on Blackjack game");
   // TODO: on player leave, cancel task or handle it
+  // or client report for player timeout
 
   const channel = ablyRest.channels.get("gamble:blackjack");
   await channel.publish("started", game.gameId); // race condition (join/card draw)
@@ -266,7 +318,14 @@ async function backgroundTask(game: BlackJack) {
     );
   }
 
-  game.turn = player_;
+  let playerCards;
+
+  do {
+    game.turn = nextTurn(game);
+    playerCards = game.players[game.turn]?.cards;
+  } while (getScore(playerCards) == 21);
   await setGame(game);
-  await channel.publish(`turn.${player_}`, game.gameId);
+  await channel.publish(`turn.${game.turn}`, game.gameId);
+
+  if (game.turn === "dealer") await playAsDealer(game);
 }

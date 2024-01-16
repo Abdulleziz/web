@@ -2,9 +2,14 @@ const HOST = "https://deckofcardsapi.com";
 
 export const CARD_BACK = `${HOST}/static/img/back.png`;
 
+export const cardImage = (codeOrHidden: { code: string } | { hidden: true }) =>
+  `${HOST}/static/img/${
+    "code" in codeOrHidden ? codeOrHidden.code : "back"
+  }.png`;
+
 export type Card = {
-  image: string; // https://deckofcardsapi.com/static/img/5S.png
-  images: { svg: string; png: string }[]; //{ "svg": "https://deckofcardsapi.com/static/img/6H.svg", "png": "https://deckofcardsapi.com/static/img/6H.png"}
+  // image: string; // https://deckofcardsapi.com/static/img/5S.png
+  // images: { svg: string; png: string }[]; //{ "svg": "https://deckofcardsapi.com/static/img/6H.svg", "png": "https://deckofcardsapi.com/static/img/6H.png"}
   value:
     | "ACE"
     | "2"
@@ -72,15 +77,26 @@ export function deckDraw(
   remaining: number;
 }>;
 export function deckDraw(deckId: string, count = 1) {
-  return fetch(`${HOST}/api/deck/${deckId}/draw/?count=${count}`).then(
-    (response) =>
-      response.json() as Promise<{
-        success: true;
-        deck_id: string;
-        cards: Card[];
-        remaining: number;
-      }>
-  );
+  return fetch(`${HOST}/api/deck/${deckId}/draw/?count=${count}`)
+    .then(
+      (response) =>
+        response.json() as Promise<{
+          success: true;
+          deck_id: string;
+          cards: (Card & {
+            image?: string;
+            images?: { svg: string; png: string }[];
+          })[];
+          remaining: number;
+        }>
+    )
+    .then((data) => {
+      data.cards.forEach((card) => {
+        delete card.image;
+        delete card.images;
+      });
+      return data;
+    });
 }
 
 /**
@@ -153,15 +169,19 @@ export function drawPileBottom(deckId: string) {
 
 export function getScore(cards?: Card[]) {
   if (!cards) return 0;
-  return cards.reduce((score, card) => {
-    if (
-      card.value === "JACK" ||
-      card.value === "QUEEN" ||
-      card.value === "KING"
-    )
-      return score + 10;
-      // NOTE: Ace is 11 by default, but if the score is over 21, it's 1
-    if (card.value === "ACE") return score < 11 ? score + 11: score + 1;
-    return score + Number(card.value);
-  }, 0);
+  return (
+    [...cards]
+      // NOTE: toSorted supported in node 20+
+      .sort((_, b) => (b.value === "ACE" ? -1 : 0)) // calculate aces last
+      .reduce((score, card) => {
+        if (
+          card.value === "JACK" ||
+          card.value === "QUEEN" ||
+          card.value === "KING"
+        )
+          return score + 10;
+        if (card.value === "ACE") return score < 11 ? score + 11 : score + 1;
+        return score + Number(card.value);
+      }, 0)
+  );
 }
