@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import { useChannel, usePresence } from "ably/react";
-import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { api } from "~/utils/api";
 import { Wheel } from "react-custom-roulette";
@@ -8,59 +6,20 @@ import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
-import { type Types } from "ably";
 import { useGetAbdullezizUsers } from "~/utils/useDiscord";
+import { useRoulette } from "~/hooks/useRoulette";
 
 const RouletteComponent = () => {
   const users = useGetAbdullezizUsers();
   const session = useSession();
-  const utils = api.useContext();
   const join = api.gamble.roulette.join.useMutation();
   const game = api.gamble.roulette.state.useQuery();
-  const [realtimePresence, setRealtimePresence] = useState<
-    Array<Types.PresenceMessage>
-  >([]);
-  const [realtimeLogs, setRealtimeLogs] = useState<Array<Types.Message>>([]);
-  const [historicalLogs, setHistoricalLogs] = useState<Array<Types.Message>>(
-    []
-  );
 
-  const { channel } = useChannel("gamble:roulette-1", (event) => {
-    const id = `gamble:roulette-1:${event.data}`;
-    void utils.gamble.roulette.invalidate();
-    if (event.name === "started")
-      toast.loading(`Rulet-1 ${event.data} başladı!`, { id });
-    if (event.name === "done")
-      toast.success(`Rulet-1 ${event.data} bitti!`, { id });
-    console.log(event);
-    setRealtimeLogs((prev) => [...prev, event]);
-  });
-
-  usePresence(channel.name, {}, (presence) => {
-    console.log({ presence });
-    void channel.presence.get().then((users) => {
-      setRealtimePresence(users.map((presence) => presence));
-    });
-  });
-
-  useEffect(() => {
-    const getHistory = async () => {
-      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-
-      let history = await channel.history({ start: twoHoursAgo.getTime() });
-      do {
-        history.items.forEach((event) => {
-          setHistoricalLogs((prev) => [...prev, event]);
-        });
-        history = await history.next();
-      } while (history);
-    };
-    getHistory().catch(console.error);
-  }, [channel]);
+  const [channel, liveLogs, presence, logs] = useRoulette();
 
   const startingAt =
-    game.data?.startedAt && !game.data?.endedAt
-      ? new Date(game.data.startedAt.getTime() + 10 * 1000)
+    game.data?.createdAt && !game.data?.endedAt
+      ? new Date(game.data.createdAt.getTime() + 10 * 1000)
       : undefined;
 
   const endedInRecently =
@@ -78,7 +37,7 @@ const RouletteComponent = () => {
           <h1>Gamble House</h1>
           <h2>Realtime (State: {channel.state})</h2>
           <ul>
-            {realtimeLogs.map((log, i) => (
+            {liveLogs.map((log, i) => (
               <li
                 key={i}
               >{`✉️ Gamble Roulette 1: event: ${log.name} gameId: ${log.data}`}</li>
@@ -88,7 +47,7 @@ const RouletteComponent = () => {
           <ScrollArea className="h-72 w-48 rounded-md border">
             <div className="p-4">
               <h4 className="mb-4 text-sm font-medium leading-none">History</h4>
-              {historicalLogs.map((log) => (
+              {logs.map((log) => (
                 <>
                   <div key={log.id} className="text-sm">
                     {`"Gamble Roulette 1: history event: ${log.name} gameId: ${
@@ -106,9 +65,9 @@ const RouletteComponent = () => {
             <ScrollArea className="h-72 w-48 rounded-md border">
               <div className="p-4">
                 <h4 className="mb-4 text-sm font-medium leading-none">
-                  Realtime Events ({realtimeLogs.length})
+                  Realtime Events ({liveLogs.length})
                 </h4>
-                {realtimeLogs.map((log) => (
+                {liveLogs.map((log) => (
                   <>
                     <div key={log.id} className="text-sm">
                       {`✉️ Gamble Roulette 1: event: ${log.name} gameId: ${log.data}`}
@@ -121,9 +80,9 @@ const RouletteComponent = () => {
             <ScrollArea className="h-72 w-48 rounded-md border">
               <div className="p-4">
                 <h4 className="mb-4 text-sm font-medium leading-none">
-                  Users ({realtimePresence.length})
+                  Users ({presence.length})
                 </h4>
-                {realtimePresence.map((presence) => (
+                {presence.map((presence) => (
                   <>
                     <div key={presence.id} className="text-sm">
                       {presence.action}:{" "}
@@ -167,8 +126,8 @@ const RouletteComponent = () => {
             <div>
               Game State: (id: {game.data?.gameId})
               <div>
-                (startedAt:{" "}
-                {game.data?.startedAt.toLocaleString("tr-TR", {
+                (createdAt:{" "}
+                {game.data?.createdAt.toLocaleString("tr-TR", {
                   hour: "numeric",
                   minute: "numeric",
                   second: "numeric",

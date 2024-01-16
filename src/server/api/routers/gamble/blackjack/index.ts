@@ -1,23 +1,23 @@
+import { TRPCError } from "@trpc/server";
+import { Client } from "@upstash/qstash";
+import superjson from "superjson";
+import { z } from "zod";
+import { env } from "~/env.mjs";
+import { ablyRest } from "~/server/ably";
 import {
   createTRPCRouter,
   protectedProcedure,
   qstashProcedure,
 } from "~/server/api/trpc";
+import { getDomainUrl } from "~/utils/api";
+import { waitFor } from "~/utils/shared";
 import {
   CARD_BACK,
-  type Card,
-  deckNewShuffle,
   deckDraw,
+  deckNewShuffle,
   getScore,
+  type Card,
 } from "./api";
-import { TRPCError } from "@trpc/server";
-import { ablyRest } from "~/server/ably";
-import superjson from "superjson";
-import { waitFor } from "~/utils/shared";
-import { env } from "~/env.mjs";
-import { z } from "zod";
-import { Client } from "@upstash/qstash/.";
-import { getDomainUrl } from "~/utils/api";
 
 type BlackJack = {
   gameId: string;
@@ -46,8 +46,11 @@ function gameAsPublic(game: BlackJack | null) {
   };
 }
 
+const INTERNAL_CHANNEL = "gamble-internal:blackjack";
+const PUBLIC_CHANNEL = "gamble:blackjack";
+
 async function getGame() {
-  const channel = ablyRest.channels.get("gamble-internal:blackjack");
+  const channel = ablyRest.channels.get(INTERNAL_CHANNEL);
   const message = await channel.history({ limit: 1 });
   const data: unknown = message.items[0]?.data;
   if (!data) return null;
@@ -55,7 +58,7 @@ async function getGame() {
 }
 
 async function setGame(game: BlackJack | null) {
-  const channel = ablyRest.channels.get("gamble-internal:blackjack");
+  const channel = ablyRest.channels.get(INTERNAL_CHANNEL);
   await channel.publish("update", game && superjson.stringify(game));
 }
 
@@ -78,7 +81,7 @@ export const blackJackRouter = createTRPCRouter({
     if (ctx.session.user.discordId !== "223071656510357504")
       throw new TRPCError({ code: "BAD_REQUEST" });
 
-    const channel = ablyRest.channels.get("gamble:blackjack");
+    const channel = ablyRest.channels.get(PUBLIC_CHANNEL);
     await setGame(null);
     await channel.publish("ended", null);
   }),
@@ -118,7 +121,7 @@ export const blackJackRouter = createTRPCRouter({
     }
   }),
   hit: protectedProcedure.mutation(async ({ ctx }) => {
-    const channel = ablyRest.channels.get("gamble:blackjack");
+    const channel = ablyRest.channels.get(PUBLIC_CHANNEL);
     const playerId = ctx.session.user.id;
 
     const game = await getGame();
@@ -153,7 +156,7 @@ export const blackJackRouter = createTRPCRouter({
     if (game.turn === "dealer") await playAsDealer(game);
   }),
   stand: protectedProcedure.mutation(async ({ ctx }) => {
-    const channel = ablyRest.channels.get("gamble:blackjack");
+    const channel = ablyRest.channels.get(PUBLIC_CHANNEL);
     const playerId = ctx.session.user.id;
 
     const game = await getGame();
@@ -178,7 +181,7 @@ function nextTurn(game: BlackJack) {
 }
 
 async function playAsDealer(game: BlackJack) {
-  const channel = ablyRest.channels.get("gamble:blackjack");
+  const channel = ablyRest.channels.get(PUBLIC_CHANNEL);
   if (game.turn !== "dealer") throw new Error("Not dealer turn");
 
   const hiddenCard = game.dealer.cards[1];
@@ -227,12 +230,12 @@ async function playAsDealer(game: BlackJack) {
 }
 
 async function announceJoin(game: BlackJack, playerId: string) {
-  const channel = ablyRest.channels.get("gamble:blackjack");
+  const channel = ablyRest.channels.get(PUBLIC_CHANNEL);
   await channel.publish(`joined.${playerId}`, game.gameId);
 }
 
 async function handleCreated(game: BlackJack, forceLocalShort = false) {
-  const channel = ablyRest.channels.get("gamble:blackjack");
+  const channel = ablyRest.channels.get(PUBLIC_CHANNEL);
   await channel.publish(
     "created",
     superjson.stringify({
@@ -271,7 +274,7 @@ async function backgroundTask(game: BlackJack) {
   // TODO: on player leave, cancel task or handle it
   // or client report for player timeout
 
-  const channel = ablyRest.channels.get("gamble:blackjack");
+  const channel = ablyRest.channels.get(PUBLIC_CHANNEL);
   await channel.publish("started", game.gameId); // race condition (join/card draw)
   const { cards } = await deckDraw(game.deckId, players.length * 2 + 2);
 

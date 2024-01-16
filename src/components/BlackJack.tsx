@@ -1,23 +1,18 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import { useChannel, usePresence } from "ably/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { api } from "~/utils/api";
 import { useSession } from "next-auth/react";
-import toast from "react-hot-toast";
 import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
-import { type Types } from "ably";
 import { useGetAbdullezizUsers } from "~/utils/useDiscord";
 import Image from "next/image";
 import { cx } from "class-variance-authority";
 import {
   type Card as DeckCard,
   getScore,
-  CARD_BACK,
   cardImage,
 } from "~/server/api/routers/gamble/blackjack/api";
-import superjson from "superjson";
 import {
   Dialog,
   DialogContent,
@@ -30,199 +25,37 @@ import { useTime } from "~/hooks/useTime";
 import { Progress } from "./ui/progress";
 import { Input } from "./ui/input";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useBlackJackGame } from "~/hooks/useBlackJack";
 
 const BlackJackComponent = () => {
   const time = useTime({ n: 100 });
   const users = useGetAbdullezizUsers();
   const session = useSession();
-  const utils = api.useContext();
+  // -- animations --
   const [dealerRef] = useAutoAnimate();
   const [playerRef] = useAutoAnimate();
+  // -- actions --
   const join = api.gamble.blackjack.join.useMutation();
   const game = api.gamble.blackjack.state.useQuery();
   const _delete = api.gamble.blackjack._delete.useMutation();
   const hit = api.gamble.blackjack.hit.useMutation();
   const stand = api.gamble.blackjack.stand.useMutation();
+  // -- state --
   const [bet, setBet] = useState(0);
-  const [realtimePresence, setRealtimePresence] = useState<
-    Array<Types.PresenceMessage>
-  >([]);
-  const [realtimeLogs, setRealtimeLogs] = useState<Array<Types.Message>>([]);
-  const [historicalLogs, setHistoricalLogs] = useState<Array<Types.Message>>(
-    []
-  );
 
   function getUsername(id?: string) {
     return users.data?.find((u) => u.id === id)?.user.username ?? id;
   }
 
-  function getEventName(name: string) {
-    if (name.includes(".")) {
-      const [event, playerId] = name.split(".");
-      return [event, playerId];
-    }
+  const [channel, liveLogs, presence, logs] = useBlackJackGame();
 
-    return [name, undefined];
-  }
-
-  const { channel } = useChannel("gamble:blackjack", (event) => {
-    const duration = 5000;
-    const [eventName, playerId] = getEventName(event.name);
-
-    if (eventName === "draw") {
-      const eventData = superjson.parse<{
-        gameId: string;
-        card: DeckCard | null;
-      }>(event.data as string);
-      if (playerId === "dealer") {
-        utils.gamble.blackjack.state.setData(undefined, (data) => {
-          data?.dealer.cards.push(
-            eventData.card
-              ? { ...eventData.card, hidden: false }
-              : { image: CARD_BACK, hidden: true }
-          );
-          return { ...data } as typeof data;
-        });
-      } else {
-        if (eventData.card && playerId) {
-          utils.gamble.blackjack.state.setData(undefined, (data) => {
-            if (!data) return data;
-            data.players[playerId]?.cards.push(eventData.card as DeckCard);
-            return { ...data };
-          });
-        }
-      }
-    }
-
-    if (eventName === "turn") {
-      utils.gamble.blackjack.state.setData(undefined, (data) => {
-        if (!data || !playerId) return data;
-        data.turn = playerId;
-        return { ...data };
-      });
-    }
-
-    if (eventName === "show" && playerId === "dealer") {
-      const eventData = superjson.parse<{
-        gameId: string;
-        card: DeckCard & { hidden: false };
-      }>(event.data as string);
-      utils.gamble.blackjack.state.setData(undefined, (data) => {
-        if (!data) return data;
-        data.dealer.cards = data.dealer.cards.map((card) =>
-          card.hidden ? eventData.card : card
-        );
-        return { ...data };
-      });
-    }
-
-    if (eventName === "bust") {
-      if (playerId === "dealer") toast.success(`Kurpiye battı.`, { duration });
-      else toast.success(`${getUsername(playerId)} battı.`, { duration });
-    }
-
-    if (eventName === "win") {
-      if (playerId === "dealer")
-        toast.success(`Kurpiye kazandı.`, { duration });
-      else toast.success(`${getUsername(playerId)} kazandı.`, { duration });
-    }
-
-    if (eventName === "tie") {
-      if (playerId === "dealer")
-        toast.success(`Kurpiye berabere.`, { duration });
-      else toast.success(`${getUsername(playerId)} berabere.`, { duration });
-    }
-
-    if (eventName === "lose") {
-      if (playerId === "dealer")
-        toast.success(`Kurpiye kaybetti.`, { duration });
-      else toast.success(`${getUsername(playerId)} kaybetti.`, { duration });
-    }
-
-    if (eventName === "joined") {
-      toast.success(`${getUsername(playerId)} katıldı.`, { duration });
-      utils.gamble.blackjack.state.setData(undefined, (data) => {
-        if (!data || !playerId) return data;
-        data.players[playerId] = {
-          cards: [],
-          busted: false,
-        };
-        return { ...data };
-      });
-    }
-
-    if (event.name === "created") {
-      const eventData = superjson.parse<{
-        gameId: string;
-        waitFor: number;
-        players: NonNullable<typeof game.data>["players"];
-      }>(event.data as string);
-
-      toast.loading(
-        `Oyun oluşturuldu, ${
-          eventData.waitFor / 1000
-        } saniye içinde başlayacak.`,
-        {
-          id: eventData.gameId,
-          duration: eventData.waitFor,
-        }
-      );
-      utils.gamble.blackjack.state.setData(undefined, (data) => {
-        if (!data) return data;
-        data.createdAt = new Date();
-        data.startingAt = new Date(Date.now() + eventData.waitFor);
-        data.dealer.cards = [];
-        data.players = eventData.players;
-        data.turn = "dealer";
-        data.endedAt = undefined;
-        data.gameId = eventData.gameId;
-        return { ...data };
-      });
-      void utils.gamble.blackjack.invalidate();
-    }
-    if (event.name === "started") {
-      toast.success("Oyun başladı, Bahisler kapatıldı. İyi şanslar!", {
-        id: event.data as string,
-        duration,
-      });
-    }
-    if (event.name === "ended") {
-      toast.success("Oyun bitti.", { duration });
-      void utils.gamble.blackjack.invalidate();
-    }
-    console.log(event);
-    setRealtimeLogs((prev) => [...prev, event]);
-  });
-
-  usePresence(channel.name, {}, (presence) => {
-    console.log({ presence });
-    void channel.presence.get().then((users) => {
-      setRealtimePresence(users.map((presence) => presence));
-    });
-  });
-
-  useEffect(() => {
-    const getHistory = async () => {
-      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-
-      let history = await channel.history({ start: twoHoursAgo.getTime() });
-      do {
-        history.items.forEach((event) => {
-          setHistoricalLogs((prev) => [...prev, event]);
-        });
-        history = await history.next();
-      } while (history);
-    };
-    getHistory().catch(console.error);
-  }, [channel]);
+  const isStarted = game.data && game.data.startingAt < new Date(time);
   const gameJoinDuration = game.data
     ? game.data.startingAt.getTime() - game.data.createdAt.getTime()
     : 0;
 
-  const started = game.data && game.data.startingAt < new Date(time);
-
-  const left = Math.max(
-    game.data && !started ? game.data.startingAt.getTime() - time : 0,
+  const timeLeft = Math.max(
+    game.data && !isStarted ? game.data.startingAt.getTime() - time : 0,
     0
   );
 
@@ -231,7 +64,7 @@ const BlackJackComponent = () => {
       ? !!game.data?.players[session.data.user.id]
       : false;
 
-  const canJoin = !selfJoined && !started;
+  const canJoin = !selfJoined && !isStarted;
 
   return (
     <div>
@@ -246,7 +79,7 @@ const BlackJackComponent = () => {
                   <h4 className="mb-4 text-sm font-medium leading-none">
                     History
                   </h4>
-                  {historicalLogs.slice(0, 20).map((log) => (
+                  {logs.slice(0, 20).map((log) => (
                     <>
                       <div key={log.id} className="text-sm">
                         {`${log.name} gameId: ${log.data}" sent at ${new Date(
@@ -260,9 +93,9 @@ const BlackJackComponent = () => {
                 <ScrollArea className="h-72 w-48 rounded-md border">
                   <div className="p-4">
                     <h4 className="mb-4 text-sm font-medium leading-none">
-                      Realtime Events ({realtimeLogs.length})
+                      Realtime Events ({liveLogs.length})
                     </h4>
-                    {realtimeLogs.map((log) => (
+                    {liveLogs.map((log) => (
                       <>
                         <div key={log.id} className="text-sm">
                           {`✉️ Gamble BlackJack: event: ${log.name} gameId: ${log.data}`}
@@ -275,9 +108,9 @@ const BlackJackComponent = () => {
                 <ScrollArea className="h-72 w-48 rounded-md border">
                   <div className="p-4">
                     <h4 className="mb-4 text-sm font-medium leading-none">
-                      Users ({realtimePresence.length})
+                      Users ({presence.length})
                     </h4>
-                    {realtimePresence.map((presence) => (
+                    {presence.map((presence) => (
                       <>
                         <div key={presence.id} className="text-sm">
                           {presence.action}: {getUsername(presence.clientId)}
@@ -288,7 +121,7 @@ const BlackJackComponent = () => {
                   </div>
                 </ScrollArea>
               </div>
-              {started && game.data && (
+              {isStarted && game.data && (
                 <>
                   (BlackJack): Playing Now:{" "}
                   {Object.keys(game.data.players).length}
@@ -482,7 +315,7 @@ const BlackJackComponent = () => {
                 <DialogHeader>
                   <DialogTitle>Oyun başlamak üzere</DialogTitle>
                   <DialogDescription>
-                    <p>Kalan süre: {(left / 1000).toFixed()} saniye</p>
+                    <p>Kalan süre: {(timeLeft / 1000).toFixed()} saniye</p>
                     <p>Bahis: ${bet}</p>
                     <div className="p-4">
                       <div className="flex items-center justify-center gap-2 p-2">
@@ -527,7 +360,7 @@ const BlackJackComponent = () => {
                             Sıfırla
                           </Button>
                         </div>
-                        <Progress value={(left / gameJoinDuration) * 100} />
+                        <Progress value={(timeLeft / gameJoinDuration) * 100} />
                         <Button
                           size={"lg-long"}
                           disabled={!canJoin}
