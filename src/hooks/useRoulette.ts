@@ -4,15 +4,22 @@ import { useChannel, usePresence } from "ably/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { api } from "~/utils/api";
+import superjson from "superjson";
+import { useGetAbdullezizUsers } from "~/utils/useDiscord";
 
 const CHANNEL = "gamble:roulette-1";
 
 export function useRoulette() {
+  const users = useGetAbdullezizUsers();
   const utils = api.useContext();
 
   const [logs, setLogs] = useState<Array<Types.Message>>([]);
   const [liveLogs, setLiveLogs] = useState<Array<Types.Message>>([]);
   const [presence, setPresence] = useState<Array<Types.PresenceMessage>>([]);
+
+  function getUsername(id?: string) {
+    return users.data?.find((u) => u.id === id)?.user.username ?? id;
+  }
 
   const { channel } = useChannel(CHANNEL, (event) => {
     const id = `gamble:roulette-1:${event.data}`;
@@ -21,6 +28,13 @@ export function useRoulette() {
       toast.loading(`Rulet-1 ${event.data} başladı!`, { id });
     if (event.name === "done")
       toast.success(`Rulet-1 ${event.data} bitti!`, { id });
+    if (event.name === "joined") {
+      const data = superjson.parse<{
+        gameId: string;
+        userId: string;
+      }>(event.data as string);
+      toast.success(`Rulet-1 ${getUsername(data.userId)} katıldı!`);
+    }
     setLiveLogs((prev) => [...prev, event]);
   });
 

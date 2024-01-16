@@ -54,12 +54,6 @@ export const rouletteRouter = createTRPCRouter({
     await backgroundTask(game); // since there is wait time, we can just call it (we must await on vercel)
   }),
   join: protectedProcedure.mutation(async ({ ctx }) => {
-    if (env.NEXT_PUBLIC_VERCEL_ENV !== "development")
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "Sadece Development ortamında çalışır",
-      });
-
     let game = await getGame();
 
     const channel = ctx.ablyRest.channels.get(PUBLIC_CHANNEL);
