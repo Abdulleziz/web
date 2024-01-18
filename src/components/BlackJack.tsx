@@ -40,6 +40,7 @@ const BlackJackComponent = () => {
   const _delete = api.gamble.blackjack._delete.useMutation();
   const hit = api.gamble.blackjack.hit.useMutation();
   const stand = api.gamble.blackjack.stand.useMutation();
+  const reportTurn = api.gamble.blackjack.reportTurn.useMutation();
   // -- state --
   const [bet, setBet] = useState(0);
 
@@ -50,6 +51,7 @@ const BlackJackComponent = () => {
   const [channel, liveLogs, presence, logs] = useBlackJackGame();
 
   const isStarted = game.data && game.data.startingAt < new Date(time);
+  const isEnded = game.data?.endedAt || true;
   const gameJoinDuration = game.data
     ? game.data.startingAt.getTime() - game.data.createdAt.getTime()
     : 0;
@@ -59,6 +61,11 @@ const BlackJackComponent = () => {
     0
   );
 
+  const lastTurnPast = liveLogs[0]
+    ? new Date(liveLogs[0].timestamp).getTime() + 30 * 1000 < Date.now()
+    : true;
+
+  const selfTurn = game.data?.turn === session.data?.user.id;
   const selfJoined =
     session.data?.user.id && game.data?.players
       ? !!game.data?.players[session.data.user.id]
@@ -111,12 +118,12 @@ const BlackJackComponent = () => {
                       Users ({presence.length})
                     </h4>
                     {presence.map((presence) => (
-                      <>
-                        <div key={presence.id} className="text-sm">
+                      <div key={presence.id}>
+                        <div className="text-sm">
                           {presence.action}: {getUsername(presence.clientId)}
                         </div>
                         <Separator className="my-2" />
-                      </>
+                      </div>
                     ))}
                   </div>
                 </ScrollArea>
@@ -308,6 +315,19 @@ const BlackJackComponent = () => {
                     </Button>
                   )}
                 </>
+              )}
+              {!isEnded && lastTurnPast && !selfTurn && (
+                <Button
+                  variant={"destructive"}
+                  className="w-24"
+                  disabled={reportTurn.isLoading}
+                  isLoading={reportTurn.isLoading}
+                  onClick={() =>
+                    game.data && reportTurn.mutate(game.data.gameId)
+                  }
+                >
+                  Turu Bitir
+                </Button>
               )}
             </div>
             <Dialog open={game.data.startingAt > new Date()}>

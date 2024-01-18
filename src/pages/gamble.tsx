@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 
 const RouletteComponent = dynamic(() => import("~/components/Roulette"), {
   ssr: false,
@@ -16,11 +17,12 @@ const BlackJackComponent = dynamic(() => import("~/components/BlackJack"), {
   ssr: false,
 });
 
-const TextPage: NextPage = () => {
+const GamblePage: NextPage = () => {
+  const session = useSession();
   const hydrated = useHydrated();
   const router = useRouter();
   const initialTab = router.query.tab as string;
-  const [activeTab, setActiveTab] = useState(initialTab || "roulette");
+  const [activeTab, setActiveTab] = useState(initialTab || "blackjack");
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -33,28 +35,36 @@ const TextPage: NextPage = () => {
 
   return (
     <Layout>
-      {hydrated && (
-        <AblyProvider>
-          <Tabs
-            value={activeTab}
-            onValueChange={handleTabChange}
-            defaultValue="roulette"
-          >
-            <TabsList className="flex items-center justify-center">
-              <TabsTrigger value="roulette">Roulette</TabsTrigger>
-              <TabsTrigger value="blackjack">BlackJack</TabsTrigger>
-            </TabsList>
-            <TabsContent value="roulette">
-              <RouletteComponent />
-            </TabsContent>
-            <TabsContent value="blackjack">
-              <BlackJackComponent />
-            </TabsContent>
-          </Tabs>
-        </AblyProvider>
+      {!session.data ? (
+        <div className="flex items-center justify-center text-xl md:text-3xl text-red-300">
+          Bu sayfayı görmek için giriş yapmalısın.
+        </div>
+      ) : (
+        <>
+          {hydrated && (
+            <AblyProvider>
+              <Tabs
+                value={activeTab}
+                onValueChange={handleTabChange}
+                defaultValue="blackjack"
+              >
+                <TabsList className="flex items-center justify-center">
+                  <TabsTrigger value="roulette">Roulette</TabsTrigger>
+                  <TabsTrigger value="blackjack">BlackJack</TabsTrigger>
+                </TabsList>
+                <TabsContent value="roulette">
+                  <RouletteComponent />
+                </TabsContent>
+                <TabsContent value="blackjack">
+                  <BlackJackComponent />
+                </TabsContent>
+              </Tabs>
+            </AblyProvider>
+          )}
+        </>
       )}
     </Layout>
   );
 };
 
-export default TextPage;
+export default GamblePage;

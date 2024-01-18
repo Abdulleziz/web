@@ -62,7 +62,7 @@ async function setGame(game: BlackJack | null) {
   await channel.publish("update", game && superjson.stringify(game));
 }
 
-const startSchema = z.string().startsWith("blackjack-");
+const gameId = z.string().startsWith("blackjack-");
 
 // if we are low on qstash limit, we can use forceShort & await on vercel
 const JOIN_WAIT = (forceShort = false) =>
@@ -70,7 +70,7 @@ const JOIN_WAIT = (forceShort = false) =>
 
 export const blackJackRouter = createTRPCRouter({
   state: protectedProcedure.query(async () => gameAsPublic(await getGame())),
-  start: qstashProcedure.input(startSchema).mutation(async ({ input }) => {
+  start: qstashProcedure.input(gameId).mutation(async ({ input }) => {
     const game = await getGame();
     if (!game) throw new TRPCError({ code: "NOT_FOUND" });
     if (game.gameId !== input)
@@ -80,6 +80,33 @@ export const blackJackRouter = createTRPCRouter({
       });
 
     await backgroundTask(game); // since there is wait time, we can just call it (we must await on vercel)
+  }),
+  reportTurn: protectedProcedure.input(gameId).mutation(async ({ input }) => {
+    const channel = ablyRest.channels.get(INTERNAL_CHANNEL);
+    const lastMsg = (await channel.history({ limit: 1 })).items[0];
+    if (!lastMsg) throw new TRPCError({ code: "NOT_FOUND" });
+
+    const game = superjson.parse<BlackJack>(lastMsg.data as string);
+    if (game.gameId !== input)
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `gameId mismatch, curr=${game.gameId}`,
+      });
+
+    const date = new Date(lastMsg.timestamp);
+    if (date.getTime() > Date.now() - 30 * 1000)
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Game is fresh" });
+
+    if (game.turn === "dealer")
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Dealer turn took more than expected.",
+      });
+
+    game.turn = nextTurn(game);
+    await setGame(game);
+    await channel.publish(`turn.${game.turn}`, game.gameId);
+    if (game.turn === "dealer") await playAsDealer(game);
   }),
   _delete: protectedProcedure.mutation(async ({ ctx }) => {
     if (ctx.session.user.discordId !== "223071656510357504")
@@ -282,9 +309,7 @@ async function handleCreated(game: BlackJack, forceLocalShort = false) {
     await c.publish({
       url,
       delay: (game.startingAt.getTime() - Date.now()) / 1000 - 4, // -4 for qstash spin up delay
-      body: superjson.stringify(
-        game.gameId satisfies z.input<typeof startSchema>
-      ),
+      body: superjson.stringify(game.gameId satisfies z.input<typeof gameId>),
       headers: { "Content-Type": "application/json" },
     });
   }
