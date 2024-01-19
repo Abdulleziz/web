@@ -26,11 +26,13 @@ import { Progress } from "./ui/progress";
 import { Input } from "./ui/input";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useBlackJackGame } from "~/hooks/useBlackJack";
+import { useGetWallet } from "~/utils/usePayments";
 
 const BlackJackComponent = () => {
   const time = useTime({ n: 100 });
   const users = useGetAbdullezizUsers();
   const session = useSession();
+  const wallet = useGetWallet();
   // -- animations --
   const [dealerRef] = useAutoAnimate();
   const [playerRef] = useAutoAnimate();
@@ -40,6 +42,7 @@ const BlackJackComponent = () => {
   const _delete = api.gamble.blackjack._delete.useMutation();
   const hit = api.gamble.blackjack.hit.useMutation();
   const stand = api.gamble.blackjack.stand.useMutation();
+  const split = api.gamble.blackjack.split.useMutation();
   const reportTurn = api.gamble.blackjack.reportTurn.useMutation();
   // -- state --
   const [bet, setBet] = useState(0);
@@ -67,8 +70,8 @@ const BlackJackComponent = () => {
 
   const selfTurn = game.data?.turn === session.data?.user.id;
   const selfJoined =
-    session.data?.user.id && game.data?.players
-      ? !!game.data?.players[session.data.user.id]
+    session.data?.user.id && game.data?.seats
+      ? !!game.data?.seats.find((p) => p.playerId === session.data?.user.id)
       : false;
 
   const canJoin = !selfJoined && !isStarted;
@@ -129,10 +132,7 @@ const BlackJackComponent = () => {
                 </ScrollArea>
               </div>
               {isStarted && game.data && (
-                <>
-                  (BlackJack): Playing Now:{" "}
-                  {Object.keys(game.data.players).length}
-                </>
+                <>(BlackJack): Dolu Koltuklar: {game.data.seats.length}</>
               )}
             </div>
           </div>
@@ -182,60 +182,67 @@ const BlackJackComponent = () => {
                 </div>
               );
             })()}
-            <div className="mt-8 flex w-full flex-col items-center justify-center space-x-4 md:flex-row">
-              {Object.entries(game.data.players)
-                .reverse()
-                .map(([playerId, player]) => {
-                  const score = getScore(player.cards);
-                  return (
-                    <div
-                      key={playerId}
-                      className="flex w-full flex-col items-center space-y-2"
-                    >
-                      <div
-                        ref={playerRef}
-                        className="flex w-full items-center justify-center space-x-4"
-                      >
-                        {player.cards.map((card, i) => (
-                          <div
-                            key={i}
+            <div
+              // TODO: animate is broken rn.
+              ref={playerRef}
+              className="mt-8 flex w-full flex-col items-center justify-center space-x-4 md:flex-row"
+            >
+              {game.data.seats.reverse().map((seat, seatIdx) => {
+                return (
+                  <div
+                    key={seatIdx}
+                    className="flex w-full flex-col items-center space-y-2"
+                  >
+                    {seat.deck.map((deck, deckIdx) => {
+                      const score = getScore(deck.cards);
+                      return (
+                        <div key={`${seatIdx}-${deckIdx}`}>
+                          <div className="flex w-full items-center justify-center space-x-4">
+                            {deck.cards.map((card, i) => (
+                              <div
+                                key={`${i}-${seatIdx}-${deckIdx}`}
+                                className={cx(
+                                  seat.playerId === session.data?.user.id
+                                    ? "bg-blue-500"
+                                    : "bg-red-500"
+                                )}
+                              >
+                                <Image
+                                  src={cardImage(card)}
+                                  width={96}
+                                  height={133}
+                                  alt={card.code}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                          <h2
                             className={cx(
-                              playerId === session.data?.user.id
-                                ? "bg-blue-500"
-                                : "bg-red-500"
+                              "text-2xl font-bold",
+                              game.data?.turn.playerId === seat.playerId &&
+                                game.data.turn.seat === seatIdx &&
+                                game.data.turn.deck === deckIdx
+                                ? "text-yellow-400"
+                                : "text-white"
                             )}
                           >
-                            <Image
-                              src={cardImage(card)}
-                              width={96}
-                              height={133}
-                              alt={card.code}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      <h2
-                        className={cx(
-                          "text-2xl font-bold",
-                          game.data?.turn === playerId
-                            ? "text-yellow-400"
-                            : "text-white"
-                        )}
-                      >
-                        {getUsername(playerId)} (
-                        {score == 21 && player.cards.length == 2 ? (
-                          <span className="text-blue-300">BlackJack</span>
-                        ) : (
-                          score
-                        )}
-                        ){" "}
-                        {player.busted && (
-                          <span className="text-red-300">Battı</span>
-                        )}
-                      </h2>
-                    </div>
-                  );
-                })}
+                            {getUsername(seat.playerId)} (
+                            {score == 21 && deck.cards.length == 2 ? (
+                              <span className="text-blue-300">BlackJack</span>
+                            ) : (
+                              score
+                            )}
+                            ){" "}
+                            {deck.busted && (
+                              <span className="text-red-300">Battı</span>
+                            )}
+                          </h2>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
             <div className="mt-8 flex items-center justify-center space-x-2">
               {game.data.endedAt ? (
@@ -265,11 +272,40 @@ const BlackJackComponent = () => {
                 <>
                   <Button
                     className="w-24"
+                    variant={"warning"}
                     disabled={
                       !selfJoined ||
-                      game.data.turn !== session.data?.user.id ||
+                      game.data.turn.playerId !== session.data?.user.id ||
+                      stand.isLoading ||
                       hit.isLoading ||
-                      stand.isLoading
+                      split.isLoading ||
+                      // DAMN TODO: current deck var
+                      game.data.seats[game.data.turn.seat]?.deck[
+                        // 🤣🤣🤣🤣🤣
+                        game.data.turn.deck
+                      ]?.cards.length !== 2 ||
+                      // 🤣🤣🤣🤣🤣
+                      game.data.seats[game.data.turn.seat]?.deck[
+                        game.data.turn.deck
+                      ]?.cards[0]?.value !==
+                        // 🤣🤣🤣🤣🤣
+                        game.data.seats[game.data.turn.seat]?.deck[
+                          game.data.turn.deck
+                        ]?.cards[1]?.value
+                    }
+                    isLoading={split.isLoading}
+                    onClick={() => split.mutate()}
+                  >
+                    Split
+                  </Button>
+                  <Button
+                    className="w-24"
+                    disabled={
+                      !selfJoined ||
+                      game.data.turn.playerId !== session.data?.user.id ||
+                      hit.isLoading ||
+                      stand.isLoading ||
+                      split.isLoading
                     }
                     isLoading={hit.isLoading}
                     onClick={() => hit.mutate()}
@@ -280,9 +316,10 @@ const BlackJackComponent = () => {
                     className="w-24"
                     disabled={
                       !selfJoined ||
-                      game.data.turn !== session.data?.user.id ||
+                      game.data.turn.playerId !== session.data?.user.id ||
                       stand.isLoading ||
-                      hit.isLoading
+                      hit.isLoading ||
+                      split.isLoading
                     }
                     isLoading={stand.isLoading}
                     onClick={() => stand.mutate()}
@@ -357,7 +394,20 @@ const BlackJackComponent = () => {
                           <Button
                             key={amount}
                             size={"sm"}
-                            onClick={() => setBet((prev) => prev + amount)}
+                            disabled={
+                              wallet.isLoading ||
+                              !wallet.data ||
+                              wallet.data.balance < amount + bet
+                            }
+                            isLoading={wallet.isLoading}
+                            onClick={() =>
+                              setBet((prev) =>
+                                Math.max(
+                                  prev + amount,
+                                  wallet.data?.balance ?? 0
+                                )
+                              )
+                            }
                           >
                             +{amount}
                           </Button>
@@ -401,10 +451,15 @@ const BlackJackComponent = () => {
             </Dialog>
             <span>
               Sıra:{" "}
-              {game.data.turn === "dealer"
-                ? "Kurpiye"
-                : users.data?.find((u) => u.id === game.data?.turn)?.user
-                    .username ?? game.data.turn}
+              {game.data.turn.playerId === "dealer" ? (
+                "Kurpiye"
+              ) : (
+                <>
+                  {" "}
+                  {getUsername(game.data.turn.playerId)} (Seat:{" "}
+                  {game.data.turn.deck + 1})
+                </>
+              )}
             </span>
           </div>
         ) : (

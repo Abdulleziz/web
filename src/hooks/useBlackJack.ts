@@ -4,14 +4,10 @@ import { useChannel, usePresence } from "ably/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import superjson from "superjson";
-import {
-  CARD_BACK,
-  type Card as DeckCard,
-} from "~/server/api/routers/gamble/blackjack/api";
-import { type RouterOutputs, api } from "~/utils/api";
+import {} from "~/server/api/routers/gamble/blackjack/api";
+import { type Events } from "~/server/api/routers/gamble/blackjack/types";
+import { api } from "~/utils/api";
 import { useGetAbdullezizUsers } from "~/utils/useDiscord";
-
-type Game = RouterOutputs["gamble"]["blackjack"]["state"];
 
 const CHANNEL = "gamble:blackjack";
 
@@ -28,13 +24,11 @@ export function useBlackJackGame() {
     return users.data?.find((u) => u.id === id)?.user.username ?? id;
   }
 
-  function getEventName(name: string) {
-    if (name.includes(".")) {
-      const [event, playerId] = name.split(".");
-      return [event, playerId];
-    }
-
-    return [name, undefined];
+  function getEventData<TKey extends keyof Events>(
+    name: TKey,
+    data: unknown
+  ): [TKey, Events[TKey]] {
+    return [name, superjson.parse<Events[TKey]>(data as string)] as const;
   }
 
   usePresence(CHANNEL, {}, (_presence) => {
@@ -43,140 +37,161 @@ export function useBlackJackGame() {
 
   const { channel } = useChannel(CHANNEL, (event) => {
     const duration = 5000;
-    const [eventName, playerId] = getEventName(event.name);
 
-    if (eventName === "draw") {
-      const eventData = superjson.parse<{
-        gameId: string;
-        card: DeckCard | null;
-      }>(event.data as string);
-      if (playerId === "dealer") {
-        utils.gamble.blackjack.state.setData(undefined, (data) => {
-          data?.dealer.cards.push(
-            eventData.card
-              ? { ...eventData.card, hidden: false }
-              : { image: CARD_BACK, hidden: true }
+    const [eventName, eventData] = getEventData(
+      event.name as keyof Events,
+      event.data as string
+    );
+
+    if (eventName.startsWith("draw")) {
+      if (eventName === "draw.dealer") {
+        const data = eventData as Events["draw.dealer"];
+        utils.gamble.blackjack.state.setData(undefined, (oldData) => {
+          oldData?.dealer.cards.push(
+            data.card ? { ...data.card, hidden: false } : { hidden: true }
           );
-          return { ...data } as typeof data;
+          return { ...oldData } as typeof oldData;
         });
       } else {
-        if (eventData.card && playerId) {
-          utils.gamble.blackjack.state.setData(undefined, (data) => {
-            if (!data) return data;
-            data.players[playerId]?.cards.push(eventData.card as DeckCard);
-            return { ...data };
-          });
-        }
+        const data = eventData as Events["draw"];
+        utils.gamble.blackjack.state.setData(undefined, (oldData) => {
+          if (!oldData) return oldData;
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const seat = oldData.seats[data.seat]!;
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const deck = seat.deck[data.deck]!;
+          deck.cards.push(data.card);
+          return { ...oldData };
+        });
       }
     }
 
+    if (eventName === "split") {
+      const data = eventData as Events["split"];
+      utils.gamble.blackjack.state.setData(undefined, (oldData) => {
+        if (!oldData) return oldData;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const seat = oldData.seats[data.seat]!;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const deck = seat.deck[data.deck]!;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        seat.deck.push({ cards: [deck.cards.pop()!], busted: false });
+        return { ...oldData };
+      });
+    }
+
     if (eventName === "turn") {
-      utils.gamble.blackjack.state.setData(undefined, (data) => {
-        if (!data || !playerId) return data;
-        data.turn = playerId;
-        return { ...data };
+      const data = eventData as Events["turn"];
+      utils.gamble.blackjack.state.setData(undefined, (oldData) => {
+        if (!oldData) return oldData;
+        oldData.turn = {
+          playerId: data.playerId,
+          seat: data.seat,
+          deck: data.deck,
+        };
+        return { ...oldData };
       });
     }
 
-    if (eventName === "show" && playerId === "dealer") {
-      const eventData = superjson.parse<{
-        gameId: string;
-        card: DeckCard & { hidden: false };
-      }>(event.data as string);
-      utils.gamble.blackjack.state.setData(undefined, (data) => {
-        if (!data) return data;
-        data.dealer.cards = data.dealer.cards.map((card) =>
-          card.hidden ? eventData.card : card
+    if (eventName === "show.dealer") {
+      const data = eventData as Events["show.dealer"];
+      utils.gamble.blackjack.state.setData(undefined, (oldData) => {
+        if (!oldData) return oldData;
+        oldData.dealer.cards = oldData.dealer.cards.map((card) =>
+          card.hidden ? data.card : card
         );
-        return { ...data };
+        return { ...oldData };
       });
     }
 
-    if (eventName === "bust") {
-      if (playerId === "dealer") toast.success(`Kurpiye battı.`, { duration });
-      else toast.success(`${getUsername(playerId)} battı.`, { duration });
+    if (eventName.startsWith("bust")) {
+      if (eventName === "bust.dealer")
+        toast.success(`Kurpiye battı.`, { duration });
+      else {
+        const data = eventData as Events["bust"];
+        toast.success(`${getUsername(data.playerId)} battı.`, { duration });
+      }
     }
 
-    if (eventName === "win") {
-      if (playerId === "dealer")
-        toast.success(`Kurpiye kazandı.`, { duration });
-      else toast.success(`${getUsername(playerId)} kazandı.`, { duration });
-    }
+    {
+      const data = eventData as Events["win" | "tie" | "lose"];
 
-    if (eventName === "tie") {
-      if (playerId === "dealer")
-        toast.success(`Kurpiye berabere.`, { duration });
-      else toast.success(`${getUsername(playerId)} berabere.`, { duration });
-    }
+      if (eventName === "win") {
+        if (data.playerId === "dealer")
+          toast.success(`Kurpiye kazandı.`, { duration });
+        else
+          toast.success(`${getUsername(data.playerId)} kazandı.`, { duration });
+      }
 
-    if (eventName === "lose") {
-      if (playerId === "dealer")
-        toast.success(`Kurpiye kaybetti.`, { duration });
-      else toast.success(`${getUsername(playerId)} kaybetti.`, { duration });
+      if (eventName === "tie") {
+        if (data.playerId === "dealer")
+          toast.success(`Kurpiye berabere.`, { duration });
+        else
+          toast.success(`${getUsername(data.playerId)} berabere.`, {
+            duration,
+          });
+      }
+
+      if (eventName === "lose") {
+        if (data.playerId === "dealer")
+          toast.success(`Kurpiye kaybetti.`, { duration });
+        else
+          toast.success(`${getUsername(data.playerId)} kaybetti.`, {
+            duration,
+          });
+      }
     }
 
     if (eventName === "joined") {
-      toast.success(`${getUsername(playerId)} katıldı.`, { duration });
-      utils.gamble.blackjack.state.setData(undefined, (data) => {
-        if (!data || !playerId) return data;
-        data.players[playerId] = {
-          cards: [],
-          busted: false,
-        };
-        return { ...data };
+      const data = eventData as Events["joined"];
+      toast.success(`${getUsername(data.playerId)} katıldı.`, { duration });
+      utils.gamble.blackjack.state.setData(undefined, (oldData) => {
+        if (!oldData) return oldData;
+        oldData.seats.push({
+          playerId: data.playerId,
+          deck: [{ cards: [], busted: false }],
+        });
+        return { ...oldData };
       });
     }
 
-    if (event.name === "created") {
-      const eventData = superjson.parse<{
-        gameId: string;
-        waitFor: number;
-        players: NonNullable<Game>["players"];
-      }>(event.data as string);
+    if (eventName === "created") {
+      const data = eventData as Events["created"];
 
       toast.loading(
-        `Oyun oluşturuldu, ${
-          eventData.waitFor / 1000
-        } saniye içinde başlayacak.`,
-        {
-          id: eventData.gameId,
-          duration: eventData.waitFor,
-        }
+        `Oyun oluşturuldu, ${data.waitFor / 1000} saniye içinde başlayacak.`,
+        { id: data.gameId, duration: data.waitFor }
       );
-      utils.gamble.blackjack.state.setData(undefined, (data) => {
-        if (!data) return data;
-        data.createdAt = new Date();
-        data.startingAt = new Date(Date.now() + eventData.waitFor);
-        data.dealer.cards = [];
-        data.players = eventData.players;
-        data.turn = "dealer";
-        data.endedAt = undefined;
-        data.gameId = eventData.gameId;
-        return { ...data };
+      utils.gamble.blackjack.state.setData(undefined, (oldData) => {
+        if (!oldData) return oldData;
+        oldData.createdAt = new Date();
+        oldData.startingAt = new Date(Date.now() + data.waitFor);
+        oldData.dealer.cards = [];
+        oldData.seats = data.seats;
+        oldData.turn = { playerId: "dealer", seat: 0, deck: 0 };
+        oldData.endedAt = undefined;
+        oldData.gameId = data.gameId;
+        return { ...oldData };
       });
       void utils.gamble.blackjack.invalidate();
     }
 
-    if (event.name === "info.newDeck") {
-      const eventData = superjson.parse<{
-        gameId?: string;
-        deckCount: number;
-        cardCount: number;
-      }>(event.data as string);
-
+    if (eventName === "info.newDeck") {
+      const data = eventData as Events["info.newDeck"];
       toast.success(
-        `Yeni deste oluşturuldu, ${eventData.deckCount} deste, ${eventData.cardCount} kart.`,
+        `Yeni deste oluşturuldu, ${data.deckCount} deste, ${data.cardCount} kart.`,
         { duration }
       );
     }
 
-    if (event.name === "started") {
+    if (eventName === "started") {
+      const gameId = eventData as Events["started"];
       toast.success("Oyun başladı, Bahisler kapatıldı. İyi şanslar!", {
-        id: event.data as string,
+        id: gameId,
         duration,
       });
     }
-    if (event.name === "ended") {
+    if (eventName === "ended") {
       toast.success("Oyun bitti.", { duration });
       void utils.gamble.blackjack.invalidate();
     }
