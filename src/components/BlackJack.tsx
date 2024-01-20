@@ -204,7 +204,7 @@ const BlackJackComponent = () => {
               ref={playerRef}
               className="mt-8 flex w-full flex-col items-center justify-center space-x-4 md:flex-row"
             >
-              {game.data.seats.reverse().map((seat, seatIdx) => {
+              {game.data.seats.toReversed().map((seat, seatIdx) => {
                 return (
                   <div
                     key={seatIdx}
@@ -355,16 +355,16 @@ const BlackJackComponent = () => {
                   >
                     Deal
                   </Button> */}
-                  {session.data?.user.discordId === "223071656510357504" && (
-                    <Button
-                      onClick={() => _delete.mutate()}
-                      variant={"destructive"}
-                      className="w-24"
-                    >
-                      End Game
-                    </Button>
-                  )}
                 </>
+              )}
+              {session.data?.user.discordId === "223071656510357504" && (
+                <Button
+                  onClick={() => _delete.mutate()}
+                  variant={"destructive"}
+                  className="w-24"
+                >
+                  End Game
+                </Button>
               )}
               {!isEnded && lastTurnPast && !selfTurn && (
                 <Button
