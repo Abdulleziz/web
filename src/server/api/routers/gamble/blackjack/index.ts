@@ -551,20 +551,29 @@ async function handleBetsCreated(game: BlackJack) {
     p.deck.map((d, deck) => ({ ...d, playerId: p.playerId, seat, deck }))
   );
 
-  for (const turn of turns) {
-    if (!turn.bet?.amount) continue;
-    const { id } = await prisma.gambleResult.create({
-      data: {
-        transaction: {
-          create: {
-            operation: "deposit",
-            amount: turn.bet.amount,
-            referenceId: turn.playerId,
+  try {
+    await prisma.$transaction(async (prisma) => {
+      for (const turn of turns) {
+        if (!turn.bet?.amount) continue;
+        const { id } = await prisma.gambleResult.create({
+          data: {
+            transaction: {
+              create: {
+                operation: "deposit",
+                amount: turn.bet.amount,
+                referenceId: turn.playerId,
+              },
+            },
           },
-        },
-      },
-      select: { id: true },
+          select: { id: true },
+        });
+        turn.bet.id = id;
+      }
     });
-    turn.bet.id = id;
+  } catch (error) {
+    console.error("Bets are not created: ", error);
+    await setGame(null);
+    await publish("ended", null);
+    throw error;
   }
 }
