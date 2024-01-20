@@ -155,9 +155,7 @@ export const blackJackRouter = createTRPCRouter({
         message: "Dealer turn took more than expected.",
       });
 
-    game.turn = nextTurn(game);
-    await setGame(game);
-    await publish("turn", { gameId: game.gameId, ...game.turn });
+    await handleNextTurn(game);
     if (game.turn.playerId === "dealer") await playAsDealer(game);
   }),
   _delete: protectedProcedure.mutation(async ({ ctx }) => {
@@ -267,14 +265,11 @@ export const blackJackRouter = createTRPCRouter({
     if (getScore(deck.cards) > 21) {
       deck.busted = true;
       const bustTurn = { ...game.turn };
-      game.turn = nextTurn(game);
-      await setGame(game);
+
       await publish("bust", { gameId: game.gameId, ...bustTurn });
-      await publish("turn", { gameId: game.gameId, ...game.turn });
+      await handleNextTurn(game);
     } else if (getScore(deck.cards) === 21) {
-      game.turn = nextTurn(game);
-      await setGame(game);
-      await publish("turn", { gameId: game.gameId, ...game.turn });
+      await handleNextTurn(game);
     }
 
     if (game.turn.playerId === "dealer") await playAsDealer(game);
@@ -287,9 +282,7 @@ export const blackJackRouter = createTRPCRouter({
     if (game.turn.playerId !== playerId)
       throw new TRPCError({ code: "BAD_REQUEST" });
 
-    game.turn = nextTurn(game);
-    await setGame(game);
-    await publish("turn", { gameId: game.gameId, ...game.turn });
+    await handleNextTurn(game);
 
     if (game.turn.playerId === "dealer") await playAsDealer(game);
   }),
@@ -301,10 +294,8 @@ export const blackJackRouter = createTRPCRouter({
     if (game.turn.playerId !== playerId)
       throw new TRPCError({ code: "BAD_REQUEST" });
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const seat = game.seats[game.turn.seat]!;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const deck = seat.deck[game.turn.deck]!;
+    const seat = currentPlayerSeat(game);
+    const deck = currentPlayerDeck(game);
 
     if (
       deck.cards.length !== 2 ||
@@ -380,6 +371,40 @@ function nextTurn(game: BlackJack) {
   );
   const nextTurn = players[currentTurn + 1];
   return nextTurn || { playerId: "dealer", seat: 0, deck: 0 };
+}
+
+function currentPlayerSeat(game: BlackJack) {
+  const seat = game.seats[game.turn.seat];
+  if (!seat) throw new Error("Seat not found");
+  return seat;
+}
+
+function currentPlayerDeck(game: BlackJack) {
+  const deck = currentPlayerSeat(game).deck[game.turn.deck];
+  if (!deck) throw new Error("Deck not found");
+  return deck;
+}
+
+async function handleNextTurn(game: BlackJack) {
+  game.turn = nextTurn(game);
+  let publishDraw;
+  if (game.turn.playerId !== "dealer") {
+    const deck = currentPlayerDeck(game);
+    if (deck.cards.length < 2) {
+      const { cards } = await deckDraw(game.deckId, 1);
+      deck.cards.push(cards[0]);
+      publishDraw = publish("draw", {
+        gameId: game.gameId,
+        playerId: game.turn.playerId,
+        card: cards[0],
+        seat: game.turn.seat,
+        deck: game.turn.deck,
+      });
+    }
+  }
+  if (publishDraw) await publishDraw;
+  await setGame(game);
+  await publish("turn", { gameId: game.gameId, ...game.turn });
 }
 
 async function playAsDealer(game: BlackJack) {
