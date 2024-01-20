@@ -11,40 +11,30 @@ import {
 import { Client } from "@upstash/qstash";
 import { getDomainUrl } from "~/utils/api";
 import { z } from "zod";
+import { type Wheel } from "./types";
 
-type Roulette = { gameId: string; createdAt: Date; players: string[] } & (
-  | {
-      resultIndex: undefined;
-      options: undefined;
-      endedAt: undefined;
-    }
-  | {
-      options: { option: string }[];
-      resultIndex: number;
-      endedAt: Date;
-    }
-);
+type WheelRoulette = Wheel;
 
 const WAIT_DURATION = 10_000;
-const INTERNAL_CHANNEL = "gamble-internal:roulette-1";
-const PUBLIC_CHANNEL = "gamble:roulette-1";
+const INTERNAL_CHANNEL = "gamble-internal:roulette-wheel";
+const PUBLIC_CHANNEL = "gamble:roulette-wheel";
 
 async function getGame() {
   const channel = ablyRest.channels.get(INTERNAL_CHANNEL);
   const message = await channel.history({ limit: 1 });
   const data: unknown = message.items[0]?.data;
   if (!data) return null;
-  return superjson.parse<Roulette>(data as string);
+  return superjson.parse<WheelRoulette>(data as string);
 }
 
-async function setGame(game: Roulette | null) {
+async function setGame(game: WheelRoulette | null) {
   const channel = ablyRest.channels.get(INTERNAL_CHANNEL);
   await channel.publish("update", game && superjson.stringify(game));
 }
 
 const startSchema = z.string().min(1); // gameId
 
-export const rouletteRouter = createTRPCRouter({
+export const rouletteWheelRouter = createTRPCRouter({
   state: protectedProcedure.query(async () => await getGame()),
   start: qstashProcedure.input(startSchema).mutation(async ({ input }) => {
     const game = await getGame();
@@ -63,7 +53,7 @@ export const rouletteRouter = createTRPCRouter({
         gameId: game?.gameId ? String(Number(game.gameId) + 1) : "1",
         createdAt: new Date(),
         players: [ctx.session.user.id],
-      } as Roulette;
+      } as WheelRoulette;
       await setGame(game);
 
       await handleCreated(game);
@@ -84,7 +74,7 @@ export const rouletteRouter = createTRPCRouter({
   }),
 });
 
-async function handleCreated(game: Roulette) {
+async function handleCreated(game: WheelRoulette) {
   const channel = ablyRest.channels.get(PUBLIC_CHANNEL);
   await channel.publish("created", game.gameId);
 
@@ -94,7 +84,7 @@ async function handleCreated(game: Roulette) {
   } else {
     // vercel, use qstash
     const c = new Client({ token: env.QSTASH_TOKEN });
-    const url = getDomainUrl() + "/api/trpc/gamble.roulette.start";
+    const url = getDomainUrl() + "/api/trpc/gamble.roulette.wheel.start";
     await c.publish({
       url,
       delay: WAIT_DURATION / 1000 - 4, // 4 seconds for qstash delay
@@ -106,7 +96,7 @@ async function handleCreated(game: Roulette) {
   }
 }
 
-async function backgroundTask(game: Roulette) {
+async function backgroundTask(game: WheelRoulette) {
   await waitFor(game.createdAt.getTime() + WAIT_DURATION - Date.now()).promise;
   const channel = ablyRest.channels.get(PUBLIC_CHANNEL);
   game = await endRoulette();
