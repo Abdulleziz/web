@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 import { type Types } from "ably";
 import { useChannel, usePresence } from "ably/react";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import superjson from "superjson";
@@ -13,9 +14,11 @@ const CHANNEL = "gamble:blackjack";
 
 // optimistic updates, toasts and logs
 export function useBlackJackGame() {
+  const session = useSession();
   const users = useGetAbdullezizUsers();
   const utils = api.useContext();
 
+  const [bet, setBet] = useState(0);
   const [logs, setLogs] = useState<Array<Types.Message>>([]);
   const [liveLogs, setLiveLogs] = useState<Array<Types.Message>>([]);
   const [presence, setPresence] = useState<Array<Types.PresenceMessage>>([]);
@@ -74,8 +77,12 @@ export function useBlackJackGame() {
         const seat = oldData.seats[data.seat]!;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const deck = seat.deck[data.deck]!;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        seat.deck.push({ cards: [deck.cards.pop()!], busted: false });
+        seat.deck.push({
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          cards: [deck.cards.pop()!],
+          busted: false,
+          bet: undefined,
+        });
         return { ...oldData };
       });
     }
@@ -115,6 +122,8 @@ export function useBlackJackGame() {
 
     {
       const data = eventData as Events["win" | "tie" | "lose"];
+      if (data.playerId === session.data?.user.id)
+        void utils.payments.getWallet.invalidate();
 
       if (eventName === "win") {
         if (data.playerId === "dealer")
@@ -149,7 +158,7 @@ export function useBlackJackGame() {
         if (!oldData) return oldData;
         oldData.seats.push({
           playerId: data.playerId,
-          deck: [{ cards: [], busted: false }],
+          deck: [{ cards: [], busted: false, bet: undefined }],
         });
         return { ...oldData };
       });
@@ -184,6 +193,21 @@ export function useBlackJackGame() {
       );
     }
 
+    if (eventName === "bet") {
+      const data = eventData as Events["bet"];
+      if (data.playerId === session.data?.user.id) {
+        utils.gamble.blackjack.state.setData(undefined, (oldData) => {
+          if (!oldData) return oldData;
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const deck = oldData.seats.find((s) => s.playerId === data.playerId)!
+            .deck[0]!;
+          deck.bet = data.bet;
+          return { ...oldData };
+        });
+        setBet(data.bet);
+      }
+    }
+
     if (eventName === "started") {
       const gameId = eventData as Events["started"];
       toast.success("Oyun başladı, Bahisler kapatıldı. İyi şanslar!", {
@@ -205,7 +229,12 @@ export function useBlackJackGame() {
       let history = await channel.history({ start: twoHoursAgo.getTime() });
       do {
         history.items.forEach((event) => {
-          setLogs((prev) => [...prev, event]);
+          setLogs((prev) => {
+            if (!prev.find((e) => e.id === event.id)) {
+              return [...prev, event];
+            }
+            return prev;
+          });
         });
         history = await history.next();
       } while (history);
@@ -213,5 +242,5 @@ export function useBlackJackGame() {
     getHistory().catch(console.error);
   }, [channel]);
 
-  return [channel, liveLogs, presence, logs] as const;
+  return [channel, liveLogs, presence, logs, bet, setBet] as const;
 }

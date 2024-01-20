@@ -10,9 +10,11 @@ import {
   qstashProcedure,
 } from "~/server/api/trpc";
 import { getDomainUrl } from "~/utils/api";
-import { waitFor } from "~/utils/shared";
+import { TransferMoney, waitFor } from "~/utils/shared";
 import { deckDraw, deckNewShuffle, getScore } from "./api";
 import { type BlackJack, type Events } from "./types";
+import { calculateWallet } from "../../payments/utils";
+import { prisma } from "~/server/db";
 
 function gameAsPublic(game: BlackJack | null) {
   if (!game) return null;
@@ -32,14 +34,21 @@ function gameAsPublic(game: BlackJack | null) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       deck: seat.deck.map(({ bet, ...deck }) => ({
         ...deck,
+        bet: bet?.amount,
       })),
     })),
   };
 }
 
+export type PublicBlackJack = NonNullable<ReturnType<typeof gameAsPublic>>;
+
 export const INTERNAL_CHANNEL = "gamble-internal:blackjack";
 export const PUBLIC_CHANNEL = "gamble:blackjack";
 export const MAX_SEAT_COUNT = 7;
+
+// if we are low on qstash limit, we can use forceShort & await on vercel
+const JOIN_WAIT = (forceShort = false) =>
+  (env.NEXT_PUBLIC_VERCEL_ENV === "development" || forceShort ? 6 : 15) * 1000;
 
 async function getGame() {
   const channel = ablyRest.channels.get(INTERNAL_CHANNEL);
@@ -47,6 +56,18 @@ async function getGame() {
   const data: unknown = message.items[0]?.data;
   if (!data) return null;
   return superjson.parse<BlackJack>(data as string);
+}
+
+async function getGameWithId(gameId: string) {
+  const game = await getGame();
+  if (!game) throw new TRPCError({ code: "NOT_FOUND" });
+  if (game.gameId !== gameId)
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `gameId mismatch, curr=${game.gameId}`,
+    });
+
+  return game;
 }
 
 async function setGame(game: BlackJack | null) {
@@ -63,26 +84,55 @@ export async function publish<TKey extends keyof Events>(
 }
 
 const gameId = z.string().startsWith("blackjack-");
-
-// if we are low on qstash limit, we can use forceShort & await on vercel
-const JOIN_WAIT = (forceShort = false) =>
-  (env.NEXT_PUBLIC_VERCEL_ENV === "development" || forceShort ? 6 : 15) * 1000;
+const bet = TransferMoney.or(z.literal(0));
+const insertBet = z.object({ gameId, bet });
 
 export const blackJackRouter = createTRPCRouter({
   state: protectedProcedure.query(async () => gameAsPublic(await getGame())),
   start: qstashProcedure.input(gameId).mutation(async ({ input }) => {
-    const game = await getGame();
-    if (!game) throw new TRPCError({ code: "NOT_FOUND" });
-    if (game.gameId !== input)
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: `gameId mismatch, curr=${game.gameId}`,
-      });
-
+    const game = await getGameWithId(input);
     await backgroundTask(game); // since there is wait time, we can just call it (we must await on vercel)
   }),
-  // updateBet: protectedProcedure.input(gameId).mutation(async ({ input }) => {
-  // }),
+  insertBet: protectedProcedure
+    .input(insertBet)
+    .mutation(async ({ ctx, input: { gameId, bet } }) => {
+      const playerId = ctx.session.user.id;
+      const game = await getGameWithId(gameId);
+
+      if (game.startingAt < new Date() || game.endedAt)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game already started or ended",
+        });
+
+      const seat = game.seats.find((p) => p.playerId === playerId);
+      if (!seat)
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Oyuna dahil değilsin",
+        });
+
+      const deck = seat.deck[0];
+      if (!deck) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const { balance } = await calculateWallet(playerId);
+      if (balance < bet)
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Yetersiz bakiye",
+        });
+
+      if (deck.bet) {
+        if (deck.bet.amount === bet)
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Same bet" });
+
+        if (bet === 0) deck.bet = undefined;
+        else deck.bet.amount = bet;
+      } else if (bet !== 0) deck.bet = { amount: bet };
+
+      await setGame(game);
+      await publish("bet", { gameId, playerId, bet });
+    }),
   reportTurn: protectedProcedure.input(gameId).mutation(async ({ input }) => {
     const channel = ablyRest.channels.get(INTERNAL_CHANNEL);
     const lastMsg = (await channel.history({ limit: 1 })).items[0];
@@ -117,59 +167,76 @@ export const blackJackRouter = createTRPCRouter({
     await setGame(null);
     await publish("ended", null);
   }),
-  join: protectedProcedure.mutation(async ({ ctx }) => {
-    let blackJack = await getGame();
+  join: protectedProcedure
+    .input(bet.optional())
+    .mutation(async ({ ctx, input: bet }) => {
+      let blackJack = await getGame();
 
-    if (blackJack && blackJack.startingAt < new Date() && !blackJack.endedAt)
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Game already started",
-      });
-
-    if (!blackJack || blackJack.endedAt) {
-      if (blackJack && blackJack?.seats.length >= MAX_SEAT_COUNT)
+      if (blackJack && blackJack.startingAt < new Date() && !blackJack.endedAt)
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Game is full",
+          message: "Game already started",
         });
 
-      // resume to deck
-      const deck_id =
-        blackJack && blackJack.endedAt
-          ? blackJack.deckId
-          : (await createNewDeck()).deck_id;
-      // TODO: get qstash limit
+      const { balance } = await calculateWallet(ctx.session.user.id);
+      const betAmount = Math.min(bet || 0, balance);
 
-      blackJack = {
-        gameId: "blackjack-" + Math.random().toString(36).slice(2),
-        deckId: deck_id,
-        createdAt: new Date(),
-        startingAt: new Date(Date.now() + JOIN_WAIT()),
-        dealer: { cards: [] },
-        seats: [
-          {
-            playerId: ctx.session.user.id,
-            deck: [{ cards: [], busted: false, bet: 0 }],
-          },
-        ],
-        turn: { playerId: "dealer", seat: 0, deck: 0 },
-      };
-      await setGame(blackJack);
+      if (!blackJack || blackJack.endedAt) {
+        if (blackJack && blackJack?.seats.length >= MAX_SEAT_COUNT)
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Game is full",
+          });
 
-      await handleCreated(blackJack);
-    } else {
-      blackJack.seats.push({
-        playerId: ctx.session.user.id,
-        deck: [{ cards: [], busted: false, bet: 0 }],
-      });
-      await setGame(blackJack);
+        // resume to deck
+        const deck_id =
+          blackJack && blackJack.endedAt
+            ? blackJack.deckId
+            : (await createNewDeck()).deck_id;
+        // TODO: get qstash limit
 
-      await publish("joined", {
-        gameId: blackJack.gameId,
-        playerId: ctx.session.user.id,
-      });
-    }
-  }),
+        blackJack = {
+          gameId: "blackjack-" + Math.random().toString(36).slice(2),
+          deckId: deck_id,
+          createdAt: new Date(),
+          startingAt: new Date(Date.now() + JOIN_WAIT()),
+          dealer: { cards: [] },
+          seats: [
+            {
+              playerId: ctx.session.user.id,
+              deck: [
+                {
+                  cards: [],
+                  busted: false,
+                  bet: betAmount > 0 ? { amount: betAmount } : undefined,
+                },
+              ],
+            },
+          ],
+          turn: { playerId: "dealer", seat: 0, deck: 0 },
+        };
+        await setGame(blackJack);
+
+        await handleCreated(blackJack);
+      } else {
+        blackJack.seats.push({
+          playerId: ctx.session.user.id,
+          deck: [
+            {
+              cards: [],
+              busted: false,
+              bet: betAmount > 0 ? { amount: betAmount } : undefined,
+            },
+          ],
+        });
+        await setGame(blackJack);
+
+        await publish("joined", {
+          gameId: blackJack.gameId,
+          playerId: ctx.session.user.id,
+        });
+      }
+    }),
   hit: protectedProcedure.mutation(async ({ ctx }) => {
     const playerId = ctx.session.user.id;
 
@@ -241,18 +308,44 @@ export const blackJackRouter = createTRPCRouter({
 
     if (
       deck.cards.length !== 2 ||
-      deck.cards[0]?.value !== deck.cards[1]?.value
+      getScore(deck.cards.slice(0, 1)) !== getScore(deck.cards.slice(1, 2))
     )
-      throw new TRPCError({ code: "BAD_REQUEST" });
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Geçersiz split" });
 
-    // check for deck.bet * 2 on wallet
+    const { balance } = await calculateWallet(playerId);
+    if (deck.bet) {
+      if (balance < deck.bet.amount)
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Yetersiz bakiye",
+        });
 
-    seat.deck.push({
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      cards: [deck.cards.pop()!],
-      busted: false,
-      bet: deck.bet,
-    });
+      const { id } = await prisma.gambleResult.create({
+        data: {
+          transaction: {
+            create: {
+              operation: "deposit",
+              amount: deck.bet.amount,
+              referenceId: playerId,
+            },
+          },
+        },
+        select: { id: true },
+      });
+
+      seat.deck.push({
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        cards: [deck.cards.pop()!],
+        busted: false,
+        bet: { id, amount: deck.bet.amount },
+      });
+    } else {
+      seat.deck.push({
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        cards: [deck.cards.pop()!],
+        busted: false,
+      });
+    }
 
     await setGame(game);
     await publish("split", { gameId: game.gameId, ...game.turn });
@@ -323,10 +416,25 @@ async function playAsDealer(game: BlackJack) {
 
     if (dealerScore > 21 || playerScore > dealerScore) {
       result = "win";
+      // TODO: blackjack win 1.25x
     } else if (playerScore === dealerScore) {
       result = "tie";
     } else {
       result = "lose";
+    }
+
+    if (turn.bet) {
+      if (!turn.bet.id) throw new Error("Bet id not found");
+
+      if (result === "win")
+        await prisma.gambleResult.update({
+          where: { id: turn.bet.id },
+          data: { transaction: { update: { operation: "withdraw" } } },
+        });
+      else if (result === "tie")
+        await prisma.bankTransaction.deleteMany({
+          where: { gamble: { id: turn.bet.id } },
+        });
     }
 
     await publish(result, {
@@ -345,10 +453,12 @@ async function playAsDealer(game: BlackJack) {
 }
 
 async function handleCreated(game: BlackJack, forceLocalShort = false) {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const blackJack = gameAsPublic(game)!;
   await publish("created", {
-    gameId: game.gameId,
-    waitFor: game.startingAt.getTime() - game.createdAt.getTime(),
-    seats: game.seats,
+    gameId: blackJack.gameId,
+    waitFor: blackJack.startingAt.getTime() - blackJack.createdAt.getTime(),
+    seats: blackJack.seats,
   });
 
   if (env.NEXT_PUBLIC_VERCEL_ENV === "development" || forceLocalShort) {
@@ -374,6 +484,7 @@ async function backgroundTask(game: BlackJack) {
   game = (await getGame()) as BlackJack;
   if (!game) throw new Error("Game not found");
   if (!game.seats.length) throw new Error("No player on Blackjack game");
+  await handleBetsCreated(game);
 
   await publish("started", game.gameId);
   const { cards } = await deckDraw(game.deckId, game.seats.length * 2 + 2);
@@ -433,4 +544,27 @@ async function backgroundTask(game: BlackJack) {
   await publish("turn", { gameId: game.gameId, ...game.turn });
 
   if (game.turn.playerId === "dealer") await playAsDealer(game);
+}
+
+async function handleBetsCreated(game: BlackJack) {
+  const turns = game.seats.flatMap((p, seat) =>
+    p.deck.map((d, deck) => ({ ...d, playerId: p.playerId, seat, deck }))
+  );
+
+  for (const turn of turns) {
+    if (!turn.bet?.amount) continue;
+    const { id } = await prisma.gambleResult.create({
+      data: {
+        transaction: {
+          create: {
+            operation: "deposit",
+            amount: turn.bet.amount,
+            referenceId: turn.playerId,
+          },
+        },
+      },
+      select: { id: true },
+    });
+    turn.bet.id = id;
+  }
 }

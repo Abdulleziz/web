@@ -184,7 +184,19 @@ model BankTransaction {
     referenceId String?
     createdAt   DateTime @default(now())
 
+    gamble GambleResult?
+
     @@index([referenceId])
+}
+
+model GambleResult {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+
+    transaction   BankTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+    transactionId String          @unique
+
+    @@index([transactionId])
 }
 
 model BankSalary {

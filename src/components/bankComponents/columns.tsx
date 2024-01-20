@@ -1,6 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { type BankHistoryEvent } from "~/utils/useBank";
-import { CoinsIcon, BanknoteIcon, ReceiptIcon } from "lucide-react";
+import { CoinsIcon, BanknoteIcon, ReceiptIcon, Dice3Icon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -174,9 +174,9 @@ export const columns: ColumnDef<BankHistoryEvent>[] = [
       if (row.original.type === "transfer") {
         return (
           <div className="flex flex-row items-center justify-start gap-1">
-            <CoinsIcon />
+            {row.original.gamble ? <Dice3Icon /> : <CoinsIcon />}
             <p>
-              Transfer (
+              {row.original.gamble ? "Kumar" : "Transfer"} (
               {row.original.operation === "deposit" ? "yatırma" : "çekme"})
             </p>
           </div>

@@ -1,12 +1,17 @@
+import { type PublicBlackJack } from ".";
 import { type Card } from "./api";
 
 type DealerCard = Card & { hidden: boolean };
 
-type PlayerDeck = { cards: Card[]; busted: boolean; bet: 0 };
+type PlayerDeck = {
+  cards: Card[];
+  busted: boolean;
+  bet?: { id?: string; amount: number };
+};
 
 /**
  * @internal game type, public data is different!
- * @use RouterOutputs instead
+ * @use RouterOutputs or PublicBlackJack instead
  */
 export type BlackJack = {
   gameId: string;
@@ -34,8 +39,9 @@ export type Events = {
   draw: Turn & { card: Card };
   started: GameId;
   ended: GameId | null;
+  bet: { gameId: GameId; playerId: string; bet: number };
   joined: { gameId: GameId; playerId: string };
-  created: { gameId: GameId; waitFor: number; seats: BlackJack["seats"] };
+  created: { gameId: GameId; waitFor: number; seats: PublicBlackJack["seats"] };
   "bust.dealer": GameId;
   "draw.dealer": { gameId: GameId; card: Card | null };
   "show.dealer": { gameId: GameId; card: DealerCard };

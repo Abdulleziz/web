@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { api } from "~/utils/api";
 import { useSession } from "next-auth/react";
@@ -27,6 +26,7 @@ import { Input } from "./ui/input";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useBlackJackGame } from "~/hooks/useBlackJack";
 import { useGetWallet } from "~/utils/usePayments";
+import toast from "react-hot-toast";
 
 const BlackJackComponent = () => {
   const time = useTime({ n: 100 });
@@ -43,15 +43,24 @@ const BlackJackComponent = () => {
   const hit = api.gamble.blackjack.hit.useMutation();
   const stand = api.gamble.blackjack.stand.useMutation();
   const split = api.gamble.blackjack.split.useMutation();
+  const insertBet = api.gamble.blackjack.insertBet.useMutation({
+    onSuccess(_data, variables) {
+      toast.success(`$${variables.bet} bahis yatırılıyor`, { id: "insertBet" });
+    },
+    onMutate(variables) {
+      toast.loading(`$${variables.bet} bahis yatırıldı`, { id: "insertBet" });
+    },
+    onError(error) {
+      toast.error(`Bahis yatırılamadı: ${error.message}`, { id: "insertBet" });
+    },
+  });
   const reportTurn = api.gamble.blackjack.reportTurn.useMutation();
-  // -- state --
-  const [bet, setBet] = useState(0);
 
   function getUsername(id?: string) {
     return users.data?.find((u) => u.id === id)?.user.username ?? id;
   }
 
-  const [channel, liveLogs, presence, logs] = useBlackJackGame();
+  const [channel, liveLogs, presence, logs, bet, setBet] = useBlackJackGame();
 
   const isStarted = game.data && game.data.startingAt < new Date(time);
   const isEnded = game.data?.endedAt || true;
@@ -71,10 +80,22 @@ const BlackJackComponent = () => {
   const selfTurn = game.data?.turn === session.data?.user.id;
   const selfJoined =
     session.data?.user.id && game.data?.seats
-      ? !!game.data?.seats.find((p) => p.playerId === session.data?.user.id)
+      ? game.data?.seats.find((p) => p.playerId === session.data?.user.id)
       : false;
 
   const canJoin = !selfJoined && !isStarted;
+
+  const currentDeck =
+    game.data?.seats[game.data.turn.seat]?.deck[game.data.turn.deck];
+
+  function setBetClamp(value: number) {
+    const newValue = Math.max(
+      Math.min(bet + value, wallet.data?.balance ?? 0),
+      0
+    );
+    setBet(newValue); // TODO: prev callback with useEffect
+    return newValue;
+  }
 
   return (
     <div>
@@ -90,14 +111,12 @@ const BlackJackComponent = () => {
                     History
                   </h4>
                   {logs.slice(0, 20).map((log) => (
-                    <>
-                      <div key={log.id} className="text-sm">
-                        {`${log.name} gameId: ${log.data}" sent at ${new Date(
-                          log.timestamp
-                        ).toLocaleString()}`}
-                      </div>
+                    <div key={log.id} className="text-sm">
+                      {`${log.name} gameId: ${log.data}" sent at ${new Date(
+                        log.timestamp
+                      ).toLocaleString()}`}
                       <Separator className="my-2" />
-                    </>
+                    </div>
                   ))}
                 </ScrollArea>
                 <ScrollArea className="h-72 w-48 rounded-md border">
@@ -106,12 +125,10 @@ const BlackJackComponent = () => {
                       Realtime Events ({liveLogs.length})
                     </h4>
                     {liveLogs.map((log) => (
-                      <>
-                        <div key={log.id} className="text-sm">
-                          {`✉️ Gamble BlackJack: event: ${log.name} gameId: ${log.data}`}
-                        </div>
+                      <div key={log.id} className="text-sm">
+                        {`✉️ Gamble BlackJack: event: ${log.name} gameId: ${log.data}`}
                         <Separator className="my-2" />
-                      </>
+                      </div>
                     ))}
                   </div>
                 </ScrollArea>
@@ -235,6 +252,11 @@ const BlackJackComponent = () => {
                             ){" "}
                             {deck.busted && (
                               <span className="text-red-300">Battı</span>
+                            )}{" "}
+                            {!!deck.bet && (
+                              <span className="bg-black text-green-700">
+                                (Bet: ${deck.bet})
+                              </span>
                             )}
                           </h2>
                         </div>
@@ -249,7 +271,7 @@ const BlackJackComponent = () => {
                 <>
                   <Button
                     variant={"warning"}
-                    onClick={() => join.mutate()}
+                    onClick={() => join.mutate(bet)}
                     isLoading={join.isLoading}
                     disabled={join.isLoading}
                   >
@@ -262,7 +284,7 @@ const BlackJackComponent = () => {
                     variant={"warning"}
                     disabled={!canJoin}
                     onClick={() => {
-                      join.mutate();
+                      join.mutate(bet);
                     }}
                   >
                     Katıl
@@ -279,19 +301,10 @@ const BlackJackComponent = () => {
                       stand.isLoading ||
                       hit.isLoading ||
                       split.isLoading ||
-                      // DAMN TODO: current deck var
-                      game.data.seats[game.data.turn.seat]?.deck[
-                        // 🤣🤣🤣🤣🤣
-                        game.data.turn.deck
-                      ]?.cards.length !== 2 ||
-                      // 🤣🤣🤣🤣🤣
-                      game.data.seats[game.data.turn.seat]?.deck[
-                        game.data.turn.deck
-                      ]?.cards[0]?.value !==
-                        // 🤣🤣🤣🤣🤣
-                        game.data.seats[game.data.turn.seat]?.deck[
-                          game.data.turn.deck
-                        ]?.cards[1]?.value
+                      (wallet.data?.balance ?? 0) < bet ||
+                      currentDeck?.cards.length !== 2 ||
+                      getScore(currentDeck?.cards.slice(0, 1)) !==
+                        getScore(currentDeck?.cards.slice(1, 2))
                     }
                     isLoading={split.isLoading}
                     onClick={() => split.mutate()}
@@ -381,9 +394,20 @@ const BlackJackComponent = () => {
                             key={amount}
                             size={"sm"}
                             variant={"outline"}
-                            onClick={() =>
-                              setBet((prev) => Math.max(prev - amount, 0))
+                            disabled={
+                              wallet.isLoading ||
+                              insertBet.isLoading ||
+                              !wallet.data ||
+                              !bet
                             }
+                            onClick={() => {
+                              const val = setBetClamp(-amount);
+                              if (game.data)
+                                insertBet.mutate({
+                                  gameId: game.data.gameId,
+                                  bet: val,
+                                });
+                            }}
                           >
                             -{amount}
                           </Button>
@@ -396,18 +420,18 @@ const BlackJackComponent = () => {
                             size={"sm"}
                             disabled={
                               wallet.isLoading ||
+                              insertBet.isLoading ||
                               !wallet.data ||
                               wallet.data.balance < amount + bet
                             }
-                            isLoading={wallet.isLoading}
-                            onClick={() =>
-                              setBet((prev) =>
-                                Math.max(
-                                  prev + amount,
-                                  wallet.data?.balance ?? 0
-                                )
-                              )
-                            }
+                            onClick={() => {
+                              const val = setBetClamp(amount);
+                              if (val && game.data)
+                                insertBet.mutate({
+                                  gameId: game.data.gameId,
+                                  bet: val,
+                                });
+                            }}
                           >
                             +{amount}
                           </Button>
@@ -419,13 +443,28 @@ const BlackJackComponent = () => {
                             className="max-w-[8rem]"
                             type="number"
                             min={0}
+                            max={wallet.data?.balance ?? 0}
                             value={bet}
-                            onChange={(e) => setBet(e.target.valueAsNumber)}
+                            onChange={(e) => {
+                              setBet(e.target.valueAsNumber);
+                              if (game.data)
+                                insertBet.mutate({
+                                  gameId: game.data.gameId,
+                                  bet: e.target.valueAsNumber,
+                                });
+                            }}
                           />
                           <Button
                             disabled={bet === 0}
                             variant={"outline"}
-                            onClick={() => setBet(0)}
+                            onClick={() => {
+                              setBet(0);
+                              if (game.data)
+                                insertBet.mutate({
+                                  gameId: game.data.gameId,
+                                  bet: 0,
+                                });
+                            }}
                           >
                             Sıfırla
                           </Button>
@@ -435,7 +474,7 @@ const BlackJackComponent = () => {
                           size={"lg-long"}
                           disabled={!canJoin}
                           onClick={() => {
-                            join.mutate();
+                            join.mutate(bet);
                           }}
                         >
                           {selfJoined ? "Katıldın" : "Katıl"}
@@ -461,6 +500,9 @@ const BlackJackComponent = () => {
                 </>
               )}
             </span>
+            <span>
+              Cüzdan: ${wallet.data?.balance ?? 0} | İlk Bahis: ${bet}
+            </span>
           </div>
         ) : (
           // Welcome screen, no game on history
@@ -468,7 +510,7 @@ const BlackJackComponent = () => {
             <Button
               disabled={!canJoin || join.isLoading}
               onClick={() => {
-                join.mutate();
+                join.mutate(bet);
               }}
               isLoading={join.isLoading}
             >
