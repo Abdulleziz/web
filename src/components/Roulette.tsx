@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
 import { useGetAbdullezizUsers } from "~/utils/useDiscord";
-import { DOUBLE_ZERO_WHEEL, useRoulette } from "~/hooks/useRoulette";
+import { SINGLE_ZERO_WHEEL, useRoulette } from "~/hooks/useRoulette";
 import { useState } from "react";
 import { type Types } from "ably";
 import { useChannel, usePresence } from "ably/react";
@@ -181,7 +181,7 @@ const RouletteClassical = () => {
 
   const [channel, liveLogs, presence, logs] = useRoulette(
     "gamble:roulette-classical",
-    "Şans Ruleti"
+    "Avrupa Ruleti"
   );
 
   const startingAt =
@@ -197,11 +197,10 @@ const RouletteClassical = () => {
   );
   const canJoin = !selfJoined || !startingAt;
 
-  const options = DOUBLE_ZERO_WHEEL.map((val) => ({
+  const options = SINGLE_ZERO_WHEEL.map((val, i) => ({
     option: val,
     style: {
-      backgroundColor:
-        +val === 0 ? "green" : +val % 2 === 0 ? "black" : "#6e0302",
+      backgroundColor: +val === 0 ? "green" : i % 2 === 0 ? "black" : "#6e0302",
       textColor: "white",
     },
   }));
@@ -233,7 +232,7 @@ const RouletteClassical = () => {
 
       <div>
         <div>
-          <p>Double Zero Roulette</p>
+          <p>Classical Roulette</p>
           Game State: (id: {game.data?.gameId})
           <div>
             (createdAt:{" "}

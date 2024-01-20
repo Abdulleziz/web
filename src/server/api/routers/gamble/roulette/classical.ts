@@ -12,10 +12,10 @@ import { Client } from "@upstash/qstash";
 import { getDomainUrl } from "~/utils/api";
 import { z } from "zod";
 import { type Wheel } from "./types";
-import { DOUBLE_ZERO_WHEEL } from "~/hooks/useRoulette";
+import { SINGLE_ZERO_WHEEL } from "~/hooks/useRoulette";
 
 type ClassicalRoulette = Wheel & {
-  type: "double";
+  type: "single-zero";
   options: never;
 };
 
@@ -36,11 +36,11 @@ async function setGame(game: ClassicalRoulette | null) {
   await channel.publish("update", game && superjson.stringify(game));
 }
 
-const startSchema = z.string().min(1); // gameId
+const gameId = z.string().min(1);
 
 export const rouletteClassicalRouter = createTRPCRouter({
   state: protectedProcedure.query(async () => await getGame()),
-  start: qstashProcedure.input(startSchema).mutation(async ({ input }) => {
+  start: qstashProcedure.input(gameId).mutation(async ({ input }) => {
     const game = await getGame();
     if (!game) throw new TRPCError({ code: "NOT_FOUND" });
     if (game.gameId !== input) throw new TRPCError({ code: "BAD_REQUEST" });
@@ -92,9 +92,7 @@ async function handleCreated(game: ClassicalRoulette) {
     await c.publish({
       url,
       delay: WAIT_DURATION / 1000 - 4, // 4 seconds for qstash delay
-      body: superjson.stringify(
-        game.gameId satisfies z.input<typeof startSchema>
-      ),
+      body: superjson.stringify(game.gameId satisfies z.input<typeof gameId>),
       headers: { "Content-Type": "application/json" },
     });
   }
@@ -113,7 +111,7 @@ async function endRoulette() {
   if (!game) throw new Error("game not created yet");
   game.endedAt = new Date();
 
-  const options = DOUBLE_ZERO_WHEEL.slice();
+  const options = SINGLE_ZERO_WHEEL.slice();
   game.resultIndex = Math.floor(Math.random() * options.length);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const result = +options[game.resultIndex]!;
