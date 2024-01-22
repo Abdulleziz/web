@@ -105,6 +105,7 @@ export const blackJackRouter = createTRPCRouter({
           message: "Game already started or ended",
         });
 
+      // TODO: seat index instead of first seat
       const seat = game.seats.find((p) => p.playerId === playerId);
       if (!seat)
         throw new TRPCError({

@@ -81,7 +81,7 @@ export function useBlackJackGame() {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           cards: [deck.cards.pop()!],
           busted: false,
-          bet: undefined,
+          bet: deck.bet,
         });
         return { ...oldData };
       });
@@ -195,17 +195,15 @@ export function useBlackJackGame() {
 
     if (eventName === "bet") {
       const data = eventData as Events["bet"];
-      if (data.playerId === session.data?.user.id) {
-        utils.gamble.blackjack.state.setData(undefined, (oldData) => {
-          if (!oldData) return oldData;
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const deck = oldData.seats.find((s) => s.playerId === data.playerId)!
-            .deck[0]!;
-          deck.bet = data.bet;
-          return { ...oldData };
-        });
-        setBet(data.bet);
-      }
+      utils.gamble.blackjack.state.setData(undefined, (oldData) => {
+        if (!oldData) return oldData;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const deck = oldData.seats.find((s) => s.playerId === data.playerId)!
+          .deck[0]!;
+        deck.bet = data.bet;
+        return { ...oldData };
+      });
+      if (data.playerId === session.data?.user.id) setBet(data.bet);
     }
 
     if (eventName === "started") {
