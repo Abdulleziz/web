@@ -384,7 +384,7 @@ const BlackJackComponent = () => {
                 </Button>
               )}
             </div>
-            <Dialog open={game.data.startingAt > new Date()}>
+            <Dialog open={game.data.startingAt > new Date() && !game.data.endedAt}>
               <DialogContent className="font-bold">
                 <DialogHeader>
                   <DialogTitle>Oyun başlamak üzere</DialogTitle>
