@@ -91,6 +91,11 @@ export const blackJackRouter = createTRPCRouter({
   state: protectedProcedure.query(async () => gameAsPublic(await getGame())),
   start: qstashProcedure.input(gameId).mutation(async ({ input }) => {
     const game = await getGameWithId(input);
+    if (game.startingAt < new Date() || game.endedAt) {
+      console.warn(`Blackjack Game (${game.gameId}) already started or ended`);
+      console.debug({ game });
+      return;
+    }
     await backgroundTask(game); // since there is wait time, we can just call it (we must await on vercel)
   }),
   insertBet: protectedProcedure
@@ -111,6 +116,12 @@ export const blackJackRouter = createTRPCRouter({
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Oyuna dahil değilsin",
+        });
+
+      if (seat.ready)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Oyuncu hazır",
         });
 
       const deck = seat.deck[0];
@@ -236,6 +247,31 @@ export const blackJackRouter = createTRPCRouter({
         });
       }
     }),
+  ready: protectedProcedure.mutation(async ({ ctx }) => {
+    const game = await getGame();
+
+    if (!game) throw new TRPCError({ code: "NOT_FOUND" });
+    if (game.startingAt < new Date() || game.endedAt)
+      throw new TRPCError({ code: "BAD_REQUEST" });
+
+    const seat = game.seats.find((p) => p.playerId === ctx.session.user.id);
+    if (!seat) throw new TRPCError({ code: "FORBIDDEN" });
+
+    if (seat.ready) throw new TRPCError({ code: "BAD_REQUEST" });
+    seat.ready = true;
+
+    if (game.seats.every((p) => p.ready)) {
+      // TODO: delete qstash message
+      game.startingAt = new Date();
+      if (env.NEXT_PUBLIC_VERCEL_ENV === "development")
+        // there is no way to cancel void promise, we cannot early start.
+        throw new TRPCError({
+          code: "METHOD_NOT_SUPPORTED",
+          message: "early start is not supported on development env",
+        });
+      await backgroundTask(game);
+    }
+  }),
   hit: protectedProcedure.mutation(async ({ ctx }) => {
     const playerId = ctx.session.user.id;
 
@@ -393,6 +429,7 @@ async function handleNextTurn(game: BlackJack) {
     const deck = currentPlayerDeck(game);
     if (deck.cards.length < 2) {
       const { cards } = await deckDraw(game.deckId, 1);
+      console.error("handleNextTurn", { cards });
       deck.cards.push(cards[0]);
       publishDraw = publish("draw", {
         gameId: game.gameId,

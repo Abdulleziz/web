@@ -212,6 +212,11 @@ export function useBlackJackGame() {
         id: gameId,
         duration,
       });
+      utils.gamble.blackjack.state.setData(undefined, (oldData) => {
+        if (!oldData) return oldData;
+        oldData.startingAt = new Date(); // invalidating (starting...) modal
+        return { ...oldData };
+      });
     }
     if (eventName === "ended") {
       toast.success("Oyun bitti.", { duration });

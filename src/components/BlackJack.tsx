@@ -38,6 +38,7 @@ const BlackJackComponent = () => {
   const [playerRef] = useAutoAnimate();
   // -- actions --
   const join = api.gamble.blackjack.join.useMutation();
+  const ready = api.gamble.blackjack.ready.useMutation();
   const game = api.gamble.blackjack.state.useQuery();
   const _delete = api.gamble.blackjack._delete.useMutation();
   const hit = api.gamble.blackjack.hit.useMutation();
@@ -78,6 +79,9 @@ const BlackJackComponent = () => {
     : true;
 
   const selfTurn = game.data?.turn === session.data?.user.id;
+  const selfSeat = game.data?.seats.find(
+    (s) => s.playerId === session.data?.user.id
+  );
   const selfJoined =
     session.data?.user.id && game.data?.seats
       ? game.data?.seats.find((p) => p.playerId === session.data?.user.id)
@@ -398,7 +402,8 @@ const BlackJackComponent = () => {
                               wallet.isLoading ||
                               insertBet.isLoading ||
                               !wallet.data ||
-                              !bet
+                              !bet ||
+                              selfSeat?.ready
                             }
                             onClick={() => {
                               const val = setBetClamp(-amount);
@@ -422,7 +427,8 @@ const BlackJackComponent = () => {
                               wallet.isLoading ||
                               insertBet.isLoading ||
                               !wallet.data ||
-                              wallet.data.balance < amount + bet
+                              wallet.data.balance < amount + bet ||
+                              selfSeat?.ready
                             }
                             onClick={() => {
                               const val = setBetClamp(amount);
@@ -444,9 +450,14 @@ const BlackJackComponent = () => {
                             type="number"
                             min={0}
                             max={wallet.data?.balance ?? 0}
+                            disabled={
+                              wallet.isLoading ||
+                              insertBet.isLoading ||
+                              selfSeat?.ready
+                            }
                             value={bet}
                             onChange={(e) => {
-                              setBet(e.target.valueAsNumber);
+                              setBet(e.target.valueAsNumber || 0);
                               if (game.data)
                                 insertBet.mutate({
                                   gameId: game.data.gameId,
@@ -455,7 +466,7 @@ const BlackJackComponent = () => {
                             }}
                           />
                           <Button
-                            disabled={bet === 0}
+                            disabled={bet === 0 || selfSeat?.ready}
                             variant={"outline"}
                             onClick={() => {
                               setBet(0);
@@ -472,12 +483,23 @@ const BlackJackComponent = () => {
                         <Progress value={(timeLeft / gameJoinDuration) * 100} />
                         <Button
                           size={"lg-long"}
-                          disabled={!canJoin}
+                          disabled={
+                            (!canJoin && selfSeat?.ready) ||
+                            ready.isLoading ||
+                            join.isLoading
+                          }
+                          isLoading={ready.isLoading || join.isLoading}
+                          variant={selfJoined ? "warning" : undefined}
                           onClick={() => {
-                            join.mutate(bet);
+                            if (!selfJoined) join.mutate(bet);
+                            else ready.mutate();
                           }}
                         >
-                          {selfJoined ? "Katıldın" : "Katıl"}
+                          {selfJoined
+                            ? !selfSeat?.ready
+                              ? "Hazır"
+                              : "Katıldın"
+                            : "Katıl"}
                         </Button>
                       </div>
                     </div>

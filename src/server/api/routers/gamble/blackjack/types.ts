@@ -19,7 +19,7 @@ export type BlackJack = {
   createdAt: Date;
   startingAt: Date;
   dealer: { cards: DealerCard[] };
-  seats: [{ playerId: string; deck: PlayerDeck[] }];
+  seats: [{ playerId: string; deck: PlayerDeck[]; ready?: boolean }];
   turn: // NOTE: if we remove playerId, how can we check for dealer?
   | { playerId: "dealer"; seat: 0; deck: 0 }
     | { playerId: string; seat: number; deck: number };
