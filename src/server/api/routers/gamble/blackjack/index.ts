@@ -269,6 +269,7 @@ export const blackJackRouter = createTRPCRouter({
           code: "METHOD_NOT_SUPPORTED",
           message: "early start is not supported on development env",
         });
+      await setGame(game);
       await backgroundTask(game);
     }
   }),
