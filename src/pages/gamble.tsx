@@ -36,7 +36,7 @@ const GamblePage: NextPage = () => {
   return (
     <Layout>
       {!session.data ? (
-        <div className="flex items-center justify-center text-xl md:text-3xl text-red-300">
+        <div className="flex items-center justify-center text-xl text-red-300 md:text-3xl">
           Bu sayfayı görmek için giriş yapmalısın.
         </div>
       ) : (

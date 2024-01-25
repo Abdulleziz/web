@@ -108,7 +108,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     <div
                       className={`"mr-2 border-primary", ${
                         isSelected
-                          ? "text-primary-foreground bg-muted-foreground"
+                          ? "bg-muted-foreground text-primary-foreground"
                           : "opacity-50 [&_svg]:invisible"
                       }
                         flex

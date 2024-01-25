@@ -4,7 +4,6 @@ import CronMaker from "./components/cronMaker";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 
 const CreateCronCard: FC = () => {
-    
   return (
     <div className="p-3">
       <Card>

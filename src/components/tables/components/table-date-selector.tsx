@@ -17,12 +17,12 @@ export function DataTableFilter<TData, TValue>({
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const [date, setDate] = React.useState<DateRange | undefined>();
 
-  const format = (date: Date) => date.toLocaleString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-
-  });
+  const format = (date: Date) =>
+    date.toLocaleString(undefined, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
 
   React.useEffect(() => {
     if (date) {

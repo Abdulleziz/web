@@ -341,6 +341,8 @@ export const blackJackRouter = createTRPCRouter({
       throw new TRPCError({ code: "BAD_REQUEST", message: "Geçersiz split" });
 
     const { balance } = await calculateWallet(playerId);
+
+    let splitBet;
     if (deck.bet) {
       if (balance < deck.bet.amount)
         throw new TRPCError({
@@ -361,22 +363,29 @@ export const blackJackRouter = createTRPCRouter({
         select: { id: true },
       });
 
-      seat.deck.push({
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        cards: [deck.cards.pop()!],
-        busted: false,
-        bet: { id, amount: deck.bet.amount },
-      });
-    } else {
-      seat.deck.push({
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        cards: [deck.cards.pop()!],
-        busted: false,
-      });
+      splitBet = { id, amount: deck.bet.amount };
     }
+
+    seat.deck.push({
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      cards: [deck.cards.pop()!],
+      busted: false,
+      bet: splitBet,
+    });
 
     await setGame(game);
     await publish("split", { gameId: game.gameId, ...game.turn });
+
+    const { cards } = await deckDraw(game.deckId, 1);
+    deck.cards.push(cards[0]);
+    await setGame(game);
+    await publish("draw", {
+      gameId: game.gameId,
+      playerId,
+      card: cards[0],
+      seat: game.turn.seat,
+      deck: game.turn.deck,
+    });
   }),
   double: protectedProcedure.mutation(() => ({})),
   deal: protectedProcedure.mutation(() => ({})),

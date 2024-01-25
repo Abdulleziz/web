@@ -1,7 +1,7 @@
 /**
  * @deprecated This file is deprecated and will be removed
  * after the merge past a week or so.
- * 
+ *
  * @use ~/server/api/routers/qstash.ts
  */
 

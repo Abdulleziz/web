@@ -8,7 +8,6 @@ export const parseCron = (
   try {
     if (!cron.trim()) throw new Error("Cron boş olamaz!");
     const i = cronParser.parseExpression(cron, { utc: true });
-    
 
     if (calculateDiff(i) >= 12) setError(null);
     else

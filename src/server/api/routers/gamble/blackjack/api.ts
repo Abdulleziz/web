@@ -1,3 +1,5 @@
+import { type ConstructTuple } from "~/utils/zod-utils";
+
 const HOST = "https://deckofcardsapi.com";
 
 export const CARD_BACK = `${HOST}/static/img/back.png`;
@@ -40,43 +42,20 @@ export function deckNewShuffle(deck_count = 1) {
   );
 }
 
-export function deckDraw(
+export function deckDraw<TLen extends number = 1>(
   deckId: string,
-  count?: 1
+  count?: TLen
 ): Promise<{
   success: true;
   deck_id: string;
-  cards: [Card];
+  cards: ConstructTuple<Card, TLen>;
   remaining: number;
 }>;
-export function deckDraw(
+
+export function deckDraw<TLen extends number>(
   deckId: string,
-  count: 2
-): Promise<{
-  success: true;
-  deck_id: string;
-  cards: [Card, Card];
-  remaining: number;
-}>;
-export function deckDraw(
-  deckId: string,
-  count: 4
-): Promise<{
-  success: true;
-  deck_id: string;
-  cards: [Card, Card, Card, Card];
-  remaining: number;
-}>;
-export function deckDraw(
-  deckId: string,
-  count: number
-): Promise<{
-  success: true;
-  deck_id: string;
-  cards: Card[];
-  remaining: number;
-}>;
-export function deckDraw(deckId: string, count = 1) {
+  count: TLen = 1 as TLen
+) {
   return fetch(`${HOST}/api/deck/${deckId}/draw/?count=${count}`)
     .then(
       (response) =>

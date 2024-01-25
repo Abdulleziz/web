@@ -9,7 +9,6 @@ import { useGetAllCrons } from "~/utils/useCron";
 const Reminder: NextPage = () => {
   const { data: session } = useSession();
   const { data } = useGetAllCrons();
-  
 
   if (!session || !data) {
     return <LoadingDashboard />;

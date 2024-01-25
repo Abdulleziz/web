@@ -15,7 +15,7 @@ const ProfilePage: NextPage = () => {
         <div className="flex h-screen flex-col items-center justify-center gap-4">
           <p>Gerçek bir Profil id gibi durmuyor!</p>
           <div
-            className="btn-primary btn"
+            className="btn btn-primary"
             onClick={() => void router.push("/")}
           >
             Geri Dön

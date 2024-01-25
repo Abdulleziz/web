@@ -4,7 +4,7 @@ import { api, type RouterOutputs, type RouterInputs } from "./api";
 type GetPosts = RouterInputs["forum"]["posts"]["getMany"];
 
 type Threads = RouterOutputs["forum"]["getThreads"];
-export type Meme = RouterOutputs["forum"]["memes"]["getMemes"][number]
+export type Meme = RouterOutputs["forum"]["memes"]["getMemes"][number];
 export const usePrefetchThreads = () => {
   const utils = api.useContext();
 

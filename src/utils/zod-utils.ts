@@ -78,3 +78,15 @@ export type IntRange<F extends number, T extends number> = Exclude<
 
 export type AtLeastOne<T> = [T, ...T[]];
 export type ReadOnlyAtLeastOne<T> = readonly [T, ...T[]];
+
+type EmptyTuple = [];
+
+export type ConstructTuple<
+  TType,
+  T extends number,
+  Acc extends TType[] = []
+> = Acc["length"] extends T
+  ? Acc extends EmptyTuple // if Acc is empty (cannot infer num literal), array instead
+    ? TType[]
+    : Acc
+  : ConstructTuple<TType, T, [...Acc, TType]>;
