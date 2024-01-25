@@ -271,7 +271,7 @@ export const blackJackRouter = createTRPCRouter({
         });
       await setGame(game);
       await backgroundTask(game);
-    }
+    } else await setGame(game);
   }),
   hit: protectedProcedure.mutation(async ({ ctx }) => {
     const playerId = ctx.session.user.id;
