@@ -107,6 +107,9 @@ const BlackJackComponent = () => {
         <div>
           <h1>Gamble House</h1>
           <h2>Realtime (State: {channel.state})</h2>
+          {/* 
+          //TODO: sadece aktıf kullanıcılar ekranın sağında çıkacak
+          */}
           <div className="flex flex-1 flex-col items-center justify-between lg:flex-row">
             <div>
               <div className="hidden flex-row items-center justify-center gap-2 md:flex">
@@ -179,16 +182,20 @@ const BlackJackComponent = () => {
                     ref={dealerRef}
                     className="flex w-full items-center justify-center gap-4"
                   >
-                    {dealer.cards.map((card, i) => (
-                      <div key={i} className="bg-red-500">
-                        <Image
-                          src={cardImage(card)}
-                          width={96}
-                          height={133}
-                          alt={card.hidden ? "hidden" : card.code}
-                        />
-                      </div>
-                    ))}
+                    {dealer.cards.map((card, i) => {
+                     
+
+                      return (
+                        <div key={i} className="bg-red-500">
+                          <Image
+                            src={cardImage(card)}
+                            width={96}
+                            height={133}
+                            alt={card.hidden ? "hidden" : card.code}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                   <h2 className="text-2xl font-bold text-white">
                     Kurpiye (

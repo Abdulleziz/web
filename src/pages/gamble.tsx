@@ -8,12 +8,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import BlackJack from "./blackjack";
 
 const RouletteComponent = dynamic(() => import("~/components/Roulette"), {
   ssr: false,
 });
 
-const BlackJackComponent = dynamic(() => import("~/components/BlackJack"), {
+const BlackJackComponent = dynamic(() => import("./blackjack"), {
   ssr: false,
 });
 

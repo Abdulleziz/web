@@ -1,18 +1,12 @@
 import { type NextPage } from "next";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import { Layout } from "~/components/Layout";
 import { useHydrated } from "../_app";
 import { Button } from "~/components/ui/button";
 import { QrCodeIcon } from "lucide-react";
 import { QrScanner } from "@yudiel/react-qr-scanner";
 import useDevice from "~/hooks/useDevice";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
