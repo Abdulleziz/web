@@ -19,7 +19,7 @@ export type BlackJack = {
   createdAt: Date;
   startingAt: Date;
   dealer: { cards: DealerCard[] };
-  seats: [{ playerId: string; deck: PlayerDeck[]; ready?: boolean }];
+  seats: { playerId: string; deck: PlayerDeck[]; ready?: boolean }[];
   turn: // NOTE: if we remove playerId, how can we check for dealer?
   | { playerId: "dealer"; seat: 0; deck: 0 }
     | { playerId: string; seat: number; deck: number };
@@ -39,8 +39,8 @@ export type Events = {
   draw: Turn & { card: Card };
   started: GameId;
   ended: GameId | null;
-  bet: { gameId: GameId; playerId: string; bet: number };
-  joined: { gameId: GameId; playerId: string };
+  bet: { gameId: GameId; seat: number; bet: number };
+  joined: { gameId: GameId; playerId: string; seat: number }; // TODO: maybe join with bet
   created: { gameId: GameId; waitFor: number; seats: PublicBlackJack["seats"] };
   "bust.dealer": GameId;
   "draw.dealer": { gameId: GameId; card: Card | null };

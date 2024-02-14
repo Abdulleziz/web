@@ -275,7 +275,7 @@ const BlackJackComponent = () => {
                 <>
                   <Button
                     variant={"warning"}
-                    onClick={() => join.mutate(bet)}
+                    onClick={() => join.mutate({ bet })}
                     isLoading={join.isLoading}
                     disabled={join.isLoading}
                   >
@@ -288,7 +288,7 @@ const BlackJackComponent = () => {
                     variant={"warning"}
                     disabled={!canJoin}
                     onClick={() => {
-                      join.mutate(bet);
+                      join.mutate({ bet });
                     }}
                   >
                     Katıl
@@ -384,7 +384,9 @@ const BlackJackComponent = () => {
                 </Button>
               )}
             </div>
-            <Dialog open={game.data.startingAt > new Date() && !game.data.endedAt}>
+            <Dialog
+              open={game.data.startingAt > new Date() && !game.data.endedAt}
+            >
               <DialogContent className="font-bold">
                 <DialogHeader>
                   <DialogTitle>Oyun başlamak üzere</DialogTitle>
@@ -407,10 +409,11 @@ const BlackJackComponent = () => {
                             }
                             onClick={() => {
                               const val = setBetClamp(-amount);
-                              if (game.data)
+                              if (game.data && selfSeat)
                                 insertBet.mutate({
                                   gameId: game.data.gameId,
                                   bet: val,
+                                  seat: game.data.seats.indexOf(selfSeat),
                                 });
                             }}
                           >
@@ -432,10 +435,11 @@ const BlackJackComponent = () => {
                             }
                             onClick={() => {
                               const val = setBetClamp(amount);
-                              if (val && game.data)
+                              if (val && game.data && selfSeat)
                                 insertBet.mutate({
                                   gameId: game.data.gameId,
                                   bet: val,
+                                  seat: game.data.seats.indexOf(selfSeat),
                                 });
                             }}
                           >
@@ -457,11 +461,13 @@ const BlackJackComponent = () => {
                             }
                             value={bet}
                             onChange={(e) => {
-                              setBet(e.target.valueAsNumber || 0);
-                              if (game.data)
+                              const _bet = e.target.valueAsNumber || 0;
+                              setBet(_bet);
+                              if (game.data && selfSeat)
                                 insertBet.mutate({
                                   gameId: game.data.gameId,
-                                  bet: e.target.valueAsNumber,
+                                  bet: _bet,
+                                  seat: game.data.seats.indexOf(selfSeat),
                                 });
                             }}
                           />
@@ -470,10 +476,11 @@ const BlackJackComponent = () => {
                             variant={"outline"}
                             onClick={() => {
                               setBet(0);
-                              if (game.data)
+                              if (game.data && selfSeat)
                                 insertBet.mutate({
                                   gameId: game.data.gameId,
                                   bet: 0,
+                                  seat: game.data.seats.indexOf(selfSeat),
                                 });
                             }}
                           >
@@ -491,7 +498,7 @@ const BlackJackComponent = () => {
                           isLoading={ready.isLoading || join.isLoading}
                           variant={selfJoined ? "warning" : undefined}
                           onClick={() => {
-                            if (!selfJoined) join.mutate(bet);
+                            if (!selfJoined) join.mutate({ bet });
                             else ready.mutate();
                           }}
                         >
@@ -532,7 +539,7 @@ const BlackJackComponent = () => {
             <Button
               disabled={!canJoin || join.isLoading}
               onClick={() => {
-                join.mutate(bet);
+                join.mutate({ bet });
               }}
               isLoading={join.isLoading}
             >

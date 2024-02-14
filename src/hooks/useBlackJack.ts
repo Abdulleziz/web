@@ -156,10 +156,10 @@ export function useBlackJackGame() {
       toast.success(`${getUsername(data.playerId)} katıldı.`, { duration });
       utils.gamble.blackjack.state.setData(undefined, (oldData) => {
         if (!oldData) return oldData;
-        oldData.seats.push({
+        oldData.seats[data.seat] = {
           playerId: data.playerId,
           deck: [{ cards: [], busted: false, bet: undefined }],
-        });
+        };
         return { ...oldData };
       });
     }
@@ -198,12 +198,14 @@ export function useBlackJackGame() {
       utils.gamble.blackjack.state.setData(undefined, (oldData) => {
         if (!oldData) return oldData;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const deck = oldData.seats.find((s) => s.playerId === data.playerId)!
-          .deck[0]!;
+        const deck = oldData.seats[data.seat]!.deck[0]!;
         deck.bet = data.bet;
         return { ...oldData };
       });
-      if (data.playerId === session.data?.user.id) setBet(data.bet);
+      const game = utils.gamble.blackjack.state.getData();
+      if (game?.seats[data.seat]?.playerId === session.data?.user.id)
+        // TODO: Record<seat, bet>
+        setBet(data.bet);
     }
 
     if (eventName === "started") {

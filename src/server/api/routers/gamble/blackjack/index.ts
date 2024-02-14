@@ -50,8 +50,10 @@ export const MAX_SEAT_COUNT = 7;
 const JOIN_WAIT = (forceShort = false) =>
   (env.NEXT_PUBLIC_VERCEL_ENV === "development" || forceShort ? 6 : 15) * 1000;
 
-async function getGame() {
-  const channel = ablyRest.channels.get(INTERNAL_CHANNEL);
+async function getGame(room = "") {
+  const channel = ablyRest.channels.get(
+    INTERNAL_CHANNEL + (room ? `:${room}` : "")
+  );
   const message = await channel.history({ limit: 1 });
   const data: unknown = message.items[0]?.data;
   if (!data) return null;
@@ -85,7 +87,13 @@ export async function publish<TKey extends keyof Events>(
 
 const gameId = z.string().startsWith("blackjack-");
 const bet = TransferMoney.or(z.literal(0));
-const insertBet = z.object({ gameId, bet });
+const seat = z
+  .number()
+  .int()
+  .min(0)
+  .max(MAX_SEAT_COUNT - 1);
+const insertBet = z.object({ gameId, bet, seat });
+const join = z.object({ bet: bet.optional(), seat: seat.optional() });
 
 export const blackJackRouter = createTRPCRouter({
   state: protectedProcedure.query(async () => gameAsPublic(await getGame())),
@@ -100,7 +108,7 @@ export const blackJackRouter = createTRPCRouter({
   }),
   insertBet: protectedProcedure
     .input(insertBet)
-    .mutation(async ({ ctx, input: { gameId, bet } }) => {
+    .mutation(async ({ ctx, input: { gameId, bet, seat: seatIdx } }) => {
       const playerId = ctx.session.user.id;
       const game = await getGameWithId(gameId);
 
@@ -110,9 +118,8 @@ export const blackJackRouter = createTRPCRouter({
           message: "Game already started or ended",
         });
 
-      // TODO: seat index instead of first seat
-      const seat = game.seats.find((p) => p.playerId === playerId);
-      if (!seat)
+      const seat = game.seats[seatIdx];
+      if (!seat || seat.playerId !== playerId)
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Oyuna dahil değilsin",
@@ -143,7 +150,7 @@ export const blackJackRouter = createTRPCRouter({
       } else if (bet !== 0) deck.bet = { amount: bet };
 
       await setGame(game);
-      await publish("bet", { gameId, playerId, bet });
+      await publish("bet", { gameId, seat: seatIdx, bet });
     }),
   reportTurn: protectedProcedure.input(gameId).mutation(async ({ input }) => {
     const channel = ablyRest.channels.get(INTERNAL_CHANNEL);
@@ -178,8 +185,9 @@ export const blackJackRouter = createTRPCRouter({
     await publish("ended", null);
   }),
   join: protectedProcedure
-    .input(bet.optional())
-    .mutation(async ({ ctx, input: bet }) => {
+    .input(join)
+    .mutation(async ({ ctx, input: { bet, seat: seatIdx } }) => {
+      const playerId = ctx.session.user.id;
       let blackJack = await getGame();
 
       if (blackJack && blackJack.startingAt < new Date() && !blackJack.endedAt)
@@ -188,49 +196,22 @@ export const blackJackRouter = createTRPCRouter({
           message: "Game already started",
         });
 
-      const { balance } = await calculateWallet(ctx.session.user.id);
+      const { balance } = await calculateWallet(playerId);
       const betAmount = Math.min(bet || 0, balance);
 
       if (!blackJack || blackJack.endedAt) {
-        if (blackJack && blackJack?.seats.length >= MAX_SEAT_COUNT)
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Game is full",
-          });
+        // NEW GAME
 
         // resume to deck
-        const deck_id =
+        const deckId =
           blackJack && blackJack.endedAt
             ? blackJack.deckId
             : (await createNewDeck()).deck_id;
         // TODO: get qstash limit
 
-        blackJack = {
-          gameId: "blackjack-" + Math.random().toString(36).slice(2),
-          deckId: deck_id,
-          createdAt: new Date(),
-          startingAt: new Date(Date.now() + JOIN_WAIT()),
-          dealer: { cards: [] },
-          seats: [
-            {
-              playerId: ctx.session.user.id,
-              deck: [
-                {
-                  cards: [],
-                  busted: false,
-                  bet: betAmount > 0 ? { amount: betAmount } : undefined,
-                },
-              ],
-            },
-          ],
-          turn: { playerId: "dealer", seat: 0, deck: 0 },
-        };
-        await setGame(blackJack);
-
-        await handleCreated(blackJack);
-      } else {
-        blackJack.seats.push({
-          playerId: ctx.session.user.id,
+        const seats = [];
+        seats[seatIdx || 0] = {
+          playerId,
           deck: [
             {
               cards: [],
@@ -238,12 +219,44 @@ export const blackJackRouter = createTRPCRouter({
               bet: betAmount > 0 ? { amount: betAmount } : undefined,
             },
           ],
-        });
+        };
+
+        blackJack = {
+          gameId: "blackjack-" + Math.random().toString(36).slice(2),
+          deckId,
+          createdAt: new Date(),
+          startingAt: new Date(Date.now() + JOIN_WAIT()),
+          dealer: { cards: [] },
+          seats,
+          turn: { playerId: "dealer", seat: 0, deck: 0 },
+        };
+        await setGame(blackJack);
+
+        await handleCreated(blackJack);
+      } else {
+        // CONTINUE GAME
+        if (blackJack?.seats.length >= MAX_SEAT_COUNT)
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Game is full",
+          });
+
+        blackJack.seats[seatIdx || blackJack.seats.length] = {
+          playerId,
+          deck: [
+            {
+              cards: [],
+              busted: false,
+              bet: betAmount > 0 ? { amount: betAmount } : undefined,
+            },
+          ],
+        };
         await setGame(blackJack);
 
         await publish("joined", {
           gameId: blackJack.gameId,
-          playerId: ctx.session.user.id,
+          playerId,
+          seat: blackJack.seats.length - 1,
         });
       }
     }),
