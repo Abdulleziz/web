@@ -12,13 +12,16 @@ import { useGetAbdullezizUsers } from "~/utils/useDiscord";
 
 const CHANNEL = "gamble:blackjack";
 
+type GameProps = {
+  setBet?: (seat: number, bet: number) => void;
+  onEnded?: () => void;
+};
 // optimistic updates, toasts and logs
-export function useBlackJackGame() {
+export function useBlackJackGame(props?: GameProps) {
   const session = useSession();
   const users = useGetAbdullezizUsers();
   const utils = api.useContext();
 
-  const [bet, setBet] = useState(0);
   const [logs, setLogs] = useState<Array<Types.Message>>([]);
   const [liveLogs, setLiveLogs] = useState<Array<Types.Message>>([]);
   const [presence, setPresence] = useState<Array<Types.PresenceMessage>>([]);
@@ -203,9 +206,15 @@ export function useBlackJackGame() {
         return { ...oldData };
       });
       const game = utils.gamble.blackjack.state.getData();
-      if (game?.seats[data.seat]?.playerId === session.data?.user.id)
-        // TODO: Record<seat, bet>
-        setBet(data.bet);
+      const seat = game?.seats[data.seat];
+      if (seat && seat.playerId === session.data?.user.id)
+        if (props?.setBet) {
+          const selfSeats = game?.seats.filter(
+            (s) => s.playerId === session.data?.user.id
+          );
+          const i = selfSeats?.indexOf(seat);
+          props.setBet(i, data.bet);
+        }
     }
 
     if (eventName === "started") {
@@ -223,6 +232,7 @@ export function useBlackJackGame() {
     if (eventName === "ended") {
       toast.success("Oyun bitti.", { duration });
       void utils.gamble.blackjack.invalidate();
+      if (props?.onEnded) props.onEnded();
     }
     setLiveLogs((prev) => [...prev, event]);
   });
@@ -247,5 +257,5 @@ export function useBlackJackGame() {
     getHistory().catch(console.error);
   }, [channel]);
 
-  return [channel, liveLogs, presence, logs, bet, setBet] as const;
+  return [channel, liveLogs, presence, logs] as const;
 }
