@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { parseCron } from "../utils/parse-cron";
+import { cronAsUTC3, parseCron } from "../utils/parse-cron";
 import {
   Dialog,
   DialogContent,
@@ -251,7 +251,7 @@ const CronMaker: FC = () => {
                 <DialogHeader>
                   <DialogTitle>Cron Oluştur</DialogTitle>
                 </DialogHeader>
-                <ConfirmCron cron={cronConstructor()} />
+                <ConfirmCron cron={cronAsUTC3(cronConstructor())} />
               </DialogContent>
             </Dialog>
           </div>

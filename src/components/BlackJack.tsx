@@ -27,6 +27,8 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useBlackJackGame } from "~/hooks/useBlackJack";
 import { useGetWallet } from "~/utils/usePayments";
 import toast from "react-hot-toast";
+import { MAX_SEAT_COUNT, currentPlayerDeck } from "~/utils/blackjack";
+import { useState } from "react";
 
 const BlackJackComponent = () => {
   const time = useTime({ n: 100 });
@@ -37,6 +39,7 @@ const BlackJackComponent = () => {
   const [dealerRef] = useAutoAnimate();
   const [playerRef] = useAutoAnimate();
   // -- actions --
+  const utils = api.useContext();
   const join = api.gamble.blackjack.join.useMutation();
   const ready = api.gamble.blackjack.ready.useMutation();
   const game = api.gamble.blackjack.state.useQuery();
@@ -46,22 +49,44 @@ const BlackJackComponent = () => {
   const split = api.gamble.blackjack.split.useMutation();
   const insertBet = api.gamble.blackjack.insertBet.useMutation({
     onSuccess(_data, variables) {
-      toast.success(`$${variables.bet} bahis yatırılıyor`, { id: "insertBet" });
+      toast.success(`$${variables.bet} bahis yatırıldı`, {
+        id: "insertBet",
+      });
     },
     onMutate(variables) {
-      toast.loading(`$${variables.bet} bahis yatırıldı`, { id: "insertBet" });
+      toast.loading(`$${variables.bet} bahis yatırılıyor`, { id: "insertBet" });
     },
     onError(error) {
       toast.error(`Bahis yatırılamadı: ${error.message}`, { id: "insertBet" });
     },
   });
   const reportTurn = api.gamble.blackjack.reportTurn.useMutation();
+  const [selectedSeat, setSelectedSeat] = useState(0);
+  const [bets, setBets] = useState(new Array<number>());
+
+  const bet = bets[selectedSeat] || 0;
+
+  function setBet(seat: number, bet: number) {
+    setBets((b) => Object.values<number>({ ...b, [seat]: bet }));
+  }
+
+  function setCurrentBet(bet: number) {
+    setBet(selectedSeat, bet);
+  }
 
   function getUsername(id?: string) {
     return users.data?.find((u) => u.id === id)?.user.username ?? id;
   }
 
-  const [channel, liveLogs, presence, logs, bet, setBet] = useBlackJackGame();
+  const [channel, liveLogs, presence, logs] = useBlackJackGame({
+    setBet,
+    onEnded: () => {
+      setBets([]);
+      setSelectedSeat(0);
+    },
+  });
+
+  if (!session.data) return;
 
   const isStarted = game.data && game.data.startingAt < new Date(time);
   const isEnded = game.data?.endedAt || true;
@@ -78,26 +103,26 @@ const BlackJackComponent = () => {
     ? new Date(liveLogs[0].timestamp).getTime() + 30 * 1000 < Date.now()
     : true;
 
-  const selfTurn = game.data?.turn === session.data?.user.id;
-  const selfSeat = game.data?.seats.find(
-    (s) => s.playerId === session.data?.user.id
+  const isSelfTurn = game.data?.turn.playerId === session.data.user.id;
+  const selfSeats = game.data?.seats.filter(
+    (s) => s.playerId === session.data.user.id
   );
-  const selfJoined =
-    session.data?.user.id && game.data?.seats
-      ? game.data?.seats.find((p) => p.playerId === session.data?.user.id)
-      : false;
+  const selfSeat = selfSeats?.at(selectedSeat);
+  const selfJoined = !!selfSeat;
 
   const canJoin = !selfJoined && !isStarted;
 
   const currentDeck =
-    game.data?.seats[game.data.turn.seat]?.deck[game.data.turn.deck];
+    game.data && game.data.turn.playerId !== "delaer"
+      ? currentPlayerDeck(game.data)
+      : undefined;
 
   function setBetClamp(value: number) {
     const newValue = Math.max(
       Math.min(bet + value, wallet.data?.balance ?? 0),
       0
     );
-    setBet(newValue); // TODO: prev callback with useEffect
+    setCurrentBet(newValue); // TODO: prev callback with useEffect
     return newValue;
   }
 
@@ -215,7 +240,7 @@ const BlackJackComponent = () => {
               ref={playerRef}
               className="mt-8 flex w-full flex-col items-center justify-center space-x-4 md:flex-row"
             >
-              {game.data.seats.toReversed().map((seat, seatIdx) => {
+              {game.data.seats.map((seat, seatIdx) => {
                 return (
                   <div
                     key={seatIdx}
@@ -282,7 +307,7 @@ const BlackJackComponent = () => {
                 <>
                   <Button
                     variant={"warning"}
-                    onClick={() => join.mutate(bet)}
+                    onClick={() => join.mutate({ bet })}
                     isLoading={join.isLoading}
                     disabled={join.isLoading}
                   >
@@ -295,7 +320,7 @@ const BlackJackComponent = () => {
                     variant={"warning"}
                     disabled={!canJoin}
                     onClick={() => {
-                      join.mutate(bet);
+                      join.mutate({ bet });
                     }}
                   >
                     Katıl
@@ -377,7 +402,7 @@ const BlackJackComponent = () => {
                   End Game
                 </Button>
               )}
-              {!isEnded && lastTurnPast && !selfTurn && (
+              {!isEnded && lastTurnPast && !isSelfTurn && (
                 <Button
                   variant={"destructive"}
                   className="w-24"
@@ -391,14 +416,83 @@ const BlackJackComponent = () => {
                 </Button>
               )}
             </div>
-            <Dialog open={game.data.startingAt > new Date() && !game.data.endedAt}>
+            <Dialog
+              open={game.data.startingAt > new Date() && !game.data.endedAt}
+            >
               <DialogContent className="font-bold">
                 <DialogHeader>
                   <DialogTitle>Oyun başlamak üzere</DialogTitle>
                   <DialogDescription>
                     <p>Kalan süre: {(timeLeft / 1000).toFixed()} saniye</p>
                     <p>Bahis: ${bet}</p>
+                    <p>Koltuk: {selectedSeat + 1}</p>
                     <div className="p-4">
+                      <div className="flex items-center justify-center gap-2 p-2">
+                        <div className="flex flex-col items-center justify-center">
+                          {selfSeats?.map((seat, i) => (
+                            <div key={i}>
+                              <Button
+                                disabled={seat.ready}
+                                variant={
+                                  seat.ready
+                                    ? "ghost"
+                                    : selectedSeat === i
+                                    ? "default"
+                                    : "outline"
+                                }
+                                onClick={() => setSelectedSeat(i)}
+                              >
+                                Koltuk {i + 1}
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        {game.data.seats.length < MAX_SEAT_COUNT && (
+                          <Button
+                            variant={"outline"}
+                            onClick={() => {
+                              join.mutate(
+                                {},
+                                {
+                                  onSuccess: () =>
+                                    setSelectedSeat((s) => s + 1),
+                                }
+                              );
+                            }}
+                          >
+                            Yeni Koltuk Ekle
+                          </Button>
+                          // <Select
+                          //   onValueChange={(val) => {
+                          //     join.mutate(
+                          //       { seat: +val },
+                          //       { onSuccess: () => setSelectedSeat(+val) }
+                          //     );
+                          //   }}
+                          // >
+                          //   <SelectTrigger className="w-48">
+                          //     <SelectValue placeholder="Yeni Koltuk Ekle" />
+                          //   </SelectTrigger>
+                          //   <SelectContent>
+                          //     {new Array(MAX_SEAT_COUNT)
+                          //       .fill("")
+                          //       .map((_v, i) => {
+                          //         const seat = game.data?.seats[i];
+                          //         return (
+                          //           <SelectItem
+                          //             disabled={!!seat}
+                          //             key={i}
+                          //             value={String(i)}
+                          //           >
+                          //             Koltuk {i + 1}{" "}
+                          //             {seat && getUsername(seat.playerId)}
+                          //           </SelectItem>
+                          //         );
+                          //       })}
+                          //   </SelectContent>
+                          // </Select>
+                        )}
+                      </div>
                       <div className="flex items-center justify-center gap-2 p-2">
                         {[50, 100, 200, 500].map((amount) => (
                           <Button
@@ -414,10 +508,11 @@ const BlackJackComponent = () => {
                             }
                             onClick={() => {
                               const val = setBetClamp(-amount);
-                              if (game.data)
+                              if (game.data && selfSeat)
                                 insertBet.mutate({
                                   gameId: game.data.gameId,
                                   bet: val,
+                                  seat: game.data.seats.indexOf(selfSeat),
                                 });
                             }}
                           >
@@ -439,10 +534,11 @@ const BlackJackComponent = () => {
                             }
                             onClick={() => {
                               const val = setBetClamp(amount);
-                              if (val && game.data)
+                              if (val && game.data && selfSeat)
                                 insertBet.mutate({
                                   gameId: game.data.gameId,
                                   bet: val,
+                                  seat: game.data.seats.indexOf(selfSeat),
                                 });
                             }}
                           >
@@ -464,11 +560,17 @@ const BlackJackComponent = () => {
                             }
                             value={bet}
                             onChange={(e) => {
-                              setBet(e.target.valueAsNumber || 0);
-                              if (game.data)
+                              const _bet = e.target.valueAsNumber || 0;
+                              setCurrentBet(_bet);
+                            }}
+                            onBlur={(e) => {
+                              const _bet = e.target.valueAsNumber || 0;
+                              setCurrentBet(_bet);
+                              if (game.data && selfSeat)
                                 insertBet.mutate({
                                   gameId: game.data.gameId,
-                                  bet: e.target.valueAsNumber,
+                                  bet: _bet,
+                                  seat: game.data.seats.indexOf(selfSeat),
                                 });
                             }}
                           />
@@ -476,11 +578,12 @@ const BlackJackComponent = () => {
                             disabled={bet === 0 || selfSeat?.ready}
                             variant={"outline"}
                             onClick={() => {
-                              setBet(0);
-                              if (game.data)
+                              setCurrentBet(0);
+                              if (game.data && selfSeat)
                                 insertBet.mutate({
                                   gameId: game.data.gameId,
                                   bet: 0,
+                                  seat: game.data.seats.indexOf(selfSeat),
                                 });
                             }}
                           >
@@ -498,8 +601,28 @@ const BlackJackComponent = () => {
                           isLoading={ready.isLoading || join.isLoading}
                           variant={selfJoined ? "warning" : undefined}
                           onClick={() => {
-                            if (!selfJoined) join.mutate(bet);
-                            else ready.mutate();
+                            if (!selfJoined) join.mutate({ bet });
+                            else if (game.data) {
+                              const i = game.data.seats.indexOf(selfSeat);
+                              ready.mutate(i, {
+                                // TODO: use timeLeft to wait for others
+                                onSuccess: () => {
+                                  utils.gamble.blackjack.state.setData(
+                                    undefined,
+                                    (oldData) => {
+                                      // TODO: ready events with useBlackJack
+                                      if (!oldData) return oldData;
+                                      oldData.seats[i]!.ready = true;
+                                      return { ...oldData };
+                                    }
+                                  );
+                                  const notReady =
+                                    selfSeats?.findIndex((s) => !s.ready) ?? -1;
+                                  if (notReady !== -1)
+                                    setSelectedSeat(notReady);
+                                },
+                              });
+                            }
                           }}
                         >
                           {selfJoined
@@ -529,9 +652,7 @@ const BlackJackComponent = () => {
                 </>
               )}
             </span>
-            <span>
-              Cüzdan: ${wallet.data?.balance ?? 0} | İlk Bahis: ${bet}
-            </span>
+            <span>Cüzdan: ${wallet.data?.balance ?? 0}</span>
           </div>
         ) : (
           // Welcome screen, no game on history
@@ -539,7 +660,7 @@ const BlackJackComponent = () => {
             <Button
               disabled={!canJoin || join.isLoading}
               onClick={() => {
-                join.mutate(bet);
+                join.mutate({ bet });
               }}
               isLoading={join.isLoading}
             >

@@ -29,7 +29,7 @@ export const NavbarRoutes: {
   },
   {
     title: "Hatırlatıcı",
-    href: "/reminder",
+    href: "/cron",
     description:
       "Hatırlatıcı oluştur veya hali hazırda olan hatırcılara katıl.",
     Icon: <BellIcon />,
