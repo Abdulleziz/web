@@ -1,5 +1,5 @@
 import { type NextPage } from "next";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Layout } from "~/components/Layout";
 import { useHydrated } from "../_app";
 import { Button } from "~/components/ui/button";
@@ -61,7 +61,7 @@ const Attendance: NextPage = () => {
     lessonId: "",
     lessonCode: "",
   });
-  const [joiningStudents, setJoiningStudents] = useState<string[]>([]);
+
   const hydrated = useHydrated();
   const { isMobile } = useDevice();
   const { data: activationCodeData, isLoading: isActivationLoading } = useQuery(
@@ -91,21 +91,18 @@ const Attendance: NextPage = () => {
     (num) => num.fetchStatus === "fetching"
   );
 
-  const onLessonChange = () => {
-    setJoiningStudents([]);
+  const joiningStudents = useMemo(() => {
     if (allSuccess) {
-      studentNumbers.map((studentNumber, i) => {
+      return studentNumbers.filter((studentNumber, i) => {
         const studentsLesson = studentLessons[i]?.data;
-        studentsLesson?.map((less) => {
+        return studentsLesson?.filter((less) => {
           const lessonCode = less.lessonCode.trim();
           const selectedLessonCode = selectedLesson.lessonCode.trim();
-          if (lessonCode === selectedLessonCode) {
-            setJoiningStudents((current) => [...current, studentNumber]);
-          }
+          return lessonCode === selectedLessonCode;
         });
       });
     }
-  };
+  }, [allSuccess, selectedLesson.lessonCode, studentLessons]);
 
   const studentsJoinLessons = useQueries({
     queries: studentNumbers.map((studentNo) => {
@@ -132,13 +129,13 @@ const Attendance: NextPage = () => {
       const data = await lesson.refetch();
       const student = allStudents[i];
       if (data.data && student) {
-        toast.success(
-          `${student.name} için ${data.data.header} ${data.data.paragraph}`,
-          { duration: 3000 }
-        );
+        toast.success(`${student.name} için ${data.data.header}`, {
+          duration: 3000,
+        });
       }
     });
   }
+  console.log(joiningStudents);
 
   return (
     <Layout>
@@ -199,17 +196,17 @@ const Attendance: NextPage = () => {
               )}
             </div>
             <Select
-              disabled={isActivationLoading || isQrLinkLoading}
               onValueChange={(value) => {
-                const selectedLesson = activationCodeData?.find(
-                  ({ lessonId }) => {
-                    return lessonId === value;
-                  }
-                );
+                let selectedLesson;
+                selectedLesson = activationCodeData?.find(({ lessonId }) => {
+                  return lessonId === value;
+                });
+                selectedLesson = qrLinkData?.find(({ lessonId }) => {
+                  return lessonId === value;
+                });
                 if (selectedLesson) {
                   setSelectedLesson(selectedLesson);
                 }
-                onLessonChange();
               }}
             >
               <SelectTrigger>
@@ -236,14 +233,16 @@ const Attendance: NextPage = () => {
             </Select>
             <Button
               isLoading={isStudentLessonsLoading || isJoinLessonLoading}
-              disabled={selectedLesson.lessonId === ""}
+              disabled={
+                selectedLesson.lessonId === "" ||
+                isActivationLoading ||
+                isQrLinkLoading
+              }
               onClick={() => OnJoinClick()}
             >
               Derse Katıl
             </Button>
-            {joiningStudents.length > 0 && (
-              <JoiningStudents joiningStudentArray={joiningStudents} />
-            )}
+            <JoiningStudents joiningStudentArray={joiningStudents} />
           </CardContent>
         </Card>
       </div>

@@ -59,6 +59,8 @@ export const authOptions: NextAuthOptions = {
         session.user.inAbdullezizServer = !!abdullezizMembers?.find(
           (member) => member.user.id === session.user.discordId
         );
+        console.log(session.user.name, session.user.inAbdullezizServer);
+
         // session.user.role = user.role; <-- put other properties on the session here
       }
       return session;

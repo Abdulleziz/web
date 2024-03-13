@@ -1,9 +1,6 @@
 import React, { useMemo } from "react";
 import { motion } from "framer-motion";
-import { CardholdersIds, Rank, SuitCard } from "./types.ds";
-import Image from "next/image";
-import { Card } from "~/server/api/routers/gamble/blackjack/api";
-import { CardStyled, CardWrap } from "./Card.styled";
+import { CardholdersIds, SuitCard } from "./types.ds";
 import { cx } from "class-variance-authority";
 
 type CardProps = {
@@ -12,7 +9,6 @@ type CardProps = {
   cardHolderId: string;
   card:
     | {
-        image: string;
         hidden: true;
       }
     | {

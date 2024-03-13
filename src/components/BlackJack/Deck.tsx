@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 export const Deck: React.FC = () => {
   return (
     <div
-      className="absolute right-[20vw] top-[3vw] animate-bounce bg-white"
+      className="absolute right-[20vw] top-0 animate-bounce bg-white"
       id="deck"
     >
       {Array.from({ length: 60 }).map((_, index) => (

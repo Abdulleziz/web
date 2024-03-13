@@ -24,6 +24,12 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         brand:
           "m-1 bg-gradient-to-r from-[#95FFFF] via-[#9C99FF] to-[#FD5DAD] bg-clip-text text-sm normal-case text-transparent md:text-xl",
+        bj_hit:
+          "group relative overflow-hidden rounded bg-green-500 px-5 py-2.5 text-white transition-all duration-300 ease-out hover:bg-gradient-to-r hover:from-green-500 hover:to-green-400 hover:ring-2 hover:ring-green-400 hover:ring-offset-2",
+        bj_stand:
+          "group relative overflow-hidden rounded bg-red-500 px-5 py-2.5 text-white transition-all duration-300 ease-out hover:bg-gradient-to-r hover:from-red-500 hover:to-red-400 hover:ring-2 hover:ring-red-400 hover:ring-offset-2",
+        bj_split:
+          "group relative overflow-hidden rounded bg-yellow-500 px-5 py-2.5 text-white transition-all duration-300 ease-out hover:bg-gradient-to-r hover:from-yellow-500 hover:to-yellow-400 hover:ring-2 hover:ring-yellow-400 hover:ring-offset-2",
       },
       size: {
         default: "h-10 px-4 py-2",

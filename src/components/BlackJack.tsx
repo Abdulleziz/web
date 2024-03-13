@@ -208,8 +208,6 @@ const BlackJackComponent = () => {
                     className="flex w-full items-center justify-center gap-4"
                   >
                     {dealer.cards.map((card, i) => {
-                     
-
                       return (
                         <div key={i} className="bg-red-500">
                           <Image
