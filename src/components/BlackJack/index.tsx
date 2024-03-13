@@ -3,24 +3,14 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { CardComponent } from "~/components/BlackJack/CardComponent";
-import { Deck } from "~/components/BlackJack/Deck";
 import { PlayerSpotComponent } from "~/components/BlackJack/PlayerSpot/PlayerSpot";
-import {
-  CardsTotal,
-  CardsWrapper,
-  SpotStyled,
-  SpotsZone,
-} from "~/components/BlackJack/PlayerSpot/Spot.styled";
 import { CardholdersIds } from "~/components/BlackJack/types.ds";
-import { Layout } from "~/components/Layout";
 import { Button } from "~/components/ui/button";
 import { useBlackJackGame } from "~/hooks/useBlackJack";
 import { useTime } from "~/hooks/useTime";
 import {
   type Card as DeckCard,
   getScore,
-  cardImage,
-  Card,
 } from "~/server/api/routers/gamble/blackjack/api";
 import { api } from "~/utils/api";
 import { useGetAbdullezizUsers } from "~/utils/useDiscord";
@@ -145,7 +135,7 @@ const BlackJack = () => {
             <>
               <Button
                 variant={"bj_split"}
-                onClick={() => join.mutate(0)}
+                onClick={() => join.mutate({ bet: 0 })}
                 isLoading={join.isLoading}
                 disabled={join.isLoading}
               >
@@ -158,7 +148,7 @@ const BlackJack = () => {
                 variant={"bj_hit"}
                 disabled={selfJoined && isStarted}
                 onClick={() => {
-                  join.mutate(0);
+                  join.mutate({ bet: 0 });
                 }}
               >
                 Katıl
