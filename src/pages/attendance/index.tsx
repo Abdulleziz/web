@@ -230,7 +230,6 @@ const Attendance: NextPage = () => {
               </SelectContent>
             </Select>
             <Button
-              isLoading={isStudentLessonsLoading || isJoinLessonLoading}
               disabled={selectedLesson?.lessonId === ""}
               onClick={() => OnJoinClick()}
             >
