@@ -56,11 +56,7 @@ const studentNumbers = allStudents.map((student) => student.no);
 const Attendance: NextPage = () => {
   const [qrLink, setQrLink] = useState<string>("");
   const [activationCode, setActivationCode] = useState<string>("");
-  const [selectedLesson, setSelectedLesson] = useState<getQrLessonsResponse>({
-    lessonName: "",
-    lessonId: "",
-    lessonCode: "",
-  });
+  const [selectedLessonId, setSelectedLessonId] = useState<string>();
 
   const hydrated = useHydrated();
   const { isMobile } = useDevice();
@@ -76,11 +72,25 @@ const Attendance: NextPage = () => {
     enabled: qrLink?.startsWith("https://pdks.nisantasi.edu.tr/ogrenci/giris"),
     queryFn: () => fetchQrCode(qrLink),
   });
+  const selectedLesson = useMemo(() => {
+    if (selectedLessonId) {
+      if (qrLinkData) {
+        return qrLinkData.find(
+          (lesson) => lesson.lessonId === selectedLessonId
+        );
+      }
+      if (activationCodeData) {
+        return activationCodeData.find(
+          (lesson) => lesson.lessonId === selectedLessonId
+        );
+      }
+    }
+  }, [activationCodeData, qrLinkData, selectedLessonId]);
   const studentLessons = useQueries({
     queries: studentNumbers.map((studentNo) => {
       return {
         queryKey: ["studentLessons", studentNo],
-        enabled: !!selectedLesson.lessonCode,
+        enabled: !!selectedLesson?.lessonCode,
         queryFn: () => fetchStudentLessons(studentNo),
       };
     }),
@@ -97,15 +107,16 @@ const Attendance: NextPage = () => {
         const studentsLesson = studentLessons[i]?.data;
         return studentsLesson?.filter((less) => {
           const lessonCode = less.lessonCode.trim();
-          const selectedLessonCode = selectedLesson.lessonCode.trim();
+          const selectedLessonCode = selectedLesson?.lessonCode.trim();
           return lessonCode === selectedLessonCode;
         });
       });
     }
-  }, [allSuccess, selectedLesson.lessonCode, studentLessons]);
+    return [];
+  }, [allSuccess, selectedLesson?.lessonCode, studentLessons]);
 
   const studentsJoinLessons = useQueries({
-    queries: studentNumbers.map((studentNo) => {
+    queries: joiningStudents.map((studentNo) => {
       return {
         queryKey: ["joinLesson", studentNo],
         enabled: false,
@@ -113,8 +124,8 @@ const Attendance: NextPage = () => {
           joinLesson(
             studentNo,
             activationCode,
-            selectedLesson.lessonId,
-            qrLink
+            qrLink,
+            selectedLesson?.lessonId
           ),
       };
     }),
@@ -135,7 +146,7 @@ const Attendance: NextPage = () => {
       }
     });
   }
-  console.log(joiningStudents);
+  console.log(selectedLesson);
 
   return (
     <Layout>
@@ -195,20 +206,7 @@ const Attendance: NextPage = () => {
                 </Dialog>
               )}
             </div>
-            <Select
-              onValueChange={(value) => {
-                let selectedLesson;
-                selectedLesson = activationCodeData?.find(({ lessonId }) => {
-                  return lessonId === value;
-                });
-                selectedLesson = qrLinkData?.find(({ lessonId }) => {
-                  return lessonId === value;
-                });
-                if (selectedLesson) {
-                  setSelectedLesson(selectedLesson);
-                }
-              }}
-            >
+            <Select onValueChange={(value) => setSelectedLessonId(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Ders Seçimi" />
               </SelectTrigger>
@@ -232,12 +230,7 @@ const Attendance: NextPage = () => {
               </SelectContent>
             </Select>
             <Button
-              isLoading={isStudentLessonsLoading || isJoinLessonLoading}
-              disabled={
-                selectedLesson.lessonId === "" ||
-                isActivationLoading ||
-                isQrLinkLoading
-              }
+              disabled={selectedLesson?.lessonId === ""}
               onClick={() => OnJoinClick()}
             >
               Derse Katıl
@@ -294,8 +287,8 @@ const fetchStudentLessons = async (studentNo: string) => {
 const joinLesson = async (
   studentNo: string,
   activationCode: string,
-  lessonId: string,
-  qrLink: string
+  qrLink: string,
+  lessonId?: string
 ) => {
   return await fetch("https://ilker.abdulleziz.com/joinLecture", {
     method: "POST",
