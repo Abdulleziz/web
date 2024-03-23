@@ -68,11 +68,11 @@ model ForumThread {
 }
 
 model ForumTagWithThread {
-    id            String      @id @default(cuid()) @map("_id")
-    ForumTag      ForumTag    @relation(fields: [forumTagId], references: [id])
-    forumTagId    String
-    ForumThread   ForumThread @relation(fields: [forumThreadId], references: [id])
-    forumThreadId String
+    id       String      @id @default(cuid()) @map("_id")
+    tag      ForumTag    @relation(fields: [tagId], references: [id])
+    tagId    String
+    thread   ForumThread @relation(fields: [threadId], references: [id])
+    threadId String
 }
 
 model ForumPost {
@@ -349,7 +349,7 @@ model User {
 }
 
 model VerificationToken {
-    id       String   @id @default(auto()) @db.ObjectId @map("_id")
+    id         String   @id @default(auto()) @map("_id") @db.ObjectId
     identifier String
     token      String   @unique
     expires    DateTime
@@ -358,7 +358,7 @@ model VerificationToken {
 }
 
 model PushSubscription {
-    endpoint  String   @id @db.String @map("_id")
+    endpoint  String   @id @map("_id") @db.String
     p256dh    String
     auth      String
     createdAt DateTime @default(now())
