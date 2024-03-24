@@ -46,7 +46,6 @@ model ForumPin {
 
     thread ForumThread @relation(fields: [id], references: [id], onDelete: Cascade)
 
-    @@index([id])
     @@index([pinnedById])
 }
 
@@ -73,6 +72,8 @@ model ForumTagWithThread {
     tagId    String
     thread   ForumThread @relation(fields: [threadId], references: [id])
     threadId String
+
+    @@unique([tagId, threadId])
 }
 
 model ForumPost {
@@ -130,8 +131,8 @@ model EntityPurchase {
     bankInvoice   BankInvoice? @relation(fields: [bankInvoiceId], references: [id], onDelete: Cascade)
     bankInvoiceId String?
 
-    @@unique([entityId, invoiceId])
-    @@unique([entityId, bankInvoiceId])
+    // @@unique([entityId, invoiceId])
+    // @@unique([entityId, bankInvoiceId])
     @@index([invoiceId])
     @@index([bankInvoiceId])
 }
@@ -269,7 +270,7 @@ model VoteEvent {
     votes      Vote[]
     createdAt  DateTime  @default(now())
     endedAt    DateTime?
-    jobId      String?   @unique
+    jobId      String?
 
     @@index([role])
 }
@@ -293,7 +294,7 @@ model VoteEventCEO {
     votes     VoteCEO[]
     createdAt DateTime  @default(now())
     endedAt   DateTime?
-    jobId     String?   @unique
+    jobId     String?
 }
 
 model Account {

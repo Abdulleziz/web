@@ -172,7 +172,7 @@ const ThreadRow = ({
         {canDelete && <DeleteThread threadId={thread.id} />}
       </div>
       <div className="flex items-center justify-center">
-        {thread.tags.slice(0, 4).map((tag) => (
+        {thread.tags.slice(0, 4).map(({ tag }) => (
           <div
             key={tag.id}
             className={classNames(
