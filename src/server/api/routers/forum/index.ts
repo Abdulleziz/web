@@ -118,17 +118,18 @@ export const forumRouter = createTRPCRouter({
         const newTagsIds = await ctx.prisma.forumTag.findMany({
           where: { name: { in: createNewTags } },
         });
+        const createMany = {
+          data: [
+            ...existingTags.map((tag) => ({ tagId: tag.id })),
+            ...newTagsIds.map((tag) => ({ tagId: tag.id })),
+          ],
+        };
         const thread = await ctx.prisma.forumThread.create({
           data: {
             title,
             defaultNotify: notify ? "all" : "mentions",
             tags: {
-              createMany: {
-                data: [
-                  ...existingTags.map((tag) => ({ tagId: tag.id })),
-                  ...newTagsIds.map((tag) => ({ tagId: tag.id })),
-                ],
-              },
+              createMany: createMany.data.length > 0 ? createMany : undefined,
             },
             creator: {
               connect: { id: ctx.session.user.id },
