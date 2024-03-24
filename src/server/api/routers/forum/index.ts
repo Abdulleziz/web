@@ -30,7 +30,7 @@ export const forumRouter = createTRPCRouter({
     return ctx.prisma.forumThread.findMany({
       include: {
         creator: true,
-        tags: true,
+        tags: { include: { tag: true } },
         pin: { include: { pinnedBy: true } },
         notifications: { where: { userId: ctx.session.user.id } },
       },
@@ -97,15 +97,39 @@ export const forumRouter = createTRPCRouter({
     )
     .mutation(
       async ({ ctx, input: { title, tags, message, notify, mentions } }) => {
+        const existingTags = await ctx.prisma.forumTag.findMany({
+          where: { name: { in: tags } },
+        });
+        const createNewTags = tags.filter(
+          (tag) => !existingTags.some((existing) => existing.name === tag)
+        );
+        const newTags =
+          createNewTags.length > 0
+            ? await ctx.prisma.forumTag.createMany({
+                data: createNewTags.map((name) => ({ name })),
+              })
+            : { count: 0 };
+        if (newTags.count !== createNewTags.length)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "DB Connector failed to create new tags",
+          });
+
+        const newTagsIds = await ctx.prisma.forumTag.findMany({
+          where: { name: { in: createNewTags } },
+        });
+        const createMany = {
+          data: [
+            ...existingTags.map((tag) => ({ tagId: tag.id })),
+            ...newTagsIds.map((tag) => ({ tagId: tag.id })),
+          ],
+        };
         const thread = await ctx.prisma.forumThread.create({
           data: {
             title,
             defaultNotify: notify ? "all" : "mentions",
             tags: {
-              connectOrCreate: tags.map((tag) => ({
-                where: { name: tag },
-                create: { name: tag },
-              })),
+              createMany: createMany.data.length > 0 ? createMany : undefined,
             },
             creator: {
               connect: { id: ctx.session.user.id },

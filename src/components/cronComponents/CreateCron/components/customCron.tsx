@@ -3,7 +3,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { flushSync } from "react-dom";
-import {  parseCron } from "../utils/parse-cron";
+import { parseCron } from "../utils/parse-cron";
 import { Label } from "~/components/ui/label";
 import {
   Dialog,

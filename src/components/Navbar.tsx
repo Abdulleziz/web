@@ -114,7 +114,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <div
-      className="min-h-16 sticky top-0 z-50 flex w-full items-center justify-between p-2 bg-background"
+      className="min-h-16 sticky top-0 z-50 flex w-full items-center justify-between bg-background p-2"
       ref={ref}
     >
       <NavigationMenu>

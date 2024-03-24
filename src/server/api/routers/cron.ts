@@ -239,7 +239,7 @@ export const cronRouter = createTRPCRouter({
       if (env.NEXT_PUBLIC_VERCEL_ENV === "production") {
         const c = new Client({ token: env.QSTASH_TOKEN });
         const destination = getDomainUrl() + "/api/trpc/qstash.cron";
-        const body = { cron } as z.input<typeof CronBody>;
+        const body = { cron } satisfies z.input<typeof CronBody>;
         const res = await c.schedules.create({
           destination,
           cron,

@@ -82,7 +82,7 @@ const Dashboard: NextPage = () => {
               <Panel key={i} />
             ))}
           </section>
-          <section className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-flow-col xl:grid-cols-4 xl:grid-rows-3">
+          <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-flow-col xl:grid-cols-4 xl:grid-rows-3">
             <Card className=" col-span-1 rounded-lg shadow md:col-span-2 md:row-span-2">
               <div className="border-b border-gray-100 px-6 py-5 font-semibold">
                 Oylar!

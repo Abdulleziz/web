@@ -550,6 +550,7 @@ export const ServantPanel = createPanel(undefined, () => {
 
 export const SalaryCounter = () => {
   const nextSalaryDate = useNextSalaryDate();
+  // TODO: useTime in hooks
   const nextDay = nextSalaryDate.data ?? new Date().getTime();
   const [remains, setRemains] = useState(() => nextDay - new Date().getTime());
 

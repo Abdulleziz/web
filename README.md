@@ -5,7 +5,7 @@
 - oylamaya katıl
 - maaş al
 - çay koy
-- *i*n-t*i.h?a_r ½et=
+- *i*n-t\*i.h?a_r ½et=
 - çay satın al
 - çaycıyı sinemle
 - bonus iste
@@ -29,12 +29,12 @@
   - en fazla 3 gün sürmeli
   - en az %50 seçilme oranı
 - Rol düşürme
-  - oylamayla yapılmalı*
+  - oylamayla yapılmalı\*
   - CEO düşürülemez. (oylama ile seçilir)
   - tamamlanması için oy verenlerin [**yetki değer**](#yetki-değerleri)lerinin toplamı düşürülen rolün [**yetki değer**](#yetki-değerleri)inin **2** katı olmalı.
   - *Örneğin; CEO Servant'ı tek oy ile düşürebilir. Veya Driver, Servant'ı düşürmek için en az bir kişiden yardım almalıdır.*
 - Rol yükseltme
-  - oylamayla yapılmalı*
+  - oylamayla yapılmalı\*
   - CEO'ya yükseltilemez. (oylama ile seçilir)
   - tamamlanması için oy verenlerin [**yetki değer**](#yetki-değerleri)lerinin toplamı yükseltilen rolün [**yetki değer**](#yetki-değerleri)inin **1,5** katı olmalı.
   - *Örneğin; CEO, Kullanıcıyı tek oy ile HR'a yükseltebilir. Veya QA Lead, kullanıcıyı HR yapmak için en az bir kişiden yardım almalıdır.*
@@ -84,8 +84,8 @@ Spesifik Forum Bildirim Seçenekleri (Thread Ayarı):
 .. Sadece Bahsetmeler
 ```
 
-- [X] Yeni Thread
-- [X] Yeni Post
+- [x] Yeni Thread
+- [x] Yeni Post
 
 ### Hatırlatıcı
 
@@ -108,7 +108,7 @@ Hatırlatıcı Bildirim Seçenekleri:
 - [ ] Rol Değişikliği
 - [ ] Yeni Oy
 - [ ] 6 Kere çaycıyı sinemleme -> atılma
-- [ ] Maaş* (haftada bir)
+- [ ] Maaş\* (haftada bir)
 
 ## Banka
 
@@ -127,6 +127,7 @@ Abdülleziz bankası, sadece CEO ve muhasebe yönetiminde olup şirketin gelir v
   - Şirketin ortalama büyüklüğü, ahlak puanı ve proje sayısına göre gelir oluşur.
     - Ahlak puanı, şirketin kara para aklaması ve düzensizliği sonucunda rol dışı adminler tarafından değiştirilir.
     - Projeler hem şirkete hem de proje sahibine kazanç sağlar.
+
 - Giderler
 
   - Maaşlar, rol sayısı ve rollerin yüksekliği bakımından hesaplanır.

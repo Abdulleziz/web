@@ -19,9 +19,7 @@ export const Layout: React.FC<Props> = ({
         <title>{title}</title>
         <meta
           name="description"
-          content={
-            "Abdulleziz Corp." + (location ? " - " : "") + location
-          }
+          content={"Abdulleziz Corp." + (location ? " - " : "") + location}
         />
         <link rel="icon" href="/favicon.ico" />
         <link rel="icon" href="/favicon-16x16.png" sizes="16x16" />

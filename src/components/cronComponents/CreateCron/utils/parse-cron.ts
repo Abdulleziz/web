@@ -1,5 +1,6 @@
 import cronParser from "cron-parser";
 import type { Dispatch, SetStateAction } from "react";
+import { UTCtoTR } from "~/pages/cron";
 
 export const parseCron = (
   cron: string,
@@ -8,7 +9,6 @@ export const parseCron = (
   try {
     if (!cron.trim()) throw new Error("Cron boş olamaz!");
     const i = cronParser.parseExpression(cron, { utc: true });
-    
 
     if (calculateDiff(i) >= 12) setError(null);
     else
@@ -27,4 +27,14 @@ export const calculateDiff = (cron: cronParser.CronExpression) => {
   const prev = cron.prev().getTime();
   const diff = (next - prev) / (1000 * 60 * 24);
   return diff;
+};
+
+export const cronAsUTC3 = (cron: string) => {
+  // UTC -> TR
+  const i = cronParser.parseExpression(cron, { utc: true });
+  // 3 saat geri al
+  const fields = UTCtoTR(i);
+  const iAsTR = cronParser.fieldsToExpression(fields);
+
+  return iAsTR.stringify();
 };

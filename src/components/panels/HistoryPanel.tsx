@@ -11,6 +11,7 @@ import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { AbdullezizUser } from "../AbdullezizUser";
 import { EntityDetails } from "~/pages/store/EntityCard";
+import { useGetEmergencyHistory } from "~/utils/useBank";
 
 type PaymentData = RouterOutputs["payments"]["getAll"];
 
@@ -21,6 +22,7 @@ type PaymentInvoice = PaymentData["invoices"][number];
 type CronData = RouterOutputs["cron"]["getAll"][number];
 type ThreadData = RouterOutputs["forum"]["getThreads"][number];
 type ConsumeTeaData = RouterOutputs["consumable"]["tea"]["history"][number]; // Deprecated
+type EmergencyData = RouterOutputs["emergency"]["history"][number];
 
 type HistoryStep =
   | { type: "buy.salary"; data: PaymentSalary }
@@ -28,7 +30,8 @@ type HistoryStep =
   | { type: "buy.invoice"; data: PaymentInvoice }
   | { type: "cron"; data: CronData }
   | { type: "thread"; data: ThreadData }
-  | { type: "consumeTea"; data: ConsumeTeaData };
+  | { type: "consumeTea"; data: ConsumeTeaData }
+  | { type: "emergency"; data: EmergencyData };
 
 const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
   switch (step.type) {
@@ -150,6 +153,16 @@ const HistoryStep: React.FC<{ step: HistoryStep }> = ({ step }) => {
         </li>
       );
     }
+    case "emergency": {
+      const { endedAt } = step.data;
+      return (
+        <li className="flex flex-col items-center justify-center gap-1">
+          <p>OHAL</p>
+          <p>(bitiş tarihi: {endedAt?.toLocaleString("tr-TR")})</p>
+        </li>
+      );
+    }
+
     default:
       const _exhaustiveCheck: never = step; // eslint-disable-line @typescript-eslint/no-unused-vars
       throw new Error(`Unhandled step type`);
@@ -165,6 +178,7 @@ export const HistoryPanel = createPanel([], () => {
   const cronHistory = useGetAllCrons().data ?? [];
   const threadHistory = useGetForumThreads().data ?? [];
   const consumeTeaHistory = useConsumeTeaHistory().data ?? [];
+  const emergencyHistory = useGetEmergencyHistory().data ?? [];
   const [ref] = useAutoAnimate();
 
   const history: HistoryStep[] = [
@@ -175,7 +189,7 @@ export const HistoryPanel = createPanel([], () => {
     ...buy.salaries.map((s) => ({ type: "buy.salary" as const, data: s })),
     ...buy.transfers.map((t) => ({ type: "buy.transfer" as const, data: t })),
     ...buy.invoices.map((i) => ({ type: "buy.invoice" as const, data: i })),
-    // TODO: OHAL
+    ...emergencyHistory.map((e) => ({ type: "emergency" as const, data: e })),
     // TODO: CEO atamaları
   ].sort((a, b) => b.data.createdAt.getTime() - a.data.createdAt.getTime());
 

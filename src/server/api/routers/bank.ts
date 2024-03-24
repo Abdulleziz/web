@@ -20,7 +20,7 @@ const manageBankProcedure = createPermissionProcedure(["bankayı yönet"]);
 export const bankRouter = createTRPCRouter({
   history: seeHistoryProcedure.query(async ({ ctx }) => {
     const transfers = await ctx.prisma.bankTransaction.findMany({
-      include: { reference: true },
+      include: { reference: true, gamble: true },
     });
     const salaries = await ctx.prisma.bankSalary.findMany({
       include: { salaries: { include: { to: true } } },
@@ -36,7 +36,7 @@ export const bankRouter = createTRPCRouter({
     .mutation(async ({ ctx, input: { amount, operation } }) => {
       return await ctx.prisma.$transaction(async (prisma) => {
         const emergency = await prisma.stateOfEmergency.findFirst({
-          where: { endedAt: {  equals: null } },
+          where: { endedAt: { equals: null } },
         });
         if (emergency)
           throw new TRPCError({

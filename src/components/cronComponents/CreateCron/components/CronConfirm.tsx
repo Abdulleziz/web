@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import { cronToDate } from "../utils/cronToLocaleDate";
+import cronParser from "cron-parser";
 
 const ConfirmCron: FC<{
   cron: string;
@@ -20,7 +20,10 @@ const ConfirmCron: FC<{
   const [title, setTitle] = useState("");
   const [isGlobal, setIsGlobal] = useState<boolean>(true);
   const create = useCreateOrJoinCron();
-  const nextDates = cronToDate(cron);
+  const nextDates = cronParser
+    .parseExpression(cron, { utc: true })
+    .iterate(5)
+    .map((d) => d.toDate());
   const nextDate = nextDates[0];
 
   return (
