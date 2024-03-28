@@ -19,7 +19,6 @@ const JoiningStudents = ({
           <AccordionContent>
             <div className="grid grid-cols-2 gap-2">
               {joiningStudentArray.map((studentNo) => {
-                console.log(studentNo);
                 const studentName = allStudents.find((a) => {
                   return a.no === studentNo;
                 })?.name;
