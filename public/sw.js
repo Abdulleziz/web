@@ -10,6 +10,8 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   // event.notification.tag
+  let page = event.action ?? "/";
+  page = page.includes("sw.js") ? "/" : page;
   event?.waitUntil(
     // self.clients
     //   .matchAll({ type: "window" })
@@ -25,7 +27,7 @@ self.addEventListener("notificationclick", (event) => {
     //     }
     //     return self.clients.openWindow(event.action ?? "/");
     //   })
-    self.clients.openWindow(event.action ?? "/")
+    self.clients.openWindow(page)
   );
 });
 
