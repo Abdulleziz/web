@@ -11,11 +11,7 @@ import { getSalaryTakers, informEmergency } from "~/server/discord-api/trpc";
 import { getDomainUrl } from "~/utils/api";
 import { createTRPCRouter, qstashProcedure } from "../trpc";
 import { type Prisma } from "@prisma/client";
-
-export const CronBody = z.object({
-  cron: z.string(),
-  debug: z.boolean().default(false),
-});
+import { CronBody } from "./cron";
 
 export const PushBody = z.object({
   title: z.string(),

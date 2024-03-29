@@ -60,18 +60,17 @@ const Attendance: NextPage = () => {
 
   const hydrated = useHydrated();
   const { isMobile } = useDevice();
-  const { data: activationCodeData, isLoading: isActivationLoading } = useQuery(
-    {
-      queryKey: ["activationCode", activationCode],
-      enabled: activationCode?.length === 7,
-      queryFn: () => fetchActivationCode(activationCode),
-    }
-  );
-  const { data: qrLinkData, isLoading: isQrLinkLoading } = useQuery({
+  const { data: activationCodeData } = useQuery({
+    queryKey: ["activationCode", activationCode],
+    enabled: activationCode?.length === 7,
+    queryFn: () => fetchActivationCode(activationCode),
+  });
+  const { data: qrLinkData } = useQuery({
     queryKey: ["QrCode", qrLink],
     enabled: qrLink?.startsWith("https://pdks.nisantasi.edu.tr/ogrenci/giris"),
     queryFn: () => fetchQrCode(qrLink),
   });
+
   const selectedLesson = useMemo(() => {
     if (selectedLessonId) {
       if (qrLinkData) {
@@ -86,30 +85,41 @@ const Attendance: NextPage = () => {
       }
     }
   }, [activationCodeData, qrLinkData, selectedLessonId]);
+
   const studentLessons = useQueries({
     queries: studentNumbers.map((studentNo) => {
       return {
         queryKey: ["studentLessons", studentNo],
-        enabled: !!selectedLesson?.lessonCode,
+        enabled: !!selectedLesson?.lessonId,
         queryFn: () => fetchStudentLessons(studentNo),
       };
     }),
   });
 
   const allSuccess = studentLessons.every((num) => num.status === "success");
-  const isStudentLessonsLoading = studentLessons.every(
-    (num) => num.fetchStatus === "fetching"
-  );
+
+  const isStudentLessonLoading = studentLessons.every((num) => {
+    if (!!selectedLesson?.lessonId) {
+      return num.fetchStatus === "fetching";
+    }
+    return false;
+  });
 
   const joiningStudents = useMemo(() => {
     if (allSuccess) {
-      return studentNumbers.filter((studentNumber, i) => {
+      return studentNumbers.flatMap((studentNumber, i) => {
         const studentsLesson = studentLessons[i]?.data;
-        return studentsLesson?.filter((less) => {
+
+        const isStudentJoining = studentsLesson?.filter((less) => {
           const lessonCode = less.lessonCode.trim();
           const selectedLessonCode = selectedLesson?.lessonCode.trim();
           return lessonCode === selectedLessonCode;
         });
+
+        if (isStudentJoining?.length) {
+          return [studentNumber];
+        }
+        return [];
       });
     }
     return [];
@@ -131,14 +141,13 @@ const Attendance: NextPage = () => {
     }),
   });
 
-  const isJoinLessonLoading = studentsJoinLessons.every(
-    (num) => num.fetchStatus === "fetching"
-  );
-
   function OnJoinClick() {
+    toast.loading("Yoklama Alınıyor", { duration: 1000 });
+
     studentsJoinLessons.map(async (lesson, i) => {
       const data = await lesson.refetch();
       const student = allStudents[i];
+
       if (data.data && student) {
         toast.success(`${student.name} için ${data.data.header}`, {
           duration: 3000,
@@ -146,7 +155,6 @@ const Attendance: NextPage = () => {
       }
     });
   }
-  console.log(selectedLesson);
 
   return (
     <Layout>
@@ -199,7 +207,7 @@ const Attendance: NextPage = () => {
                           setQrLink(result.getText());
                           toast.success("QR Kod Tarandı");
                         }}
-                        onError={(err) => console.log(err)}
+                        onError={console.error}
                       />
                     </div>
                   </DialogContent>
@@ -230,7 +238,12 @@ const Attendance: NextPage = () => {
               </SelectContent>
             </Select>
             <Button
-              disabled={selectedLesson?.lessonId === ""}
+              disabled={
+                isStudentLessonLoading ||
+                selectedLesson?.lessonId === "" ||
+                (!qrLink && !activationCode)
+              }
+              isLoading={isStudentLessonLoading}
               onClick={() => OnJoinClick()}
             >
               Derse Katıl
