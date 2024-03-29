@@ -66,7 +66,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const subs = await prisma.pushSubscription.findMany();
       const notif = await sendNotification(subs, parsed);
 
-      console.log("push notif result in cron", { notif });
+      console.log("push notif result in cron", notif, notif.length);
       res.status(200).send("OK - push");
       return;
     }
@@ -152,7 +152,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
 
       if (unpaidSalaries.length > 3) {
-        console.log("3'ten fazla ödenmemiş maaş var");
+        console.error("3'ten fazla ödenmemiş maaş var");
       }
 
       if (unpaidSalaries.length === 0) {

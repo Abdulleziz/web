@@ -207,7 +207,7 @@ const Attendance: NextPage = () => {
                           setQrLink(result.getText());
                           toast.success("QR Kod Tarandı");
                         }}
-                        onError={(err) => console.log(err)}
+                        onError={console.error}
                       />
                     </div>
                   </DialogContent>
@@ -239,7 +239,9 @@ const Attendance: NextPage = () => {
             </Select>
             <Button
               disabled={
-                selectedLesson?.lessonId === "" || (!qrLink && !activationCode)
+                isStudentLessonLoading ||
+                selectedLesson?.lessonId === "" ||
+                (!qrLink && !activationCode)
               }
               isLoading={isStudentLessonLoading}
               onClick={() => OnJoinClick()}

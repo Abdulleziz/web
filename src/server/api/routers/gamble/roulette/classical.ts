@@ -116,7 +116,7 @@ async function endRoulette() {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const result = +options[game.resultIndex]!;
 
-  console.log("result", result);
+  console.log("classical roulette result", result);
 
   await setGame(game);
   return game;

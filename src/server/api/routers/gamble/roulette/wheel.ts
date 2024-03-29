@@ -101,7 +101,7 @@ async function backgroundTask(game: WheelRoulette) {
   const channel = ablyRest.channels.get(PUBLIC_CHANNEL);
   game = await endRoulette();
   await channel.publish("done", game.gameId);
-  console.log("game ended");
+  console.log("roulette game ended");
 }
 
 async function endRoulette() {
