@@ -3,7 +3,6 @@ import { Client } from "@upstash/qstash";
 import { z } from "zod";
 import { env } from "~/env.mjs";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import type { CronBody } from "~/pages/api/cron";
 import { REST } from "@discordjs/rest";
 import * as v10 from "discord-api-types/v10";
 import { getDomainUrl } from "~/utils/api";
@@ -18,6 +17,11 @@ const CronTitle = z
   .string({ required_error: "Hatırlatıcı başlığı boş olamaz" })
   .trim()
   .min(1, "Hatırlatıcı başlığı en az 1 karakter olmalıdır");
+
+export const CronBody = z.object({
+  cron: CronInput,
+  debug: z.boolean().default(false),
+});
 
 export const cronRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
