@@ -35,6 +35,7 @@ export const forumMemesRouter = createTRPCRouter({
   deleteMeme: protectedProcedure
     .input(MemeId)
     .mutation(async ({ ctx, input }) => {
+      const N = 15
       const meme = await ctx.prisma.dictionaryMeme.findUnique({
         where: { id: input },
         select: { createdAt: true },
@@ -46,10 +47,10 @@ export const forumMemesRouter = createTRPCRouter({
           message: "Sözlükte bulunamadı.",
         });
 
-      if (new Date().getTime() > meme.createdAt.getTime() + 1000 * 60 * 15)
+      if (new Date().getTime() > meme.createdAt.getTime() + 1000 * 60 * N)
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
-          message: "Sözlüğe en fazla 15 dakika içinde eklenmiş olmalı.",
+          message: `Sözlüğe en fazla ${N} dakika içinde eklenmiş olmalı.`,
         });
 
       return await ctx.prisma.dictionaryMeme.delete({ where: { name: input } });

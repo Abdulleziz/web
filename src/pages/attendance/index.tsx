@@ -25,6 +25,7 @@ import {
 } from "~/components/ui/select";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import JoiningStudents from "~/components/attendanceComponents/JoiningStudents";
+import { api } from "~/utils/api";
 
 export type getQrLessonsResponse = {
   lessonName: string;
@@ -47,10 +48,7 @@ export const allStudents = [
   { name: "Bora", no: "20202022025" },
   { name: "Buğra", no: "20202022035" },
   { name: "Ulaştı", no: "20232022062" },
-  {
-    name: "Taha",
-    no: "20202022008",
-  },
+  { name: "Taha", no: "20202022008" },
 ];
 const studentNumbers = allStudents.map((student) => student.no);
 const Attendance: NextPage = () => {
@@ -60,6 +58,7 @@ const Attendance: NextPage = () => {
 
   const hydrated = useHydrated();
   const { isMobile } = useDevice();
+  const lecturePostJoin = api.notifications.lecturePostJoin.useMutation();
   const { data: activationCodeData } = useQuery({
     queryKey: ["activationCode", activationCode],
     enabled: activationCode?.length === 7,
@@ -141,19 +140,25 @@ const Attendance: NextPage = () => {
     }),
   });
 
-  function OnJoinClick() {
+  async function OnJoinClick() {
     toast.loading("Yoklama Alınıyor", { duration: 1000 });
 
-    studentsJoinLessons.map(async (lesson, i) => {
-      const data = await lesson.refetch();
+    for (const lesson of studentsJoinLessons) {
+      const i = studentsJoinLessons.indexOf(lesson);
+      const { data } = await lesson.refetch();
       const student = allStudents[i];
 
-      if (data.data && student) {
-        toast.success(`${student.name} için ${data.data.header}`, {
+      if (data && student) {
+        toast.success(`${student.name} için ${data.header}`, {
           duration: 3000,
         });
       }
-    });
+    }
+
+    if (selectedLesson?.lessonName) {
+      console.log(`Yoklama alındı: ${selectedLesson.lessonName}`);
+      lecturePostJoin.mutate(selectedLesson.lessonName);
+    }
   }
 
   return (
@@ -241,10 +246,11 @@ const Attendance: NextPage = () => {
               disabled={
                 isStudentLessonLoading ||
                 selectedLesson?.lessonId === "" ||
-                (!qrLink && !activationCode)
+                (!qrLink && !activationCode) ||
+                lecturePostJoin.isLoading
               }
-              isLoading={isStudentLessonLoading}
-              onClick={() => OnJoinClick()}
+              isLoading={isStudentLessonLoading || lecturePostJoin.isLoading}
+              onClick={() => void OnJoinClick()}
             >
               Derse Katıl
             </Button>

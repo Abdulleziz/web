@@ -1,3 +1,4 @@
+import { nonEmptyString } from "~/utils/zod-utils";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { PushSubscription } from "~/utils/shared";
 
@@ -28,5 +29,18 @@ export const notificationsRouter = createTRPCRouter({
           NOT: { endpoint: { in: include.map((s) => s.endpoint) } },
         },
       });
+    }),
+  lecturePostJoin: protectedProcedure
+    .input(nonEmptyString)
+    .mutation(async ({ ctx, input: lectureName }) => {
+      // TODO: custom notification for student
+      const subs = await ctx.prisma.pushSubscription.findMany();
+      const res = await ctx.sendNotification(subs, {
+        title: "Yoklama Alındı",
+        body: `${lectureName} dersine yoklama alındı.`,
+      });
+      return res.map((r) =>
+        r === undefined ? "errored" : r === "expired" ? r : "success"
+      );
     }),
 });
