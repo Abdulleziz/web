@@ -1,4 +1,4 @@
-import { allStudents } from "~/pages/attendance";
+import { allStudents } from "~/utils/shared";
 import {
   Accordion,
   AccordionContent,
