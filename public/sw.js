@@ -10,24 +10,19 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   // event.notification.tag
-  let page = event.action ?? "/";
-  page = page.includes("sw.js") ? "/" : page;
   event?.waitUntil(
-    // self.clients
-    //   .matchAll({ type: "window" })
-    //   .then(function (clientList) {
-    //     if (clientList.length > 0) {
-    //       let client = clientList[0];
-    //       for (let i = 0; i < clientList.length; i++) {
-    //         if (clientList[i].focused) {
-    //           client = clientList[i];
-    //         }
-    //       }
-    //       return client.focus();
-    //     }
-    //     return self.clients.openWindow(event.action ?? "/");
-    //   })
-    self.clients.openWindow(page)
+    clients.matchAll({ type: "window" }).then((clients) => {
+      // If a Window tab matching the targeted URL already exists, focus that;
+      const hadWindowToFocus = clients.some((windowClient) =>
+        windowClient.url === event.action ? (windowClient.focus(), true) : false
+      );
+      // Otherwise, open a new tab to the applicable URL and focus it.
+      if (!hadWindowToFocus)
+        clients
+          // TODO: safari on ios should open / but other browsers can open event.action
+          .openWindow("/")
+          .then((windowClient) => (windowClient ? windowClient.focus() : null));
+    })
   );
 });
 
