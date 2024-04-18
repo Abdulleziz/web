@@ -137,7 +137,7 @@ const Attendance: NextPage = () => {
     for (const lesson of studentsJoinLessons) {
       const i = studentsJoinLessons.indexOf(lesson);
       const { data } = await lesson.refetch();
-      const success = data?.header.toLowerCase().includes("başarılı");
+      const success = data?.header.toLowerCase().includes("başarili");
       const student = allStudents[i];
 
       if (data && student) {
@@ -156,7 +156,7 @@ const Attendance: NextPage = () => {
       });
     }
     if (selectedLesson?.lessonName && result.length) {
-      console.log(`Yoklama alındı: ${selectedLesson.lessonName}`);
+      toast.success(`Yoklama alındı: ${selectedLesson.lessonName}`);
       lecturePostJoin.mutate({
         lectureName: selectedLesson.lessonName,
         userDiscordIds: result,
