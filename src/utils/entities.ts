@@ -42,6 +42,14 @@ export const SystemEntity = z.discriminatedUnion("type", [
       surname: z.string(),
     }),
   }),
+  SystemEntityBase.extend({
+    type: z.literal("privilege"),
+    privilege: z.object({
+      kind: z.enum(["voice-kick"]),
+      name: z.string(),
+      description: z.string(),
+    }),
+  }),
 ]);
 export type SystemEntityInput = z.infer<typeof SystemEntity>;
 export type SystemEntity = z.output<typeof SE>[number];
@@ -49,6 +57,10 @@ export type Tea = Extract<SystemEntity, { type: "tea" }>["tea"];
 export type Car = Extract<SystemEntity, { type: "car" }>["car"];
 export type Phone = Extract<SystemEntity, { type: "phone" }>["phone"];
 export type Human = Extract<SystemEntity, { type: "human" }>["human"];
+export type Privilege = Extract<
+  SystemEntity,
+  { type: "privilege" }
+>["privilege"];
 
 const SE = z.array(SystemEntity).transform((t) => {
   const ids = t.map((e) => e.id);
@@ -157,6 +169,17 @@ export const SystemEntities = SE.parse([
     ],
     image:
       "https://uploadthing.com/f/5bf7445a-c410-4867-8e5e-43f0905a9d0a-n39zc3.jpg",
+  },
+  {
+    id: 8,
+    type: "privilege",
+    privilege: {
+      kind: "voice-kick",
+      name: "Voice Kick",
+      description: "Kick someone from voice channel",
+    },
+    price: 200,
+    image: "https://utfs.io/f/6ecd0943-59e7-46bd-8704-9f64f3028a3a-8rsfj0.png",
   },
 ] satisfies SystemEntityInput[]);
 

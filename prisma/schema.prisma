@@ -249,6 +249,15 @@ model ConsumeTea {
     @@index([consumerId])
 }
 
+model ConsumeVoiceKick {
+    id        String    @id @default(cuid()) @map("_id")
+    target    String /// discord.id
+    createdAt DateTime  @default(now())
+
+    consumerId String
+    consumer   User   @relation(fields: [consumerId], references: [id], onDelete: Cascade)
+}
+
 model Vote {
     id        String   @id @default(cuid()) @map("_id")
     voter     String /// discord.id
@@ -347,6 +356,7 @@ model User {
     bankTransactions    BankTransaction[]
     invoices            Invoice[]          @relation("invoices")
     salaries            Salary[]
+    voiceKicks          ConsumeVoiceKick[]
 }
 
 model VerificationToken {

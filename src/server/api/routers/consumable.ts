@@ -4,8 +4,54 @@ import { getSystemEntityById } from "~/utils/entities";
 import { prisma, type Transaction } from "~/server/db";
 import { TRPCError } from "@trpc/server";
 import { env } from "~/env.mjs";
+import { DiscordId } from "~/utils/zod-utils";
+import { ABDULLEZIZ_SERVER_ID } from "~/server/discord-api/guild";
+import { REST } from "@discordjs/rest";
+import * as v10 from "discord-api-types/v10";
+
+// TODO: consumable route as folder
 
 export const consumableRouter = createTRPCRouter({
+  privilege: createTRPCRouter({
+    voiceKick: createTRPCRouter({
+      getRemaining: protectedProcedure.query(({ ctx }) => {
+        return calculateRemainingVoiceKick(ctx.session.user.id, ctx.prisma);
+      }),
+      consume: protectedProcedure
+        .input(DiscordId)
+        .mutation(async ({ ctx, input: target }) => {
+          return await ctx.prisma.$transaction(async (tx) => {
+            const remaining = await calculateRemainingVoiceKick(
+              ctx.session.user.id,
+              tx
+            );
+            if (remaining <= 0)
+              throw new TRPCError({
+                code: "PRECONDITION_FAILED",
+                message: "Yetersiz sesli atma hakkı.",
+              });
+
+            const discord = new REST({ version: "10" }).setToken(
+              env.DISCORD_TOKEN
+            );
+            await discord.patch(
+              v10.Routes.guildMember(ABDULLEZIZ_SERVER_ID, target),
+              {
+                body: {
+                  channel_id: null,
+                } satisfies v10.RESTPatchAPIGuildMemberJSONBody,
+              }
+            );
+
+            // await modifyGuildMember(target, { channel_id: null });
+
+            return await tx.consumeVoiceKick.create({
+              data: { target, consumerId: ctx.session.user.id },
+            });
+          });
+        }),
+    }),
+  }),
   tea: createTRPCRouter({
     getRemaining: protectedProcedure.query(({ ctx }) => {
       return calculateRemainingTea(ctx.prisma);
@@ -71,6 +117,33 @@ export const consumableRouter = createTRPCRouter({
       }),
   }),
 });
+
+export async function calculateRemainingVoiceKick(
+  to: string,
+  db: Transaction = prisma
+) {
+  const invoices = await db.invoice.findMany({
+    where: { toId: to },
+    select: { entities: true },
+  });
+
+  const entities = invoices
+    .map((i) => i.entities)
+    .flat()
+    .map((e) => ({ ...getSystemEntityById(e.entityId), quantity: e.quantity }));
+
+  const has = entities.reduce((acc, e) => {
+    if (e.type === "privilege" && e.privilege.kind === "voice-kick")
+      acc += e.quantity;
+    return acc;
+  }, 0);
+
+  const consumes = await db.consumeVoiceKick.count({
+    where: { consumerId: to },
+  });
+
+  return has - consumes;
+}
 
 export function calculateRemainingTea(db: Transaction = prisma) {
   // const invoices = await db.payment.findMany({

@@ -57,6 +57,7 @@ import {
 } from "../ui/select";
 import ResponsivePopup from "../ResponsivePopup";
 import useDevice from "~/hooks/useDevice";
+import { Badge } from "../ui/badge";
 
 ChartJS.register(
   RadialLinearScale,
@@ -126,6 +127,14 @@ export const MemberPanel = createPanel(undefined, () => {
           >
             {voteCEO.data ? "Oylamaya katıl" : "Oylama başlat"}
           </Button>
+        </Link>
+        <Link href="/manage">
+          <div>
+            <Button size="sm">Sesten At</Button>
+            <Badge className="-m-2" variant={"success"}>
+              Yeni
+            </Badge>
+          </div>
         </Link>
         <Button disabled={!canRequestBonus} size="sm">
           Bonus iste

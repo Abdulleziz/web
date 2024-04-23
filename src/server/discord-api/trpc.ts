@@ -42,10 +42,9 @@ export async function modifyMemberRole(
 export async function removeAllRoles(
   member: Member & { roles: { id: string }[] }
 ) {
-  let roleCount = member.roles.length;
   return await Promise.all(
-    member.roles.map((r: { id: string }) =>
-      modifyMemberRole(member, r.id, "DELETE", roleCount--)
+    member.roles.map((r: { id: string }, i) =>
+      modifyMemberRole(member, r.id, "DELETE", member.roles.length - i)
     )
   );
 }
