@@ -1,22 +1,12 @@
-import type {
-  RESTGetAPIGuildMemberResult,
-  RESTGetAPIGuildRolesResult,
-  RESTPostAPIGuildRoleJSONBody,
-  RESTPatchAPIGuildMemberJSONBody,
-  // bu typeları kullanmak çok işe yarıyor, ide autocomplete typescript 😎
-} from "discord-api-types/v10";
+import * as v10 from "discord-api-types/v10";
 
-import { discordFetch } from ".";
-import { timedCache } from "./utils";
+import { discord, discordFetch } from ".";
+import { ABDULLEZIZ_SERVER_ID, timedCache } from "./utils";
 
-export type Roles = RESTGetAPIGuildRolesResult;
-export type Member = RESTGetAPIGuildMemberResult & {
-  user: NonNullable<RESTGetAPIGuildMemberResult["user"]>;
+export type Roles = v10.RESTGetAPIGuildRolesResult;
+export type Member = v10.RESTGetAPIGuildMemberResult & {
+  user: NonNullable<v10.RESTGetAPIGuildMemberResult["user"]>;
 };
-
-export const ABDULLEZIZ_SERVER_ID = "918833527389315092";
-export const STAFF_ROLE_ID = "918834668751704124";
-export const UNEMPLOYED_ROLE_ID = "1180815262149251172";
 
 export async function getGuildMember(
   userId: string,
@@ -57,16 +47,12 @@ export const invalidateGetGuildMembers = (guildId = ABDULLEZIZ_SERVER_ID) => {
 
 export async function modifyGuildMember(
   userId: string,
-  options?: RESTPatchAPIGuildMemberJSONBody,
+  options?: v10.RESTPatchAPIGuildMemberJSONBody,
   guildId = ABDULLEZIZ_SERVER_ID
 ) {
-  const ret = await discordFetch<Member>(
-    `guilds/${guildId}/members/${userId}`,
-    {
-      method: "PATCH",
-      body: options ? JSON.stringify(options) : undefined,
-    }
-  );
+  const ret = await discord.patch(v10.Routes.guildMember(guildId, userId), {
+    body: options,
+  }) as v10.RESTGetAPIGuildMemberResult;
 
   invalidateGetGuildMembers(guildId);
   return ret;
@@ -103,7 +89,7 @@ export async function getGuildRole(
 }
 
 export async function createGuildRole(
-  options?: RESTPostAPIGuildRoleJSONBody,
+  options?: v10.RESTPostAPIGuildRoleJSONBody,
   guildId = ABDULLEZIZ_SERVER_ID
 ) {
   return await discordFetch<Roles>(`guilds/${guildId}/roles`, {

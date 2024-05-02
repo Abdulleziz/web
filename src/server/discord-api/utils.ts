@@ -4,7 +4,11 @@ import {
   abdullezizRoleSeverities,
   type AbdullezizRole,
 } from "~/utils/zod-utils";
-import { ABDULLEZIZ_SERVER_ID, type Member } from "./guild";
+import { type Member } from "./guild";
+
+export const ABDULLEZIZ_SERVER_ID = "918833527389315092";
+export const STAFF_ROLE_ID = "918834668751704124";
+export const UNEMPLOYED_ROLE_ID = "1180815262149251172";
 
 // discord permlerinden abdülleziz-verified rolleri alıyoz
 // CEO, COO... gibi

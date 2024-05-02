@@ -20,7 +20,7 @@ const EntityCard = ({ entity }: { entity?: SystemEntity }) => {
       <Avatar>
         <AvatarImage
           src={entity.image}
-          className="h-40 w-40"
+          className="h-40 w-40 object-contain"
           width={250}
           height={250}
         />

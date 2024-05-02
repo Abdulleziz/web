@@ -9,7 +9,7 @@ import {
 } from "~/utils/zod-utils";
 import { useVote, useVoteCEO, type User, useAssign } from "~/utils/useDiscord";
 import { formatName } from "~/utils/abdulleziz";
-import { Card, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardTitle } from "~/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -41,10 +41,15 @@ import {
 import { Label } from "~/components/ui/label";
 import { DialogClose } from "@radix-ui/react-dialog";
 import {
+  useConsumeVoiceDeafen,
   useConsumeVoiceKick,
+  useConsumeVoiceMute,
+  useGetRemainingVoiceDeafen,
   useGetRemainingVoiceKick,
+  useGetRemainingVoiceMute,
 } from "~/utils/useConsumable";
 import Link from "next/link";
+import { MicOffIcon, UnplugIcon, VolumeXIcon } from "lucide-react";
 
 const FormSchema = z.object({
   role: z.string({
@@ -58,8 +63,13 @@ export const ManageWorker: React.FC<{
   const vote = useVote();
   const voteCEO = useVoteCEO();
   const assign = useAssign();
-  const voice = useGetRemainingVoiceKick();
+  const voiceKick = useGetRemainingVoiceKick();
+  const voiceMute = useGetRemainingVoiceMute();
+  const voiceDeafen = useGetRemainingVoiceDeafen();
+
   const kick = useConsumeVoiceKick();
+  const mute = useConsumeVoiceMute();
+  const deafen = useConsumeVoiceDeafen();
 
   const roles = Object.keys(abdullezizRoles) as AbdullezizRole[];
 
@@ -82,9 +92,7 @@ export const ManageWorker: React.FC<{
     <Card className="grid grid-cols-1 gap-2 md:grid-cols-2">
       {worker?.roles[0]?.name !== "CEO" ? (
         <Card className="m-2 flex flex-col gap-2 rounded-lg p-4 shadow lg:gap-4 lg:p-8">
-          <CardHeader>
-            <CardTitle>Oylama Başlat!</CardTitle>
-          </CardHeader>
+          <CardTitle>Oylama Başlat!</CardTitle>
 
           <Dialog>
             <Form {...form}>
@@ -185,12 +193,9 @@ export const ManageWorker: React.FC<{
         </div>
       )}
       <Card className="m-2 flex flex-col gap-2 rounded-lg p-4 shadow lg:gap-4 lg:p-8">
-        <CardHeader>
-          <CardTitle>Sesten At</CardTitle>
-        </CardHeader>
+        <CardTitle>Sesi Yönet</CardTitle>
         <div className="flex items-center justify-start gap-2">
-          Kalan: <span className="text-3xl">{voice.data ?? 0}</span>
-          {!voice.data && (
+          {!voiceKick.data && (
             <Link href={"/store"}>
               <Button size={"relative-sm"}>Satın Al</Button>
             </Link>
@@ -200,14 +205,56 @@ export const ManageWorker: React.FC<{
           Uyarı: Bu işlem geri alınamaz, eğer kullanıcı seste değil ise hakkınız
           çöpe gidecektir.
         </p>
-        <Button
-          isLoading={voice.isLoading || kick.isLoading}
-          disabled={voice.isLoading || kick.isLoading || voice.data === 0}
-          variant={"destructive"}
-          onClick={() => kick.mutate(worker.user.id)}
-        >
-          Sesten At
-        </Button>
+        <div className="flex w-full gap-2">
+          <Button
+            size={"icon"}
+            variant={"bj_hit"}
+            className="w-full"
+            isLoading={voiceMute.isLoading || mute.isLoading}
+            disabled={
+              voiceMute.isLoading || mute.isLoading || voiceMute.data === 0
+            }
+            onClick={() =>
+              mute.mutate({ target: worker.user.id, mode: "toggle" })
+            }
+          >
+            <div className="flex gap-1">
+              <MicOffIcon /> {voiceMute.data}
+            </div>
+          </Button>
+          <Button
+            size={"icon"}
+            className="w-full"
+            isLoading={voiceDeafen.isLoading || deafen.isLoading}
+            variant={"bj_split"}
+            disabled={
+              voiceDeafen.isLoading ||
+              deafen.isLoading ||
+              voiceDeafen.data === 0
+            }
+            onClick={() =>
+              deafen.mutate({ target: worker.user.id, mode: "toggle" })
+            }
+          >
+            <div className="flex gap-1">
+              <VolumeXIcon /> {voiceDeafen.data}
+            </div>
+          </Button>
+          <Button
+            size={"icon"}
+            isLoading={voiceKick.isLoading || kick.isLoading}
+            disabled={
+              voiceKick.isLoading || kick.isLoading || voiceKick.data === 0
+            }
+            variant={"bj_stand"}
+            onClick={() => kick.mutate(worker.user.id)}
+            className="w-full"
+          >
+            <div className="flex gap-1">
+              <UnplugIcon /> {voiceKick.data}
+            </div>
+          </Button>
+        </div>
       </Card>
     </Card>
   );

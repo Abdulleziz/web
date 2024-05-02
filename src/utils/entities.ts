@@ -45,7 +45,7 @@ export const SystemEntity = z.discriminatedUnion("type", [
   SystemEntityBase.extend({
     type: z.literal("privilege"),
     privilege: z.object({
-      kind: z.enum(["voice-kick"]),
+      kind: z.enum(["voice-kick", "voice-mute", "voice-deafen"]),
       name: z.string(),
       description: z.string(),
     }),
@@ -180,6 +180,28 @@ export const SystemEntities = SE.parse([
     },
     price: 200,
     image: "https://utfs.io/f/6ecd0943-59e7-46bd-8704-9f64f3028a3a-8rsfj0.png",
+  },
+  {
+    id: 9,
+    type: "privilege",
+    privilege: {
+      kind: "voice-mute",
+      name: "Voice Mute",
+      description: "Mute someone in voice channel",
+    },
+    price: 100,
+    image: "https://utfs.io/f/da3cf083-da4f-447c-9c2e-f8693c484a25-2036h.png",
+  },
+  {
+    id: 10,
+    type: "privilege",
+    privilege: {
+      kind: "voice-deafen",
+      name: "Voice Defaen",
+      description: "Deafen someone in voice channel",
+    },
+    price: 150,
+    image: "https://utfs.io/f/689fd03d-3e35-49e2-abff-23589525ec68-m3air5.png",
   },
 ] satisfies SystemEntityInput[]);
 

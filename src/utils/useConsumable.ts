@@ -15,6 +15,22 @@ export const useGetRemainingVoiceKick = (
     staleTime: 1000 * 60 * 5,
   });
 
+  
+export const useGetRemainingVoiceMute = (
+  q: In["privilege"]["voiceMute"]["getRemaining"]
+) =>
+  api.consumable.privilege.voiceMute.getRemaining.useQuery(q, {
+    staleTime: 1000 * 60 * 5,
+  });
+
+export const useGetRemainingVoiceDeafen = (
+  q: In["privilege"]["voiceDeafen"]["getRemaining"]
+) =>
+  api.consumable.privilege.voiceDeafen.getRemaining.useQuery(q, {
+    staleTime: 1000 * 60 * 5,
+  });
+
+
 export const useConsumeTeaHistory = (q: In["tea"]["history"]) => {
   const utils = api.useContext();
   return api.consumable.tea.history.useQuery(q, {
@@ -46,6 +62,44 @@ export const useConsumeVoiceKick = () => {
     },
     onSettled: () => {
       void utils.consumable.privilege.voiceKick.invalidate();
+    },
+  });
+}
+
+export const useConsumeVoiceMute = () => {
+  const utils = api.useContext();
+  const id = "consumeVoiceMute";
+  return api.consumable.privilege.voiceMute.consume.useMutation({
+    onMutate: () => {
+      toast.loading("Sesli atma hakkı kullanılıyor...", { id });
+    },
+    onSuccess: () => {
+      toast.success("Sesli atma hakkı kullanıldı!", { id });
+    },
+    onError: (error) => {
+      toast.error(error.data?.zodError || error.message, { id });
+    },
+    onSettled: () => {
+      void utils.consumable.privilege.voiceMute.invalidate();
+    },
+  });
+}
+
+export const useConsumeVoiceDeafen = () => {
+  const utils = api.useContext();
+  const id = "consumeVoiceDeafen";
+  return api.consumable.privilege.voiceDeafen.consume.useMutation({
+    onMutate: () => {
+      toast.loading("Sesli atma hakkı kullanılıyor...", { id });
+    },
+    onSuccess: () => {
+      toast.success("Sesli atma hakkı kullanıldı!", { id });
+    },
+    onError: (error) => {
+      toast.error(error.data?.zodError || error.message, { id });
+    },
+    onSettled: () => {
+      void utils.consumable.privilege.voiceDeafen.invalidate();
     },
   });
 }

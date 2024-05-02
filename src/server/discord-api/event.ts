@@ -1,7 +1,7 @@
 import { REST } from "@discordjs/rest";
 import * as v10 from "discord-api-types/v10";
 import { env } from "~/env.mjs";
-import { ABDULLEZIZ_SERVER_ID } from "./guild";
+import { ABDULLEZIZ_SERVER_ID } from "./utils";
 
 const discord = new REST({ version: "10" }).setToken(env.DISCORD_TOKEN);
 

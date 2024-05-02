@@ -1,5 +1,8 @@
+import { REST } from "@discordjs/rest";
 import { TRPCError } from "@trpc/server";
 import { env } from "~/env.mjs";
+
+export const discord = new REST({ version: "10" }).setToken(env.DISCORD_TOKEN);
 
 export async function discordFetch<T>(path: string, options: RequestInit) {
   options.headers = {

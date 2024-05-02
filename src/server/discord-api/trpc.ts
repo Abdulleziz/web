@@ -4,11 +4,9 @@ import {
   getGuildMember,
   getGuildMembers,
   getGuildRoles,
-  STAFF_ROLE_ID,
   modifyGuildMemberRole,
-  UNEMPLOYED_ROLE_ID,
 } from "./guild";
-import { connectMembersWithIds, getAbdullezizRoles } from "./utils";
+import { STAFF_ROLE_ID, UNEMPLOYED_ROLE_ID, connectMembersWithIds, getAbdullezizRoles } from "./utils";
 import {
   type AtLeastOne,
   abdullezizRoleSeverities,
