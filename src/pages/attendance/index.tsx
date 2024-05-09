@@ -25,6 +25,8 @@ import {
 } from "~/components/ui/select";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import JoiningStudents from "~/components/attendanceComponents/JoiningStudents";
+import { api } from "~/utils/api";
+import { allStudents } from "~/utils/shared";
 
 export type getQrLessonsResponse = {
   lessonName: string;
@@ -37,21 +39,6 @@ type joinLectureResponse = {
   paragraph: string;
 };
 
-export const allStudents = [
-  { name: "Barkin", no: "20212022067" },
-  { name: "İlker", no: "20212022092" },
-  { name: "Ali Kerem Karaduman", no: "20212022072" },
-  { name: "Kaan", no: "20212022089" },
-  { name: "Yağiz", no: "20212022021" },
-  { name: "Yusuf", no: "20212022071" },
-  { name: "Bora", no: "20202022025" },
-  { name: "Buğra", no: "20202022035" },
-  { name: "Ulaştı", no: "20232022062" },
-  {
-    name: "Taha",
-    no: "20202022008",
-  },
-];
 const studentNumbers = allStudents.map((student) => student.no);
 const Attendance: NextPage = () => {
   const [qrLink, setQrLink] = useState<string>("");
@@ -60,6 +47,7 @@ const Attendance: NextPage = () => {
 
   const hydrated = useHydrated();
   const { isMobile } = useDevice();
+  const lecturePostJoin = api.notifications.lecturePostJoin.useMutation();
   const { data: activationCodeData } = useQuery({
     queryKey: ["activationCode", activationCode],
     enabled: activationCode?.length === 7,
@@ -141,19 +129,39 @@ const Attendance: NextPage = () => {
     }),
   });
 
-  function OnJoinClick() {
+  async function OnJoinClick() {
     toast.loading("Yoklama Alınıyor", { duration: 1000 });
 
-    studentsJoinLessons.map(async (lesson, i) => {
-      const data = await lesson.refetch();
+    const result: string[] = [];
+
+    for (const lesson of studentsJoinLessons) {
+      const i = studentsJoinLessons.indexOf(lesson);
+      const { data } = await lesson.refetch();
+      const success = data?.header.toLowerCase().includes("başarili");
       const student = allStudents[i];
 
-      if (data.data && student) {
-        toast.success(`${student.name} için ${data.data.header}`, {
+      if (data && student) {
+        toast(`${student.name} için ${data.header}`, {
           duration: 3000,
+          icon: success ? undefined : "💀",
         });
+        if (success) {
+          result.push(student.discordId);
+        }
       }
-    });
+    }
+    if (!result.length) {
+      toast.success("Bütün öğrenciler daha önce katılmış!", {
+        icon: "😤",
+      });
+    }
+    if (selectedLesson?.lessonName && result.length) {
+      toast.success(`Yoklama alındı: ${selectedLesson.lessonName}`);
+      lecturePostJoin.mutate({
+        lectureName: selectedLesson.lessonName,
+        userDiscordIds: result,
+      });
+    }
   }
 
   return (
@@ -241,10 +249,11 @@ const Attendance: NextPage = () => {
               disabled={
                 isStudentLessonLoading ||
                 selectedLesson?.lessonId === "" ||
-                (!qrLink && !activationCode)
+                (!qrLink && !activationCode) ||
+                lecturePostJoin.isLoading
               }
-              isLoading={isStudentLessonLoading}
-              onClick={() => OnJoinClick()}
+              isLoading={isStudentLessonLoading || lecturePostJoin.isLoading}
+              onClick={() => void OnJoinClick()}
             >
               Derse Katıl
             </Button>

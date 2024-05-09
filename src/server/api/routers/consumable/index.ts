@@ -1,11 +1,14 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { getSystemEntityById } from "~/utils/entities";
+import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { prisma, type Transaction } from "~/server/db";
 import { TRPCError } from "@trpc/server";
 import { env } from "~/env.mjs";
+import { privilegeRouter } from "./priviledge";
+
+// TODO: consumable route as folder
 
 export const consumableRouter = createTRPCRouter({
+  privilege: privilegeRouter,
   tea: createTRPCRouter({
     getRemaining: protectedProcedure.query(({ ctx }) => {
       return calculateRemainingTea(ctx.prisma);

@@ -1,5 +1,8 @@
+import { DiscordId, nonEmptyString } from "~/utils/zod-utils";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { PushSubscription } from "~/utils/shared";
+import { z } from "zod";
+import { connectMembersWithIds } from "~/server/discord-api/utils";
 
 export const notificationsRouter = createTRPCRouter({
   syncSubscription: protectedProcedure
@@ -28,5 +31,20 @@ export const notificationsRouter = createTRPCRouter({
           NOT: { endpoint: { in: include.map((s) => s.endpoint) } },
         },
       });
+    }),
+  lecturePostJoin: protectedProcedure
+    .input(z.object({ lectureName: nonEmptyString, userDiscordIds: DiscordId.array().min(1) }))
+    .mutation(async ({ ctx, input: { lectureName, userDiscordIds } }) => {
+
+      const ids = await connectMembersWithIds(ctx.prisma, userDiscordIds.map(id => ({ user: { id } })));
+      const subs = await ctx.prisma.pushSubscription.findMany({ where: { userId: { in: ids.map(i => i.id) } } });
+
+      const res = await ctx.sendNotification(subs, ({
+        title: "Yoklama Alındı",
+        body: `${ctx.session.user.name ?? "Biri"} tarafından ${lectureName} dersine yoklama alındı.`,
+      }));
+      return res.map((r) =>
+        r === undefined ? "errored" : r === "expired" ? r : "success"
+      );
     }),
 });

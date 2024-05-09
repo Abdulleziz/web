@@ -47,7 +47,7 @@ const ActionMenu = (Props: { cron: string; listeners: Listeners }) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuLabel>Detay</DropdownMenuLabel>
           <DialogTrigger asChild>
             <DropdownMenuItem>Oyları Göster</DropdownMenuItem>
           </DialogTrigger>

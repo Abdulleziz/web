@@ -20,7 +20,7 @@ const EntityCard = ({ entity }: { entity?: SystemEntity }) => {
       <Avatar>
         <AvatarImage
           src={entity.image}
-          className="h-40 w-40"
+          className="h-40 w-40 object-contain"
           width={250}
           height={250}
         />
@@ -44,18 +44,21 @@ export const EntityDetails = ({
 }): JSX.Element => {
   switch (entity.type) {
     case "tea":
-      return <p>{`${entity.tea.name} ${entity.tea.amountGram} gr`}</p>;
+      return <span>{`${entity.tea.name} ${entity.tea.amountGram} gr`}</span>;
 
     case "phone":
-      return <p>{`${entity.phone.brand} ${entity.phone.model}`}</p>;
+      return <span>{`${entity.phone.brand} ${entity.phone.model}`}</span>;
 
     case "human":
-      return <p>{`${entity.human.name} ${entity.human.surname}`}</p>;
+      return <span>{`${entity.human.name} ${entity.human.surname}`}</span>;
 
     case "car":
       return (
-        <p>{`${entity.car.brand} ${entity.car.model} ${entity.car.year}`}</p>
+        <span>{`${entity.car.brand} ${entity.car.model} ${entity.car.year}`}</span>
       );
+
+    case "privilege":
+      return <span>{entity.privilege.name}</span>;
   }
 };
 

@@ -249,6 +249,33 @@ model ConsumeTea {
     @@index([consumerId])
 }
 
+model ConsumeVoiceKick {
+    id        String   @id @default(cuid()) @map("_id")
+    target    String /// discord.id
+    createdAt DateTime @default(now())
+
+    consumerId String
+    consumer   User   @relation(fields: [consumerId], references: [id], onDelete: Cascade)
+}
+
+model ConsumeVoiceMute {
+    id        String   @id @default(cuid()) @map("_id")
+    target    String /// discord.id
+    createdAt DateTime @default(now())
+
+    consumerId String
+    consumer   User   @relation(fields: [consumerId], references: [id], onDelete: Cascade)
+}
+
+model ConsumeVoiceDeafen {
+    id        String   @id @default(cuid()) @map("_id")
+    target    String /// discord.id
+    createdAt DateTime @default(now())
+
+    consumerId String
+    consumer   User   @relation(fields: [consumerId], references: [id], onDelete: Cascade)
+}
+
 model Vote {
     id        String   @id @default(cuid()) @map("_id")
     voter     String /// discord.id
@@ -327,9 +354,9 @@ model Session {
 }
 
 model User {
-    id                  String             @id @default(cuid()) @map("_id")
+    id                  String               @id @default(cuid()) @map("_id")
     name                String?
-    email               String?            @unique
+    email               String?              @unique
     emailVerified       DateTime?
     image               String?
     accounts            Account[]
@@ -338,15 +365,18 @@ model User {
     forumPosts          ForumPost[]
     listenedCrons       CronListener[]
     ForumPin            ForumPin[]
-    transfersSent       Transfer[]         @relation("transferSender")
-    transfersRecieved   Transfer[]         @relation("transferReciever")
+    transfersSent       Transfer[]           @relation("transferSender")
+    transfersRecieved   Transfer[]           @relation("transferReciever")
     teaConsumer         ConsumeTea[]
     threadNotify        ForumNotify[]
-    defaultThreadNotify ForumNotification  @default(mentions)
+    defaultThreadNotify ForumNotification    @default(mentions)
     pushSubscriptions   PushSubscription[]
     bankTransactions    BankTransaction[]
-    invoices            Invoice[]          @relation("invoices")
+    invoices            Invoice[]            @relation("invoices")
     salaries            Salary[]
+    voiceKicks          ConsumeVoiceKick[]
+    voiceMutes          ConsumeVoiceMute[]
+    voiceDeafens        ConsumeVoiceDeafen[]
 }
 
 model VerificationToken {
