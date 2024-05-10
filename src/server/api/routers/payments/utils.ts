@@ -61,7 +61,7 @@ export const calculateWallet = async (
 
   for (const invoice of invoices) {
     wallet.balance -= invoice.entities.reduce(
-      (acc, e) => acc + getSystemEntityById(e.entityId).price,
+      (acc, e) => acc + getSystemEntityById(e.entityId).price * e.quantity,
       0
     );
   }
