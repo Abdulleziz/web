@@ -32,7 +32,9 @@ webPush.setVapidDetails(
   env.NEXT_PUBLIC_VAPID_KEY,
   env.VAPID_SECRET_KEY
 );
-type Options = NotificationOptions & { title: string };
+// actions is experimental: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/showNotification#actions
+type Actions = { action: string; title: string; icon?: string }[];
+type Options = NotificationOptions & { title: string; actions?: Actions };
 
 /**
  * @param title 40 to 75 characters

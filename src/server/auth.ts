@@ -5,13 +5,14 @@ import {
   type DefaultSession,
 } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
+import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { env } from "~/env.mjs";
 import { prisma } from "~/server/db";
-import { getGuildMembers } from "./discord-api/guild";
 import { REST } from "@discordjs/rest";
 import * as v10 from "discord-api-types/v10";
 import { getAvatarUrl } from "./discord-api/utils";
+import { inAbdullezizServerOrThrow } from "./discord-api/trpc";
 
 type User = v10.RESTGetAPICurrentUserResult;
 
@@ -47,25 +48,21 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, user }) {
       if (session.user) {
-        const account = await prisma.account.findFirstOrThrow({
-          where: { userId: user.id },
-          select: { providerAccountId: true },
-        });
-
-        const abdullezizMembers = await getGuildMembers();
-
         session.user.id = user.id;
-        session.user.discordId = account.providerAccountId;
-        session.user.inAbdullezizServer = !!abdullezizMembers?.find(
-          (member) => member.user.id === session.user.discordId
-        );
+        [session.user.discordId, session.user.inAbdullezizServer] =
+          await inAbdullezizServerOrThrow(user.id);
         // session.user.role = user.role; <-- put other properties on the session here
       }
       return session;
     },
     async signIn({ user: { id }, account }) {
-      const access_token = account?.access_token;
-      if (!access_token) return false;
+      if (account?.provider !== "discord") {
+        await inAbdullezizServerOrThrow(id); // ensures discord account is linked
+        return true;
+      }
+
+      const access_token = account.access_token;
+      if (!access_token) return true;
 
       const discord = new REST({
         version: "10",
@@ -91,13 +88,15 @@ export const authOptions: NextAuthOptions = {
   },
   adapter: PrismaAdapter(prisma),
   providers: [
+    GoogleProvider({
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    }),
     DiscordProvider({
       clientId: env.DISCORD_CLIENT_ID,
       clientSecret: env.DISCORD_CLIENT_SECRET,
     }),
-    /**
-     * @see https://next-auth.js.org/providers/github
-     */
   ],
 };
 

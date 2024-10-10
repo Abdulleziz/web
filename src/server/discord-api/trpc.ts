@@ -19,6 +19,22 @@ import { permissionDecider } from "~/utils/abdulleziz";
 import { prisma } from "../db";
 import { sendNotification } from "../api/trpc";
 
+export async function inAbdullezizServerOrThrow(databaseUserId: string) {
+  const account = await prisma.account.findFirst({
+    where: { userId: databaseUserId, provider: "discord" },
+    select: { providerAccountId: true },
+  });
+
+  if (!account) throw new Error("Discord account not found");
+
+  const abdullezizMembers = await getGuildMembers();
+  const inServer = !!abdullezizMembers?.find(
+    (member) => member.user.id === account.providerAccountId
+  );
+
+  return [account.providerAccountId, inServer] as const;
+}
+
 export async function modifyMemberRole(
   member: Member,
   roleId: DiscordId,
