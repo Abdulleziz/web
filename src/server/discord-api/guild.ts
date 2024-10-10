@@ -50,9 +50,9 @@ export async function modifyGuildMember(
   options?: v10.RESTPatchAPIGuildMemberJSONBody,
   guildId = ABDULLEZIZ_SERVER_ID
 ) {
-  const ret = await discord.patch(v10.Routes.guildMember(guildId, userId), {
+  const ret = (await discord.patch(v10.Routes.guildMember(guildId, userId), {
     body: options,
-  }) as v10.RESTGetAPIGuildMemberResult;
+  })) as v10.RESTGetAPIGuildMemberResult;
 
   invalidateGetGuildMembers(guildId);
   return ret;

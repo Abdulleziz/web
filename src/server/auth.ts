@@ -50,14 +50,17 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = user.id;
         [session.user.discordId, session.user.inAbdullezizServer] =
-          await inAbdullezizServerOrThrow(user.id);
+          await inAbdullezizServerOrThrow({ databaseUserId: user.id });
         // session.user.role = user.role; <-- put other properties on the session here
       }
       return session;
     },
-    async signIn({ user: { id }, account }) {
+    async signIn({ user: { id, email }, account }) {
+      // NOTE: id is providerAccountId
+
       if (account?.provider !== "discord") {
-        await inAbdullezizServerOrThrow(id); // ensures discord account is linked
+        if (!email) return false;
+        await inAbdullezizServerOrThrow({ userEmail: email }); // ensures discord account is linked
         return true;
       }
 

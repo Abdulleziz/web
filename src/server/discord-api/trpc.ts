@@ -24,14 +24,32 @@ import { permissionDecider } from "~/utils/abdulleziz";
 import { prisma } from "../db";
 import { sendNotification } from "../api/trpc";
 
-export async function inAbdullezizServerOrThrow(databaseUserId: string) {
-  const account = await prisma.account.findFirst({
-    where: { userId: databaseUserId, provider: "discord" },
-    select: { providerAccountId: true },
-  });
+export async function inAbdullezizServerOrThrow(
+  query: { databaseUserId: string } | { userEmail: string }
+) {
+  console.debug(`Checking user {${JSON.stringify(query)}}`);
+  const account =
+    "userEmail" in query
+      ? await prisma.account.findFirst({
+          where: {
+            user: { email: query.userEmail },
+            provider: "discord",
+          },
+          select: { providerAccountId: true },
+        })
+      : await prisma.account.findFirst({
+          where: {
+            user: { id: query.databaseUserId },
+            provider: "discord",
+          },
+          select: { providerAccountId: true },
+        });
 
   if (!account) {
-    console.error(`Discord account not found for user ${databaseUserId}`);
+    console.error(
+      `Discord account not found for user {${JSON.stringify(query)}}`
+    );
+
     throw new Error("Discord account not found");
   }
 
