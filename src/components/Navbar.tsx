@@ -270,7 +270,7 @@ export const Navbar: React.FC = () => {
             </DropdownMenu>
           </>
         ) : (
-          <Button variant="destructive" onClick={() => void signIn("discord")}>
+          <Button variant="destructive" onClick={() => void signIn()}>
             Giriş yap
           </Button>
         )}
