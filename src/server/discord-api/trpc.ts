@@ -6,7 +6,12 @@ import {
   getGuildRoles,
   modifyGuildMemberRole,
 } from "./guild";
-import { STAFF_ROLE_ID, UNEMPLOYED_ROLE_ID, connectMembersWithIds, getAbdullezizRoles } from "./utils";
+import {
+  STAFF_ROLE_ID,
+  UNEMPLOYED_ROLE_ID,
+  connectMembersWithIds,
+  getAbdullezizRoles,
+} from "./utils";
 import {
   type AtLeastOne,
   abdullezizRoleSeverities,
@@ -25,7 +30,10 @@ export async function inAbdullezizServerOrThrow(databaseUserId: string) {
     select: { providerAccountId: true },
   });
 
-  if (!account) throw new Error("Discord account not found");
+  if (!account) {
+    console.error(`Discord account not found for user ${databaseUserId}`);
+    throw new Error("Discord account not found");
+  }
 
   const abdullezizMembers = await getGuildMembers();
   const inServer = !!abdullezizMembers?.find(
