@@ -6,7 +6,12 @@ import {
   getGuildRoles,
   modifyGuildMemberRole,
 } from "./guild";
-import { STAFF_ROLE_ID, UNEMPLOYED_ROLE_ID, connectMembersWithIds, getAbdullezizRoles } from "./utils";
+import {
+  STAFF_ROLE_ID,
+  UNEMPLOYED_ROLE_ID,
+  connectMembersWithIds,
+  getAbdullezizRoles,
+} from "./utils";
 import {
   type AtLeastOne,
   abdullezizRoleSeverities,
@@ -18,6 +23,43 @@ import {
 import { permissionDecider } from "~/utils/abdulleziz";
 import { prisma } from "../db";
 import { sendNotification } from "../api/trpc";
+
+export async function inAbdullezizServerOrThrow(
+  query: { databaseUserId: string } | { userEmail: string }
+) {
+  console.debug(`Checking user {${JSON.stringify(query)}}`);
+  const account =
+    "userEmail" in query
+      ? await prisma.account.findFirst({
+          where: {
+            user: { email: query.userEmail },
+            provider: "discord",
+          },
+          select: { providerAccountId: true },
+        })
+      : await prisma.account.findFirst({
+          where: {
+            user: { id: query.databaseUserId },
+            provider: "discord",
+          },
+          select: { providerAccountId: true },
+        });
+
+  if (!account) {
+    console.error(
+      `Discord account not found for user {${JSON.stringify(query)}}`
+    );
+
+    throw new Error("Discord account not found");
+  }
+
+  const abdullezizMembers = await getGuildMembers();
+  const inServer = !!abdullezizMembers?.find(
+    (member) => member.user.id === account.providerAccountId
+  );
+
+  return [account.providerAccountId, inServer] as const;
+}
 
 export async function modifyMemberRole(
   member: Member,

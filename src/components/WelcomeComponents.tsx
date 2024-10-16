@@ -45,7 +45,7 @@ export const SignComponent: React.FC = () => {
         <Button
           isLoading={status === "loading"}
           disabled={status === "loading"}
-          onClick={() => void signIn("discord")}
+          onClick={() => void signIn()}
         >
           Giriş Yap
         </Button>

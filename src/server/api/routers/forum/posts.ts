@@ -128,3 +128,4 @@ export const forumPostsRouter = createTRPCRouter({
       return await ctx.prisma.forumPost.delete({ where: { id } });
     }),
 });
+ 
